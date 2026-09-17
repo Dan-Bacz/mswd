@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Error' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="auth-header" style="background: var(--danger);">
+      <div class="auth-logo">403</div>
+      <h2>Access Denied</h2>
+      <p>You do not have permission to view this page</p>
+    </div>
+    <div class="auth-body-inner text-center">
+      <p style="margin-bottom: 20px; color: var(--gray-600);"><%= typeof message !== 'undefined' && message ? message : 'You are not authorized to access this resource.' %></p>
+      <a href="/" class="btn btn-outline-secondary">Go to Home</a>
+    </div>
+  </div>
+</body>
+</html>

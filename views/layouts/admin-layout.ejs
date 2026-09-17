@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Municipal Social Welfare and Development Management System">
+  <title><%= typeof title !== 'undefined' ? title : 'MSWD Management System' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">MSWD</div>
+        <div class="brand-text">
+          <h1>MSWD Mahayag</h1>
+          <small>Management System</small>
+        </div>
+      </div>
+      <nav class="sidebar-menu">
+        <div class="sidebar-section-label">Main</div>
+        <a href="/admin" class="sidebar-item <%= currentPath === '/admin' || currentPath.startsWith('/admin/dashboard') ? 'active' : '' %>">
+          <span class="si-icon">&#9632;</span>Dashboard
+        </a>
+
+        <div class="sidebar-section-label">Beneficiaries</div>
+        <a href="/admin/beneficiaries" class="sidebar-item <%= currentPath.startsWith('/admin/beneficiaries') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>All Beneficiaries
+        </a>
+        <a href="/admin/beneficiaries/new" class="sidebar-item <%= currentPath === '/admin/beneficiaries/new' ? 'active' : '' %>">
+          <span class="si-icon">&#43;</span>Add Beneficiary
+        </a>
+
+        <div class="sidebar-section-label">Sectors</div>
+        <a href="javascript:void(0)" class="sidebar-item js-submenu-toggle <%= currentPath.startsWith('/admin/juvenile') ? 'active' : '' %>">
+          <span class="si-icon">&#9654;</span>Juvenile
+        </a>
+        <div class="sidebar-submenu <%= currentPath.startsWith('/admin/juvenile') ? 'open' : '' %>">
+          <a href="/admin/juvenile" class="sidebar-item <%= currentPath === '/admin/juvenile' ? 'active' : '' %>">Dashboard</a>
+          <a href="/admin/juvenile/beneficiaries" class="sidebar-item <%= currentPath.startsWith('/admin/juvenile/beneficiaries') && !currentPath.includes('/cases') ? 'active' : '' %>">Beneficiaries</a>
+          <a href="/admin/juvenile/cases" class="sidebar-item <%= currentPath.startsWith('/admin/juvenile/cases') ? 'active' : '' %>">Cases</a>
+          <a href="/admin/juvenile/services" class="sidebar-item <%= currentPath.startsWith('/admin/juvenile/services') ? 'active' : '' %>">Services</a>
+          <a href="/admin/juvenile/reports" class="sidebar-item <%= currentPath.startsWith('/admin/juvenile/reports') ? 'active' : '' %>">Reports</a>
+        </div>
+
+        <a href="javascript:void(0)" class="sidebar-item js-submenu-toggle <%= currentPath.startsWith('/admin/solo-parent') ? 'active' : '' %>">
+          <span class="si-icon">&#9654;</span>Solo Parent
+        </a>
+        <div class="sidebar-submenu <%= currentPath.startsWith('/admin/solo-parent') ? 'open' : '' %>">
+          <a href="/admin/solo-parent" class="sidebar-item <%= currentPath === '/admin/solo-parent' ? 'active' : '' %>">Dashboard</a>
+          <a href="/admin/solo-parent/beneficiaries" class="sidebar-item <%= currentPath.startsWith('/admin/solo-parent/beneficiaries') ? 'active' : '' %>">Beneficiaries</a>
+          <a href="/admin/solo-parent/records" class="sidebar-item <%= currentPath.startsWith('/admin/solo-parent/records') ? 'active' : '' %>">Records</a>
+          <a href="/admin/solo-parent/services" class="sidebar-item <%= currentPath.startsWith('/admin/solo-parent/services') ? 'active' : '' %>">Services</a>
+          <a href="/admin/solo-parent/reports" class="sidebar-item <%= currentPath.startsWith('/admin/solo-parent/reports') ? 'active' : '' %>">Reports</a>
+        </div>
+
+        <a href="javascript:void(0)" class="sidebar-item js-submenu-toggle <%= currentPath.startsWith('/admin/senior-citizens') ? 'active' : '' %>">
+          <span class="si-icon">&#9654;</span>Senior Citizens
+        </a>
+        <div class="sidebar-submenu <%= currentPath.startsWith('/admin/senior-citizens') ? 'open' : '' %>">
+          <a href="/admin/senior-citizens" class="sidebar-item <%= currentPath === '/admin/senior-citizens' ? 'active' : '' %>">Dashboard</a>
+          <a href="/admin/senior-citizens/beneficiaries" class="sidebar-item <%= currentPath.startsWith('/admin/senior-citizens/beneficiaries') ? 'active' : '' %>">Beneficiaries</a>
+          <a href="/admin/senior-citizens/records" class="sidebar-item <%= currentPath.startsWith('/admin/senior-citizens/records') ? 'active' : '' %>">Records</a>
+          <a href="/admin/senior-citizens/services" class="sidebar-item <%= currentPath.startsWith('/admin/senior-citizens/services') ? 'active' : '' %>">Services</a>
+          <a href="/admin/senior-citizens/reports" class="sidebar-item <%= currentPath.startsWith('/admin/senior-citizens/reports') ? 'active' : '' %>">Reports</a>
+        </div>
+
+        <a href="javascript:void(0)" class="sidebar-item js-submenu-toggle <%= currentPath.startsWith('/admin/pwd') ? 'active' : '' %>">
+          <span class="si-icon">&#9654;</span>PWD
+        </a>
+        <div class="sidebar-submenu <%= currentPath.startsWith('/admin/pwd') ? 'open' : '' %>">
+          <a href="/admin/pwd" class="sidebar-item <%= currentPath === '/admin/pwd' ? 'active' : '' %>">Dashboard</a>
+          <a href="/admin/pwd/beneficiaries" class="sidebar-item <%= currentPath.startsWith('/admin/pwd/beneficiaries') ? 'active' : '' %>">Beneficiaries</a>
+          <a href="/admin/pwd/records" class="sidebar-item <%= currentPath.startsWith('/admin/pwd/records') ? 'active' : '' %>">Records</a>
+          <a href="/admin/pwd/services" class="sidebar-item <%= currentPath.startsWith('/admin/pwd/services') ? 'active' : '' %>">Services</a>
+          <a href="/admin/pwd/reports" class="sidebar-item <%= currentPath.startsWith('/admin/pwd/reports') ? 'active' : '' %>">Reports</a>
+        </div>
+
+        <div class="sidebar-section-label">Administration</div>
+        <a href="/admin/officers" class="sidebar-item <%= currentPath.startsWith('/admin/officers') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Officers
+        </a>
+        <a href="/admin/services" class="sidebar-item <%= currentPath.startsWith('/admin/services') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Services
+        </a>
+        <a href="/admin/notifications" class="sidebar-item <%= currentPath.startsWith('/admin/notifications') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Notifications
+        </a>
+        <a href="/admin/reports" class="sidebar-item <%= currentPath.startsWith('/admin/reports') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Reports
+        </a>
+        <a href="/admin/settings" class="sidebar-item <%= currentPath.startsWith('/admin/settings') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>System Settings
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="javascript:void(0)" id="sidebar-logout" style="color: rgba(255,255,255,0.85);">&#10227; Logout</a>
+      </div>
+      <form id="logout-form" method="POST" action="/logout"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"></form>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
+          <div>
+            <strong>MSWD Mahayag</strong>
+          </div>
+        </div>
+        <div class="topbar-user">
+          <div class="topbar-actions" style="position: relative;">
+            <button class="notif-btn" id="notif-btn" aria-label="Notifications">
+              &#128276; <span class="notif-badge" id="notif-badge"><%= unreadCount %></span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <% if (latestNotifs && latestNotifs.length) { %>
+                <% latestNotifs.forEach(function(n) { %>
+                  <div class="notif-item <%= n.is_read ? '' : 'unread' %>">
+                    <div class="n-title"><%= n.title %></div>
+                    <% if (n.message) { %><div class="n-msg"><%= n.message %></div><% } %>
+                    <div class="n-time"><%= n.created_at %></div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="notif-empty">No notifications</div>
+              <% } %>
+            </div>
+          </div>
+          <div class="user-chip">
+            <div class="avatar"><%= user.first_name.charAt(0) %><%= user.last_name.charAt(0) %></div>
+            <div>
+              <div class="uname"><%= user.first_name %> <%= user.last_name %></div>
+              <div class="urole"><%= user.role === 'admin' ? 'Administrator' : ('Sector Officer - ' + (user.sector_name || '')) %></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length) { %>
+        <nav class="breadcrumb">
+          <% breadcrumbs.forEach(function(crumb, i) { %>
+            <% if (i === breadcrumbs.length - 1) { %>
+              <span class="current"><%= crumb.label %></span>
+            <% } else { %>
+              <a href="<%= crumb.url %>"><%= crumb.label %></a><span class="sep">/</span>
+            <% } %>
+          <% }) %>
+        </nav>
+      <% } %>
+
+      <div class="content-wrap">
+        <% if (flashMessages) { %>
+          <% if (flashMessages.success && flashMessages.success.length) { %>
+            <div class="flash flash-success"><%= flashMessages.success.join('<br>') %></div>
+          <% } %>
+          <% if (flashMessages.error && flashMessages.error.length) { %>
+            <div class="flash flash-error"><%= flashMessages.error.join('<br>') %></div>
+          <% } %>
+          <% if (flashMessages.warning && flashMessages.warning.length) { %>
+            <div class="flash flash-warning"><%= flashMessages.warning.join('<br>') %></div>
+          <% } %>
+          <% if (flashMessages.info && flashMessages.info.length) { %>
+            <div class="flash flash-info"><%= flashMessages.info.join('<br>') %></div>
+          <% } %>
+        <% } %>
+        <%- body %>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

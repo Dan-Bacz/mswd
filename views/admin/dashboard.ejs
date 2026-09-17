@@ -1,0 +1,149 @@
+<div class="page-title-row">
+  <div>
+    <h2>Administrator Dashboard</h2>
+    <div class="subtitle">Welcome back, <%= user.first_name %>. Here is an overview of the MSWD system.</div>
+  </div>
+  <div class="page-actions">
+    <a href="/admin/beneficiaries/new" class="btn btn-primary">+ New Beneficiary</a>
+    <a href="/admin/reports" class="btn btn-outline-secondary">View Reports</a>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div>
+      <div class="stat-label">Total Beneficiaries</div>
+      <div class="stat-value"><%= totalBeneficiaries %></div>
+    </div>
+    <div class="stat-icon">&#128100;</div>
+  </div>
+  <div class="stat-card alt-purple">
+    <div>
+      <div class="stat-label">Juvenile</div>
+      <div class="stat-value"><%= countsBySector[1] || 0 %></div>
+    </div>
+    <div class="stat-icon">&#127891;</div>
+  </div>
+  <div class="stat-card alt-blue">
+    <div>
+      <div class="stat-label">Solo Parents</div>
+      <div class="stat-value"><%= countsBySector[2] || 0 %></div>
+    </div>
+    <div class="stat-icon">&#128106;</div>
+  </div>
+  <div class="stat-card alt-gold">
+    <div>
+      <div class="stat-label">Senior Citizens</div>
+      <div class="stat-value"><%= countsBySector[3] || 0 %></div>
+    </div>
+    <div class="stat-icon">&#127802;</div>
+  </div>
+  <div class="stat-card alt-green">
+    <div>
+      <div class="stat-label">PWD</div>
+      <div class="stat-value"><%= countsBySector[4] || 0 %></div>
+    </div>
+    <div class="stat-icon">&#9855;</div>
+  </div>
+  <div class="stat-card alt-red">
+    <div>
+      <div class="stat-label">Active Cases</div>
+      <div class="stat-value"><%= caseTotals %></div>
+    </div>
+    <div class="stat-icon">&#9873;</div>
+  </div>
+  <div class="stat-card alt-orange">
+    <div>
+      <div class="stat-label">Total Officers</div>
+      <div class="stat-value"><%= totalOfficers %></div>
+    </div>
+    <div class="stat-icon">&#128737;</div>
+  </div>
+  <div class="stat-card alt-purple">
+    <div>
+      <div class="stat-label">Pending Officers</div>
+      <div class="stat-value"><%= pendingOfficers %></div>
+    </div>
+    <div class="stat-icon">&#8987;</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>Sector Officer Assignments</h3>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr><th>Sector</th><th>Assigned Officers</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <% activeAssignments.forEach(function(row) { %>
+            <tr>
+              <td><strong><%= row.name %></strong></td>
+              <td><span class="badge badge-blue"><%= row.officers %></span></td>
+              <td><a href="/admin/officers?filter=sector-<%= row.slug %>" class="btn btn-sm btn-outline-secondary">Manage Officers</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex gap-16 flex-wrap">
+  <div class="card" style="flex: 1; min-width: 320px;">
+    <div class="card-header">
+      <h3>Recent Beneficiaries</h3>
+      <a href="/admin/beneficiaries" class="card-action">View All</a>
+    </div>
+    <div class="card-body slim">
+      <% if (recentBeneficiaries.length) { %>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead><tr><th>Beneficiary</th><th>Sector</th><th>Date</th></tr></thead>
+            <tbody>
+              <% recentBeneficiaries.forEach(function(b) { %>
+                <tr>
+                  <td><a href="/admin/beneficiaries/<%= b.id %>"><%= b.last_name %>, <%= b.first_name %></a></td>
+                  <td><span class="badge badge-green"><%= b.sector_name %></span></td>
+                  <td class="small text-muted"><%= b.registration_date %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="empty-state"><div class="empty-icon">&#128100;</div><h4>No beneficiaries yet</h4></div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card" style="flex: 1; min-width: 320px;">
+    <div class="card-header">
+      <h3>Recent Cases</h3>
+      <a href="/admin/juvenile/cases" class="card-action">View All</a>
+    </div>
+    <div class="card-body slim">
+      <% if (recentCases.length) { %>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead><tr><th>Case Number</th><th>Beneficiary</th><th>Status</th></tr></thead>
+            <tbody>
+              <% recentCases.forEach(function(c) { %>
+                <tr>
+                  <td><a href="/admin/juvenile/cases/<%= c.id %>"><%= c.case_number %></a></td>
+                  <td><%= c.last_name %>, <%= c.first_name %></td>
+                  <td><span class="badge badge-blue"><%= c.case_status %></span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="empty-state"><div class="empty-icon">&#9873;</div><h4>No cases yet</h4></div>
+      <% } %>
+    </div>
+  </div>
+</div>

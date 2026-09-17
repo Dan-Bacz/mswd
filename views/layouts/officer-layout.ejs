@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Municipal Social Welfare and Development Management System">
+  <title><%= typeof title !== 'undefined' ? title : 'MSWD Management System' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">MSWD</div>
+        <div class="brand-text">
+          <h1>MSWD Mahayag</h1>
+          <small><%= user.sector_name || 'Officer' %></small>
+        </div>
+      </div>
+      <nav class="sidebar-menu">
+        <div class="sidebar-section-label">Main</div>
+        <a href="/officer" class="sidebar-item <%= currentPath === '/officer' ? 'active' : '' %>">
+          <span class="si-icon">&#9632;</span>Dashboard
+        </a>
+
+        <% var sector = user.sector_slug; %>
+        <div class="sidebar-section-label"><%= user.sector_name %></div>
+        <a href="/officer/<%= sector %>" class="sidebar-item <%= currentPath === '/officer/' + sector ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span><%= user.sector_name %> Dashboard
+        </a>
+        <a href="/officer/<%= sector %>/beneficiaries" class="sidebar-item <%= currentPath.includes('/beneficiaries') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span><%= user.sector_name %> Beneficiaries
+        </a>
+        <% if (sector === 'juvenile') { %>
+        <a href="/officer/<%= sector %>/cases" class="sidebar-item <%= currentPath.includes('/cases') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span><%= user.sector_name %> Cases
+        </a>
+        <% } %>
+        <% if (sector === 'solo-parent') { %>
+        <a href="/officer/<%= sector %>/records" class="sidebar-item <%= currentPath.includes('/records') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Solo Parent Records
+        </a>
+        <% } %>
+        <% if (sector === 'senior-citizens') { %>
+        <a href="/officer/<%= sector %>/records" class="sidebar-item <%= currentPath.includes('/records') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Senior Citizen Records
+        </a>
+        <% } %>
+        <% if (sector === 'pwd') { %>
+        <a href="/officer/<%= sector %>/records" class="sidebar-item <%= currentPath.includes('/records') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>PWD Records
+        </a>
+        <% } %>
+        <a href="/officer/<%= sector %>/services" class="sidebar-item <%= currentPath.includes('/services') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Services Provided
+        </a>
+        <a href="/officer/<%= sector %>/reports" class="sidebar-item <%= currentPath.includes('/reports') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>Reports
+        </a>
+
+        <div class="sidebar-section-label">Account</div>
+        <a href="/officer/notifications" class="sidebar-item <%= currentPath.includes('/notifications') ? 'active' : '' %>">
+          <span class="si-icon">&#128276;</span>Notifications
+        </a>
+        <a href="/officer/profile" class="sidebar-item <%= currentPath.includes('/profile') ? 'active' : '' %>">
+          <span class="si-icon">&#9679;</span>My Profile
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="javascript:void(0)" id="sidebar-logout" style="color: rgba(255,255,255,0.85);">&#10227; Logout</a>
+      </div>
+      <form id="logout-form" method="POST" action="/logout"><input type="hidden" name="_csrf" value="<%= csrfToken() %>"></form>
+    </aside>
+
+    <div class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
+          <div>
+            <strong>MSWD Mahayag</strong>
+          </div>
+        </div>
+        <div class="topbar-user">
+          <div class="topbar-actions" style="position: relative;">
+            <button class="notif-btn" id="notif-btn" aria-label="Notifications">
+              &#128276; <span class="notif-badge" id="notif-badge"><%= unreadCount %></span>
+            </button>
+            <div class="notif-dropdown" id="notif-dropdown">
+              <% if (latestNotifs && latestNotifs.length) { %>
+                <% latestNotifs.forEach(function(n) { %>
+                  <div class="notif-item <%= n.is_read ? '' : 'unread' %>">
+                    <div class="n-title"><%= n.title %></div>
+                    <% if (n.message) { %><div class="n-msg"><%= n.message %></div><% } %>
+                    <div class="n-time"><%= n.created_at %></div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="notif-empty">No notifications</div>
+              <% } %>
+            </div>
+          </div>
+          <div class="user-chip">
+            <div class="avatar"><%= user.first_name.charAt(0) %><%= user.last_name.charAt(0) %></div>
+            <div>
+              <div class="uname"><%= user.first_name %> <%= user.last_name %></div>
+              <div class="urole"><%= user.sector_name || 'Sector Officer' %></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs && breadcrumbs.length) { %>
+        <nav class="breadcrumb">
+          <% breadcrumbs.forEach(function(crumb, i) { %>
+            <% if (i === breadcrumbs.length - 1) { %>
+              <span class="current"><%= crumb.label %></span>
+            <% } else { %>
+              <a href="<%= crumb.url %>"><%= crumb.label %></a><span class="sep">/</span>
+            <% } %>
+          <% }) %>
+        </nav>
+      <% } %>
+
+      <div class="content-wrap">
+        <% if (flashMessages) { %>
+          <% if (flashMessages.success && flashMessages.success.length) { %>
+            <div class="flash flash-success"><%= flashMessages.success.join('<br>') %></div>
+          <% } %>
+          <% if (flashMessages.error && flashMessages.error.length) { %>
+            <div class="flash flash-error"><%= flashMessages.error.join('<br>') %></div>
+          <% } %>
+          <% if (flashMessages.warning && flashMessages.warning.length) { %>
+            <div class="flash flash-warning"><%= flashMessages.warning.join('<br>') %></div>
+          <% } %>
+          <% if (flashMessages.info && flashMessages.info.length) { %>
+            <div class="flash flash-info"><%= flashMessages.info.join('<br>') %></div>
+          <% } %>
+        <% } %>
+        <%- body %>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

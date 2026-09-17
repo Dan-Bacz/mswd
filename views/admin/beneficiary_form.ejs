@@ -1,0 +1,111 @@
+<div class="page-title-row">
+  <div>
+    <h2><%= beneficiary ? 'Edit Beneficiary' : 'Add Beneficiary' %></h2>
+    <div class="subtitle">Register a new beneficiary or update existing information</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="<%= formAction %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+      <input type="hidden" name="beneficiary_id" value="<%= beneficiary ? beneficiary.id : '' %>">
+
+      <div class="form-group">
+        <label for="sector_id">Sector <span class="required">*</span></label>
+        <select id="sector_id" name="sector_id" class="form-control" required <%= beneficiary ? 'disabled' : '' %>>
+          <option value="">-- Select Sector --</option>
+          <% sectors.forEach(function(s) { %>
+            <option value="<%= s.id %>" <%= (beneficiary && beneficiary.sector_id == s.id) || (!beneficiary && preselected == s.id) ? 'selected' : '' %>><%= s.name %></option>
+          <% }) %>
+        </select>
+        <% if (beneficiary) { %>
+          <input type="hidden" name="_sector_id_fixed" value="<%= beneficiary.sector_id %>">
+        <% } %>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="first_name">First Name <span class="required">*</span></label>
+          <input type="text" id="first_name" name="first_name" class="form-control" required value="<%= beneficiary ? beneficiary.first_name : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="middle_name">Middle Name</label>
+          <input type="text" id="middle_name" name="middle_name" class="form-control" value="<%= beneficiary ? (beneficiary.middle_name || '') : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="last_name">Last Name <span class="required">*</span></label>
+          <input type="text" id="last_name" name="last_name" class="form-control" required value="<%= beneficiary ? beneficiary.last_name : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="suffix">Suffix</label>
+          <input type="text" id="suffix" name="suffix" class="form-control" placeholder="Jr., Sr., III" value="<%= beneficiary ? (beneficiary.suffix || '') : '' %>">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="date_of_birth">Date of Birth</label>
+          <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" value="<%= beneficiary && beneficiary.date_of_birth ? beneficiary.date_of_birth.toISOString().slice(0,10) : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="sex">Sex</label>
+          <select id="sex" name="sex" class="form-control">
+            <option value="">-- Select --</option>
+            <option value="Male" <%= beneficiary && beneficiary.sex === 'Male' ? 'selected' : '' %>>Male</option>
+            <option value="Female" <%= beneficiary && beneficiary.sex === 'Female' ? 'selected' : '' %>>Female</option>
+            <option value="Other" <%= beneficiary && beneficiary.sex === 'Other' ? 'selected' : '' %>>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="civil_status">Civil Status</label>
+          <select id="civil_status" name="civil_status" class="form-control">
+            <option value="">-- Select --</option>
+            <option value="Single" <%= beneficiary && beneficiary.civil_status === 'Single' ? 'selected' : '' %>>Single</option>
+            <option value="Married" <%= beneficiary && beneficiary.civil_status === 'Married' ? 'selected' : '' %>>Married</option>
+            <option value="Widowed" <%= beneficiary && beneficiary.civil_status === 'Widowed' ? 'selected' : '' %>>Widowed</option>
+            <option value="Separated" <%= beneficiary && beneficiary.civil_status === 'Separated' ? 'selected' : '' %>>Separated</option>
+            <option value="Divorced" <%= beneficiary && beneficiary.civil_status === 'Divorced' ? 'selected' : '' %>>Divorced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="registration_date">Registration Date</label>
+          <input type="date" id="registration_date" name="registration_date" class="form-control" value="<%= beneficiary && beneficiary.registration_date ? beneficiary.registration_date.toISOString().slice(0,10) : new Date().toISOString().slice(0,10) %>">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="address">Complete Address</label>
+        <input type="text" id="address" name="address" class="form-control" value="<%= beneficiary ? (beneficiary.address || '') : '' %>">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="barangay">Barangay</label>
+          <input type="text" id="barangay" name="barangay" class="form-control" value="<%= beneficiary ? (beneficiary.barangay || '') : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="contact_number">Contact Number</label>
+          <input type="text" id="contact_number" name="contact_number" class="form-control" value="<%= beneficiary ? (beneficiary.contact_number || '') : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="form-control" value="<%= beneficiary ? (beneficiary.email || '') : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" name="status" class="form-control">
+            <option value="Active" <%= beneficiary && beneficiary.status === 'Active' ? 'selected' : '' %>>Active</option>
+            <option value="Inactive" <%= beneficiary && beneficiary.status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
+            <option value="Archived" <%= beneficiary && beneficiary.status === 'Archived' ? 'selected' : '' %>>Archived</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Beneficiary</button>
+        <a href="<%= beneficiary ? '/admin/beneficiaries/' + beneficiary.id : '/admin/beneficiaries' %>" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

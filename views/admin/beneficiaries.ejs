@@ -1,0 +1,91 @@
+<div class="page-title-row">
+  <div>
+    <h2>All Beneficiaries</h2>
+    <div class="subtitle"><%= total %> beneficiary records found</div>
+  </div>
+  <div class="page-actions">
+    <a href="/admin/beneficiaries/new" class="btn btn-primary">+ Add Beneficiary</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="filter-bar">
+    <form method="GET" action="/admin/beneficiaries" class="d-flex flex-wrap gap-8" style="width: 100%;">
+      <input type="search" name="search" value="<%= search %>" class="form-control" placeholder="Search name, number, contact...">
+      <select name="sector" class="form-control">
+        <option value="">All Sectors</option>
+        <% sectors.forEach(function(s) { %>
+          <option value="<%= s.id %>" <%= sectorFilter == s.id ? 'selected' : '' %>><%= s.name %></option>
+        <% }) %>
+      </select>
+      <select name="status" class="form-control">
+        <option value="">All Status</option>
+        <option value="Active" <%= statusFilter === 'Active' ? 'selected' : '' %>>Active</option>
+        <option value="Inactive" <%= statusFilter === 'Inactive' ? 'selected' : '' %>>Inactive</option>
+        <option value="Archived" <%= statusFilter === 'Archived' ? 'selected' : '' %>>Archived</option>
+      </select>
+      <select name="barangay" class="form-control">
+        <option value="">All Barangays</option>
+        <% barangays.forEach(function(b) { %>
+          <option value="<%= b.barangay %>" <%= barangayFilter === b.barangay ? 'selected' : '' %>><%= b.barangay %></option>
+        <% }) %>
+      </select>
+      <button type="submit" class="btn btn-outline-secondary">Search</button>
+      <a href="/admin/beneficiaries" class="btn btn-outline-primary btn-sm" style="align-self: center;">Reset</a>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Beneficiary No.</th>
+          <th>Name</th>
+          <th>Sector</th>
+          <th>Barangay</th>
+          <th>Contact No.</th>
+          <th>Status</th>
+          <th>Registered</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (beneficiaries.length) { %>
+          <% beneficiaries.forEach(function(b) { %>
+            <tr>
+              <td class="small"><strong><%= b.beneficiary_number %></strong></td>
+              <td><a href="/admin/beneficiaries/<%= b.id %>"><%= b.last_name %>, <%= b.first_name %> <%= b.suffix || '' %></a></td>
+              <td><span class="badge badge-green"><%= b.sector_name %></span></td>
+              <td><%= b.barangay || '-' %></td>
+              <td class="small"><%= b.contact_number || '-' %></td>
+              <td>
+                <% if (b.status === 'Active') { %><span class="badge badge-green">Active</span><% } %>
+                <% if (b.status === 'Inactive') { %><span class="badge badge-gray">Inactive</span><% } %>
+                <% if (b.status === 'Archived') { %><span class="badge badge-red">Archived</span><% } %>
+              </td>
+              <td class="small text-muted"><%= b.registration_date %></td>
+              <td class="table-actions">
+                <div class="btn-group">
+                  <a href="/admin/beneficiaries/<%= b.id %>" class="btn btn-sm btn-outline-secondary">View</a>
+                  <a href="/admin/beneficiaries/<%= b.id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="8">
+            <div class="empty-state"><div class="empty-icon">&#128269;</div><h4>No beneficiaries found</h4><p>Try adjusting your search filters.</p></div>
+          </td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% for (var p = 1; p <= totalPages; p++) { %>
+        <a href="/admin/beneficiaries?page=<%= p %>&search=<%= search %>&sector=<%= sectorFilter %>&status=<%= statusFilter %>&barangay=<%= barangayFilter %>" class="<%= p === page ? 'active' : '' %>"><%= p %></a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
