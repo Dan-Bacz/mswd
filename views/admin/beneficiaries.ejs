@@ -1,91 +1,83 @@
-<div class="page-title-row">
+<% var title = 'Beneficiaries'; var pageTitle = 'Beneficiaries'; %>
+
+<div class="page-head">
   <div>
-    <h2>All Beneficiaries</h2>
-    <div class="subtitle"><%= total %> beneficiary records found</div>
+    <h1 class="page-title">Beneficiary Records</h1>
+    <p class="page-sub">Register and manage individuals receiving services by sector.</p>
   </div>
-  <div class="page-actions">
-    <a href="/admin/beneficiaries/new" class="btn btn-primary">+ Add Beneficiary</a>
-  </div>
+  <a class="btn btn-primary" href="/admin/beneficiaries/new">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Beneficiary
+  </a>
 </div>
 
 <div class="card">
-  <div class="filter-bar">
-    <form method="GET" action="/admin/beneficiaries" class="d-flex flex-wrap gap-8" style="width: 100%;">
-      <input type="search" name="search" value="<%= search %>" class="form-control" placeholder="Search name, number, contact...">
-      <select name="sector" class="form-control">
-        <option value="">All Sectors</option>
+  <div class="toolbar">
+    <form method="GET" action="/admin/beneficiaries">
+      <input type="text" name="search" value="<%= search %>" class="form-control compact" style="min-width:210px" placeholder="Search name...">
+      <select name="sector" class="form-control compact">
+        <option value="">All sectors</option>
         <% sectors.forEach(function(s) { %>
-          <option value="<%= s.id %>" <%= sectorFilter == s.id ? 'selected' : '' %>><%= s.name %></option>
+          <option value="<%= s.id %>" <%= String(s.id) === String(sectorId) ? 'selected' : '' %>><%= s.name %></option>
         <% }) %>
       </select>
-      <select name="status" class="form-control">
-        <option value="">All Status</option>
-        <option value="Active" <%= statusFilter === 'Active' ? 'selected' : '' %>>Active</option>
-        <option value="Inactive" <%= statusFilter === 'Inactive' ? 'selected' : '' %>>Inactive</option>
-        <option value="Archived" <%= statusFilter === 'Archived' ? 'selected' : '' %>>Archived</option>
-      </select>
-      <select name="barangay" class="form-control">
-        <option value="">All Barangays</option>
-        <% barangays.forEach(function(b) { %>
-          <option value="<%= b.barangay %>" <%= barangayFilter === b.barangay ? 'selected' : '' %>><%= b.barangay %></option>
+      <select name="status" class="form-control compact">
+        <% ['all','Active','Inactive','Archived'].forEach(function(st) { %>
+          <option value="<%= st %>" <%= status === st ? 'selected' : '' %>><%= st === 'all' ? 'All statuses' : st %></option>
         <% }) %>
       </select>
-      <button type="submit" class="btn btn-outline-secondary">Search</button>
-      <a href="/admin/beneficiaries" class="btn btn-outline-primary btn-sm" style="align-self: center;">Reset</a>
+      <button type="submit" class="btn btn-outline">Filter</button>
     </form>
   </div>
 
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Beneficiary No.</th>
-          <th>Name</th>
-          <th>Sector</th>
-          <th>Barangay</th>
-          <th>Contact No.</th>
-          <th>Status</th>
-          <th>Registered</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (beneficiaries.length) { %>
-          <% beneficiaries.forEach(function(b) { %>
+  <div class="card-body flush">
+    <% if (rows.length === 0) { %>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <p>No beneficiaries found.</p>
+        <a class="btn btn-primary btn-sm" href="/admin/beneficiaries/new">Add beneficiary</a>
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
             <tr>
-              <td class="small"><strong><%= b.beneficiary_number %></strong></td>
-              <td><a href="/admin/beneficiaries/<%= b.id %>"><%= b.last_name %>, <%= b.first_name %> <%= b.suffix || '' %></a></td>
-              <td><span class="badge badge-green"><%= b.sector_name %></span></td>
-              <td><%= b.barangay || '-' %></td>
-              <td class="small"><%= b.contact_number || '-' %></td>
-              <td>
-                <% if (b.status === 'Active') { %><span class="badge badge-green">Active</span><% } %>
-                <% if (b.status === 'Inactive') { %><span class="badge badge-gray">Inactive</span><% } %>
-                <% if (b.status === 'Archived') { %><span class="badge badge-red">Archived</span><% } %>
-              </td>
-              <td class="small text-muted"><%= b.registration_date %></td>
-              <td class="table-actions">
-                <div class="btn-group">
-                  <a href="/admin/beneficiaries/<%= b.id %>" class="btn btn-sm btn-outline-secondary">View</a>
-                  <a href="/admin/beneficiaries/<%= b.id %>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
-                </div>
-              </td>
+              <th>Name</th><th>Beneficiary No.</th><th>Sector</th><th>Barangay</th><th>Registered</th><th>Status</th><th></th>
             </tr>
-          <% }) %>
-        <% } else { %>
-          <tr><td colspan="8">
-            <div class="empty-state"><div class="empty-icon">&#128269;</div><h4>No beneficiaries found</h4><p>Try adjusting your search filters.</p></div>
-          </td></tr>
-        <% } %>
-      </tbody>
-    </table>
+          </thead>
+          <tbody>
+            <% rows.forEach(function(b) { %>
+              <tr>
+                <td class="row-primary"><a href="/admin/beneficiaries/<%= b.id %>"><%= h.fullName(b) %></a></td>
+                <td><%= b.beneficiary_number %></td>
+                <td><span class="badge badge-blue"><%= b.sector_name %></span></td>
+                <td><%= b.barangay || '—' %></td>
+                <td class="row-muted"><%= h.formatDisplayDate(b.registration_date || b.created_at) %></td>
+                <td><span class="badge <%= h.badgeClass(b.status) %>"><%= b.status %></span></td>
+                <td>
+                  <div class="row-actions">
+                    <a class="btn btn-ghost btn-sm" href="/admin/beneficiaries/<%= b.id %>/edit">Edit</a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
   </div>
 
-  <% if (totalPages > 1) { %>
+  <% if (pg.totalPages > 1) { %>
     <div class="pagination">
-      <% for (var p = 1; p <= totalPages; p++) { %>
-        <a href="/admin/beneficiaries?page=<%= p %>&search=<%= search %>&sector=<%= sectorFilter %>&status=<%= statusFilter %>&barangay=<%= barangayFilter %>" class="<%= p === page ? 'active' : '' %>"><%= p %></a>
+      <% var base = '/admin/beneficiaries?page='; %>
+      <% if (pg.hasPrev) { %><a class="page-link" href="<%= base + (pg.page - 1) %>">&laquo;</a><% } %>
+      <% for (var p = Math.max(1, pg.page - 2); p <= Math.min(pg.totalPages, pg.page + 2); p++) { %>
+        <a class="page-link <%= p === pg.page ? 'current' : '' %>" href="<%= base + p %>"><%= p %></a>
       <% } %>
+      <% if (pg.hasNext) { %><a class="page-link" href="<%= base + (pg.page + 1) %>">&raquo;</a><% } %>
+      <span class="pg-info">Page <%= pg.page %> of <%= pg.totalPages %> &middot; <%= pg.total %> record(s)</span>
     </div>
+  <% } else { %>
+    <div class="pagination"><span class="pg-info"><%= pg.total %> record(s)</span></div>
   <% } %>
 </div>

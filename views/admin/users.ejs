@@ -1,0 +1,65 @@
+<% var pageTitle = filter === 'pending' ? 'Approval Requests' : 'Users'; var title = pageTitle; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%= pageTitle %></h1>
+    <p class="page-sub"><%= filter === 'pending' ? 'Officer registration requests awaiting approval.' : 'All user accounts in the system.' %></p>
+  </div>
+</div>
+
+<div class="tabs">
+  <a class="tab <%= filter === 'all' ? 'active' : '' %>" href="/admin/users">All</a>
+  <a class="tab <%= filter === 'pending' ? 'active' : '' %>" href="/admin/users?filter=pending">Pending approval</a>
+  <a class="tab <%= filter === 'inactive' ? 'active' : '' %>" href="/admin/users?filter=inactive">Inactive</a>
+</div>
+
+<div class="card">
+  <div class="card-body flush">
+    <% if (users.length === 0) { %>
+      <div class="empty-state"><p>No users found for this filter.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Username</th><th>Role</th><th>Sector</th><th>Status</th><th>Registered</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% users.forEach(function(u) { %>
+              <tr>
+                <td class="row-primary"><%= u.first_name %> <%= u.last_name %><%= u.suffix ? ', ' + u.suffix : '' %></td>
+                <td><%= u.username %></td>
+                <td><span class="badge <%= u.role_name === 'admin' ? 'badge-purple' : 'badge-blue' %>"><%= u.role_name === 'admin' ? 'Admin' : 'Officer' %></span></td>
+                <td><%= u.sector_name || '—' %></td>
+                <td>
+                  <% if (!u.is_approved) { %><span class="badge badge-amber">Pending</span>
+                  <% } else if (u.is_active) { %><span class="badge badge-green">Active</span>
+                  <% } else { %><span class="badge badge-gray">Inactive</span><% } %>
+                </td>
+                <td class="row-muted"><%= h.formatDisplayDate(u.created_at) %></td>
+                <td>
+                  <div class="row-actions">
+                    <% if (!u.is_approved && u.role_name === 'officer') { %>
+                      <form method="POST" action="/admin/users/<%= u.id %>/approve">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-primary btn-sm">Approve</button>
+                      </form>
+                    <% } %>
+                    <% if (u.role_name === 'officer') { %>
+                      <form method="POST" action="/admin/users/<%= u.id %>/toggle" data-confirm="<%= u.is_active ? 'Deactivate' : 'Activate' %> this user?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="back" value="/admin/users?filter=<%= filter %>">
+                        <button type="submit" class="btn btn-ghost btn-sm"><%= u.is_active ? 'Deactivate' : 'Activate' %></button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

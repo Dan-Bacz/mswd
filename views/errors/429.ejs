@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title><%= typeof title !== 'undefined' ? title : 'Server Error' %> | Mahayag MSWD</title>
+  <title>Too Many Requests | Mahayag MSWD</title>
   <style>
     :root { --blue:#0B5ED7; --blue-dark:#073B7A; --blue-deep:#062E60; --navy:#12355B; --border:#D8E3F0; --light:#EAF3FF; }
     * { box-sizing:border-box; }
@@ -20,12 +20,12 @@
       border-radius:22px; box-shadow:0 18px 50px rgba(6,46,96,.35); overflow:hidden;
       text-align:center; position:relative;
     }
-    .ed-card::before { content:""; position:absolute; top:0; left:0; right:0; height:6px; background:linear-gradient(90deg,#8a2222,#d14242); }
+    .ed-card::before { content:""; position:absolute; top:0; left:0; right:0; height:6px; background:linear-gradient(90deg,#9a6700,#f2b23d); }
     .ed-fill { padding:40px 36px 30px; }
-    .ed-code { font-size:64px; font-weight:800; letter-spacing:2px; color:#a03028; line-height:1; }
+    .ed-code { font-size:64px; font-weight:800; letter-spacing:2px; color:#9a6700; line-height:1; }
     .ed-title { font-size:22px; font-weight:800; color:var(--navy); margin:10px 0 8px; }
     .ed-msg { font-size:14px; color:#66748c; margin:0 0 24px; }
-    .ed-ico { width:44px; height:44px; margin:0 auto 18px; color:#a03028; border-radius:50%; background:#fdf0ef; display:flex; align-items:center; justify-content:center; }
+    .ed-ico { width:44px; height:44px; margin:0 auto 18px; color:#9a6700; border-radius:50%; background:#fff8e6; display:flex; align-items:center; justify-content:center; }
     .ed-actions { display:flex; gap:12px; justify-content:center; border-top:1px solid var(--border); padding:18px; background:#fbfdff; }
     .btn {
       display:inline-flex; align-items:center; justify-content:center; gap:8px;
@@ -34,23 +34,20 @@
     }
     .btn-primary { background:linear-gradient(180deg,#0A4FC0,var(--blue) 55%,var(--blue-dark)); color:#fff; box-shadow:0 8px 18px rgba(11,94,215,.28); }
     .btn-primary:hover { transform:translateY(-1px); }
-    .btn-outline { border:1px solid var(--border); color:var(--blue-dark); background:#fff; }
-    .btn-outline:hover { background:var(--light); }
   </style>
 </head>
 <body>
   <main class="ed-card">
     <div class="ed-fill">
       <div class="ed-ico">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
       </div>
-      <div class="ed-code">500</div>
-      <h1 class="ed-title"><%= typeof title !== 'undefined' ? title : 'Server Error' %></h1>
-      <p class="ed-msg"><%= typeof message !== 'undefined' && message ? message : 'Something went wrong on our end. Please try again shortly.' %></p>
+      <div class="ed-code">429</div>
+      <h1 class="ed-title">Too Many Requests</h1>
+      <p class="ed-msg">Too many attempts. Please wait a few minutes before trying again.</p>
     </div>
     <div class="ed-actions">
-      <a class="btn btn-outline" href="javascript:history.back()">&laquo; Go Back</a>
-      <a class="btn btn-primary" href="/">Go to Home</a>
+      <a class="btn btn-primary" href="/login">Back to Login</a>
     </div>
   </main>
 </body>

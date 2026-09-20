@@ -3,3 +3,6 @@ node_modules/
 npm-debug.log
 .DS_Store
 *.log
+
+# Uploaded documents are stored at runtime, not in the repository
+public/uploads/

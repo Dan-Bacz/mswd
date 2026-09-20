@@ -1,104 +1,86 @@
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+  'use strict';
 
-  var sidebarToggle = document.getElementById('sidebar-toggle');
-  var sidebar = document.getElementById('sidebar');
-  if (sidebarToggle && sidebar) {
-    sidebarToggle.addEventListener('click', function () {
-      if (window.innerWidth <= 1024) {
-        sidebar.classList.toggle('mobile-open');
-      } else {
-        sidebar.classList.toggle('collapsed');
-      }
-    });
-  }
-
-  var logoutLink = document.getElementById('sidebar-logout');
-  var logoutForm = document.getElementById('logout-form');
-  if (logoutLink && logoutForm) {
-    logoutLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (confirm('Are you sure you want to log out?')) {
-        logoutForm.submit();
-      }
-    });
-  }
-
-  document.querySelectorAll('.js-submenu-toggle').forEach(function (toggle) {
+  // Sidebar toggle (mobile/tablet)
+  var toggle = document.getElementById('sidebarToggle');
+  var sidebar = document.querySelector('.sidebar');
+  if (toggle && sidebar) {
     toggle.addEventListener('click', function () {
-      var menu = toggle.nextElementSibling;
-      if (menu) menu.classList.toggle('open');
-    });
-  });
-
-  var notifBtn = document.getElementById('notif-btn');
-  var notifDropdown = document.getElementById('notif-dropdown');
-  if (notifBtn && notifDropdown) {
-    notifBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      notifDropdown.classList.toggle('show');
-      var badge = document.getElementById('notif-badge');
-      if (badge) badge.textContent = '0';
-      fetch('/api/notifications/mark-read', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '_csrf=' + encodeURIComponent(window.csrfTokenValue || '') }).catch(function(){});
+      sidebar.classList.toggle('open');
     });
     document.addEventListener('click', function (e) {
-      if (!e.target.closest('.topbar-actions')) {
-        notifDropdown.classList.remove('show');
+      if (sidebar.classList.contains('open') &&
+          !sidebar.contains(e.target) &&
+          !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
       }
     });
   }
 
+  // Notifications dropdown
+  var bell = document.getElementById('bellBtn');
+  var panel = document.getElementById('bellPanel');
+  if (bell && panel) {
+    bell.addEventListener('click', function (e) {
+      e.stopPropagation();
+      panel.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+      if (!panel.contains(e.target) && e.target !== bell) {
+        panel.classList.remove('open');
+      }
+    });
+  }
+
+  // Generic modal helpers: [data-modal-open="id"], [data-modal-close]
   document.querySelectorAll('[data-modal-open]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var target = document.getElementById(btn.dataset.modalOpen);
-      if (target) target.classList.add('show');
+      var modal = document.getElementById(btn.getAttribute('data-modal-open'));
+      if (modal) modal.classList.add('open');
     });
   });
-
   document.querySelectorAll('[data-modal-close]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var modal = btn.closest('.modal-backdrop');
-      if (modal) modal.classList.remove('show');
+      if (modal) modal.classList.remove('open');
+    });
+  });
+  document.querySelectorAll('.modal-backdrop').forEach(function (bd) {
+    bd.addEventListener('click', function (e) {
+      if (e.target === bd) bd.classList.remove('open');
     });
   });
 
-  document.querySelectorAll('.modal-backdrop').forEach(function (modal) {
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) modal.classList.remove('show');
-    });
-  });
-
-  document.querySelectorAll('[data-confirm]').forEach(function (el) {
-    el.addEventListener('click', function (e) {
-      if (!confirm(el.dataset.confirm || 'Are you sure?')) {
+  // Confirm helper for destructive inline forms
+  document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!window.confirm(form.getAttribute('data-confirm'))) {
         e.preventDefault();
       }
     });
   });
 
-  var tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      var target = tab.dataset.tab;
-      var wrapper = tab.closest('.tabs');
-      if (wrapper) {
-        wrapper.querySelectorAll('.tab-btn').forEach(function (t) { t.classList.remove('active'); });
-        tab.classList.add('active');
-      }
-      document.querySelectorAll('.tab-pane').forEach(function (pane) {
-        pane.classList.toggle('active', pane.id === target);
-      });
-    });
-  });
-
-  var checkAll = document.querySelector('[data-checkall]');
-  if (checkAll) {
-    checkAll.addEventListener('change', function () {
-      document.querySelectorAll('input[type="checkbox"].row-check').forEach(function (cb) {
-        cb.checked = checkAll.checked;
-      });
-    });
+  // Auto-refresh the header unread badge via API (only when signed in)
+  var badgeDot = document.querySelector('.bell-dot');
+  var navBadge = document.querySelector('.nav-badge');
+  function refreshUnread() {
+    fetch('/api/notifications/unread-count', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) return;
+        var n = data.unread;
+        if (badgeDot) {
+          badgeDot.textContent = n > 9 ? '9+' : n;
+          badgeDot.style.display = n > 0 ? 'inline-flex' : 'none';
+        }
+        if (navBadge) {
+          navBadge.textContent = n > 9 ? '9+' : n;
+          navBadge.style.display = n > 0 ? 'inline-flex' : 'none';
+        }
+      })
+      .catch(function () {});
   }
-
-  var csrfInput = document.querySelector('input[name="_csrf"]');
-  window.csrfTokenValue = csrfInput ? csrfInput.value : '';
-});
+  if (badgeDot || navBadge) {
+    setInterval(refreshUnread, 30000);
+  }
+})();

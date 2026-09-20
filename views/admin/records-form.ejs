@@ -1,0 +1,83 @@
+<% var isEdit = typeof rec !== 'undefined' && rec; var pageTitle = (isEdit ? 'Edit ' : 'New ') + cfg.item; var title = pageTitle; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%= pageTitle %></h1>
+    <p class="page-sub"><%= cfg.title %> &middot; link the record to a beneficiary and an assigned officer.</p>
+  </div>
+  <a class="btn btn-outline" href="/admin/records/<%= slug %>">&laquo; Back to <%= cfg.title %></a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="<%= isEdit ? '/admin/records/' + slug + '/' + rec.id : '/admin/records/' + slug %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label for="beneficiary_id">Linked Beneficiary <span class="required-star">*</span></label>
+          <select id="beneficiary_id" name="beneficiary_id" class="form-control" required>
+            <option value="">-- Select beneficiary --</option>
+            <% beneficiaries.forEach(function(b) { %>
+              <option value="<%= b.id %>" <%= String(chosenBeneficiaryId) === String(b.id) ? 'selected' : '' %>><%= h.fullName(b) %> (<%= b.beneficiary_number %>) — <%= b.barangay || 'no barangay' %></option>
+            <% }) %>
+          </select>
+          <% if (beneficiaries.length === 0) { %>
+            <span class="hint">No active beneficiaries in this sector yet. <a href="/admin/beneficiaries/new">Register one first</a>.</span>
+          <% } %>
+        </div>
+
+        <% cfg.fields.forEach(function(f) { %>
+          <% if (f.col === cfg.statusColumn) return; %>
+          <% var val = isEdit ? rec[f.col] : ''; %>
+          <div class="form-group">
+            <label for="f-<%= f.col %>"><%= f.label %></label>
+            <% if (f.type === 'textarea') { %>
+              <textarea id="f-<%= f.col %>" name="<%= f.col %>" class="form-control"><%= val || '' %></textarea>
+            <% } else if (f.type === 'select') { %>
+              <select id="f-<%= f.col %>" name="<%= f.col %>" class="form-control">
+                <option value="">-- Select --</option>
+                <% f.options.forEach(function(o) { %>
+                  <option value="<%= o %>" <%= val === o ? 'selected' : '' %>><%= o %></option>
+                <% }) %>
+              </select>
+            <% } else if (f.type === 'date') { %>
+              <input type="date" id="f-<%= f.col %>" name="<%= f.col %>" class="form-control" value="<%= h.formatDate(val) %>">
+            <% } else if (f.type === 'number') { %>
+              <input type="number" step="0.01" id="f-<%= f.col %>" name="<%= f.col %>" class="form-control" value="<%= val || '' %>">
+            <% } else { %>
+              <input type="text" id="f-<%= f.col %>" name="<%= f.col %>" class="form-control" value="<%= val || '' %>">
+            <% } %>
+            <% if (f.hint) { %><span class="hint"><%= f.hint %></span><% } %>
+          </div>
+        <% }) %>
+
+        <div class="form-group">
+          <label for="assigned_officer_id">Assigned Officer</label>
+          <select id="assigned_officer_id" name="assigned_officer_id" class="form-control">
+            <option value="">-- None --</option>
+            <% officers.forEach(function(o) { %>
+              <option value="<%= o.id %>" <%= isEdit && rec.assigned_officer_id === o.id ? 'selected' : '' %>><%= o.first_name %> <%= o.last_name %></option>
+            <% }) %>
+          </select>
+          <% if (officers.length === 0) { %>
+            <span class="hint">No active officers assigned to this sector.</span>
+          <% } %>
+        </div>
+
+        <div class="form-group">
+          <label for="f-status"><%= cfg.statusColumn === 'case_status' ? 'Case Status' : 'Status' %></label>
+          <select id="f-status" name="<%= cfg.statusColumn %>" class="form-control">
+            <% cfg.statuses.forEach(function(st) { %>
+              <option value="<%= st %>" <%= isEdit && rec[cfg.statusColumn] === st ? 'selected' : '' %>><%= st %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><%= isEdit ? 'Save Changes' : 'Create Record' %></button>
+        <a class="btn btn-outline" href="/admin/records/<%= slug %>">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

@@ -3,19 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Not Found</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= typeof title !== 'undefined' ? title : 'Page Not Found' %> | Mahayag MSWD</title>
+  <style>
+    :root { --blue:#0B5ED7; --blue-dark:#073B7A; --blue-deep:#062E60; --navy:#12355B; --border:#D8E3F0; --light:#EAF3FF; }
+    * { box-sizing:border-box; }
+    html, body { height:100%; }
+    body {
+      margin:0; display:flex; align-items:center; justify-content:center; padding:24px;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:linear-gradient(160deg,var(--blue-deep) 0%,var(--blue-dark) 40%,var(--blue) 100%);
+      color:var(--navy); line-height:1.55;
+    }
+    .ed-card {
+      width:min(100%,460px); background:#fff; border:1px solid var(--border);
+      border-radius:22px; box-shadow:0 18px 50px rgba(6,46,96,.35); overflow:hidden;
+      text-align:center; position:relative;
+    }
+    .ed-card::before { content:""; position:absolute; top:0; left:0; right:0; height:6px; background:linear-gradient(90deg,var(--blue-deep),var(--blue)); }
+    .ed-fill { padding:40px 36px 30px; }
+    .ed-code { font-size:64px; font-weight:800; letter-spacing:2px; color:var(--blue-dark); line-height:1; }
+    .ed-title { font-size:22px; font-weight:800; color:var(--navy); margin:10px 0 8px; }
+    .ed-msg { font-size:14px; color:#66748c; margin:0 0 24px; }
+    .ed-ico { width:44px; height:44px; margin:0 auto 18px; color:var(--blue); border-radius:50%; background:var(--light); display:flex; align-items:center; justify-content:center; }
+    .ed-actions { display:flex; gap:12px; justify-content:center; border-top:1px solid var(--border); padding:18px; background:#fbfdff; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:11px 18px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;
+      text-decoration:none; transition:transform .14s ease, box-shadow .16s ease;
+    }
+    .btn-primary { background:linear-gradient(180deg,#0A4FC0,var(--blue) 55%,var(--blue-dark)); color:#fff; box-shadow:0 8px 18px rgba(11,94,215,.28); }
+    .btn-primary:hover { transform:translateY(-1px); }
+    .btn-outline { border:1px solid var(--border); color:var(--blue-dark); background:#fff; }
+    .btn-outline:hover { background:var(--light); }
+  </style>
 </head>
-<body class="auth-body">
-  <div class="auth-card">
-    <div class="auth-header" style="background: var(--warning);">
-      <div class="auth-logo">404</div>
-      <h2>Page Not Found</h2>
-      <p>The page you are looking for does not exist</p>
+<body>
+  <main class="ed-card">
+    <div class="ed-fill">
+      <div class="ed-ico">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="10" y1="15.5" x2="14" y2="19.5"/><line x1="14" y1="15.5" x2="10" y2="19.5"/><line x1="12" y1="7" x2="12" y2="12"/></svg>
+      </div>
+      <div class="ed-code">404</div>
+      <h1 class="ed-title"><%= typeof title !== 'undefined' ? title : 'Page Not Found' %></h1>
+      <p class="ed-msg"><%= typeof message !== 'undefined' && message ? message : 'The page you are looking for does not exist or may have been moved.' %></p>
     </div>
-    <div class="auth-body-inner text-center">
-      <a href="/" class="btn btn-outline-secondary">Go to Home</a>
+    <div class="ed-actions">
+      <a class="btn btn-outline" href="javascript:history.back()">&laquo; Go Back</a>
+      <a class="btn btn-primary" href="/">Go to Home</a>
     </div>
-  </div>
+  </main>
 </body>
 </html>

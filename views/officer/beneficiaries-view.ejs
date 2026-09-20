@@ -1,0 +1,101 @@
+<% var pageTitle = b.first_name + ' ' + b.last_name; var title = 'Beneficiary'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%= h.fullName(b) %></h1>
+    <p class="page-sub">
+      <span class="badge badge-blue"><%= b.sector_name || allowedSector ? (b.sector_name || allowedSector.name) : '' %></span>
+      <span class="badge <%= b.status === 'Active' ? 'badge-green' : b.status === 'Inactive' ? 'badge-gray' : 'badge-red' %>"><%= b.status %></span>
+    </p>
+  </div>
+  <div class="row-actions">
+    <a class="btn btn-outline" href="/officer/beneficiaries">&laquo; Back</a>
+    <a class="btn btn-primary" href="/officer/beneficiaries/<%= b.id %>/edit">Edit</a>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Personal Information</h3></div>
+    <div class="card-body">
+      <div class="detail-list">
+        <div class="detail-item"><span class="k">Beneficiary No.</span><span class="v"><%= b.beneficiary_number %></span></div>
+        <div class="detail-item"><span class="k">Full Name</span><span class="v"><%= h.fullName(b) %></span></div>
+        <div class="detail-item"><span class="k">Date of Birth</span><span class="v"><%= h.formatDisplayDate(b.date_of_birth) %> <% if (b.date_of_birth) { %><span class="muted">(<%= h.calculateAge(b.date_of_birth) %> yrs old)</span><% } %></span></div>
+        <div class="detail-item"><span class="k">Sex</span><span class="v"><%= b.sex || '—' %></span></div>
+        <div class="detail-item"><span class="k">Civil Status</span><span class="v"><%= b.civil_status || '—' %></span></div>
+        <div class="detail-item"><span class="k">Barangay</span><span class="v"><%= b.barangay || '—' %></span></div>
+        <div class="detail-item"><span class="k">Address</span><span class="v"><%= b.address || '—' %></span></div>
+        <div class="detail-item"><span class="k">Contact</span><span class="v"><%= b.contact_number || '—' %> <% if (b.email) { %><br><%= b.email %><% } %></span></div>
+        <div class="detail-item"><span class="k">Registered</span><span class="v"><%= h.formatDisplayDate(b.registration_date) %> <% if (b.reg_first) { %>by <%= b.reg_first %> <%= b.reg_last %><% } %></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Sector Records</h3></div>
+    <div class="card-body">
+      <div class="count-row">
+        <div class="count-cell"><div class="stat-value small"><%= b.juvenile_count %></div><div class="stat-label">Juvenile</div></div>
+        <div class="count-cell"><div class="stat-value small"><%= b.sp_count %></div><div class="stat-label">Solo Parent</div></div>
+        <div class="count-cell"><div class="stat-value small"><%= b.sc_count %></div><div class="stat-label">Senior</div></div>
+        <div class="count-cell"><div class="stat-value small"><%= b.pwd_count %></div><div class="stat-label">PWD</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Update Status</h3></div>
+  <div class="card-body">
+    <form method="POST" action="/officer/beneficiaries/<%= b.id %>/status" class="form-actions">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <select name="status" class="form-control compact" style="width:160px">
+        <% ['Active', 'Inactive', 'Archived'].forEach(function(st) { %>
+          <option value="<%= st %>" <%= b.status === st ? 'selected' : '' %>><%= st %></option>
+        <% }) %>
+      </select>
+      <button type="submit" class="btn btn-primary">Update Status</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Notes</h3></div>
+  <div class="card-body">
+    <% if (notes.length === 0) { %>
+      <div class="empty-state"><p>No notes for this beneficiary.</p></div>
+    <% } else { %>
+      <ul class="timeline">
+        <% notes.forEach(function(n) { %>
+          <li class="timeline-item">
+            <div class="timeline-head">
+              <span class="timeline-actor"><%= n.first_name %> <%= n.last_name %></span>
+              <span class="timeline-time"><%= h.formatDateTime(n.created_at) %></span>
+            </div>
+            <p class="timeline-body"><%= n.note %></p>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Documents</h3></div>
+  <div class="card-body">
+    <% if (documents.length === 0) { %>
+      <div class="empty-state"><p>No documents uploaded. Upload documents from a case's Documents panel.</p></div>
+    <% } else { %>
+      <% documents.forEach(function(d) { %>
+        <div class="file-item">
+          <span class="file-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+          <div style="min-width:0;flex:1">
+            <a class="file-name" href="<%= d.file_path %>" target="_blank"><%= d.document_name %></a>
+            <div class="file-meta"><%= d.document_type || 'General' %> &middot; <%= h.formatDisplayDate(d.created_at) %></div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>

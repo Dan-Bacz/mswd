@@ -1,0 +1,81 @@
+<% var isEdit = typeof officer !== 'undefined' && officer; var pageTitle = isEdit ? 'Edit Officer' : 'New Officer'; var title = pageTitle; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%= pageTitle %></h1>
+    <p class="page-sub"><%= isEdit ? 'Update officer details and sector assignment.' : 'Create an officer account and assign it to a sector.' %></p>
+  </div>
+  <a class="btn btn-outline" href="/admin/officers">&laquo; Back to officers</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="<%= isEdit ? '/admin/officers/' + officer.id : '/admin/officers' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="first_name">First Name <span class="required-star">*</span></label>
+          <input type="text" id="first_name" name="first_name" class="form-control" required value="<%= isEdit ? officer.first_name : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="last_name">Last Name <span class="required-star">*</span></label>
+          <input type="text" id="last_name" name="last_name" class="form-control" required value="<%= isEdit ? officer.last_name : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="middle_name">Middle Name</label>
+          <input type="text" id="middle_name" name="middle_name" class="form-control" value="<%= isEdit && officer.middle_name ? officer.middle_name : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="suffix">Suffix</label>
+          <input type="text" id="suffix" name="suffix" class="form-control" value="<%= isEdit && officer.suffix ? officer.suffix : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="sector_id">Assigned Sector <span class="required-star">*</span></label>
+          <select id="sector_id" name="sector_id" class="form-control" required>
+            <option value="">-- Select sector --</option>
+            <% sectors.forEach(function(s) { %>
+              <option value="<%= s.id %>" <%= isEdit && officer.sector_id === s.id ? 'selected' : '' %>><%= s.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="contact_number">Contact Number</label>
+          <input type="text" id="contact_number" name="contact_number" class="form-control" value="<%= isEdit && officer.contact_number ? officer.contact_number : '' %>">
+        </div>
+        <div class="form-group">
+          <label for="username">Username <span class="required-star">*</span></label>
+          <input type="text" id="username" name="username" class="form-control" required value="<%= isEdit ? officer.username : '' %>" <%= isEdit ? 'readonly' : '' %>>
+        </div>
+        <div class="form-group">
+          <label for="email">Email <span class="required-star">*</span></label>
+          <input type="email" id="email" name="email" class="form-control" required value="<%= isEdit ? officer.email : '' %>">
+        </div>
+
+        <% if (!isEdit) { %>
+          <div class="form-group full">
+            <label for="password">Temporary Password <span class="required-star">*</span></label>
+            <input type="text" id="password" name="password" class="form-control" placeholder="Minimum 8 characters" required>
+            <span class="hint">Provide the initial password. The officer can change it from their profile.</span>
+          </div>
+        <% } %>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><%= isEdit ? 'Save Changes' : 'Create Officer' %></button>
+        <a class="btn btn-outline" href="/admin/officers">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<% if (isEdit && officer.is_approved) { %>
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Reset Password</h3></div>
+    <div class="card-body">
+      <form method="POST" action="/admin/officers/<%= officer.id %>/reset-password" class="toolbar" style="padding:0;border:none">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="text" name="password" class="form-control compact" style="min-width:260px" placeholder="New temporary password (min 8 characters)" required>
+        <button type="submit" class="btn btn-outline">Reset Password</button>
+      </form>
+    </div>
+  </div>
+<% } %>

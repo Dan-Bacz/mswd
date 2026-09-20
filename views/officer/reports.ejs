@@ -1,0 +1,82 @@
+<% var pageTitle = 'Reports'; var title = 'Reports'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Sector Reports</h1>
+    <p class="page-sub">Analytics for your assigned sector (<%= allowedSector ? allowedSector.name : '—' %>).</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title"><%= perSector[0] ? perSector[0].title : 'Cases' %></h3></div>
+  <div class="card-body">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 11v4c0 1.5 2.7 3 6 3s6-1.5 6-3v-4"/></svg></span>
+        <div><div class="stat-value"><%= perSector[0] ? perSector[0].total : 0 %></div><div class="stat-label">Total Records</div></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+        <div><div class="stat-value"><%= perSector[0] ? perSector[0].active : 0 %></div><div class="stat-label">Active / Open</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Records by Status</h3></div>
+    <div class="card-body">
+      <div class="bar-list">
+        <% var maxS = 1; statusRows.forEach(function(s) { if (s.c > maxS) maxS = s.c; }); %>
+        <% statusRows.forEach(function(s) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= s.status %></span>
+            <div class="bar-track"><div class="bar-fill" style="width:<%= Math.max(4, Math.round(s.c / maxS * 100)) %>%"><%= s.c %></div></div>
+          </div>
+        <% }) %>
+        <% if (statusRows.length === 0) { %><div class="empty-state"><p>No data yet.</p></div><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Monthly Registrations (12 months)</h3></div>
+    <div class="card-body">
+      <div class="bar-list">
+        <% var maxReg = 1; monthlyRegistrations.forEach(function(m) { if (m.c > maxReg) maxReg = m.c; }); %>
+        <% monthlyRegistrations.forEach(function(m) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= m.label %></span>
+            <div class="bar-track"><div class="bar-fill dark" style="width:<%= Math.max(3, Math.round(m.c / maxReg * 100)) %>%"><%= m.c %></div></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Upcoming Follow-ups (next 7 days)</h3></div>
+  <div class="card-body flush">
+    <% if (upcoming.length === 0) { %>
+      <div class="empty-state"><p>No scheduled follow-ups in the next 7 days.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Beneficiary</th><th>Type</th><th>Scheduled</th><th>Description</th></tr></thead>
+          <tbody>
+            <% upcoming.forEach(function(f) { %>
+              <tr>
+                <td class="row-primary"><%= f.ben_first %> <%= f.ben_last %> <span class="muted">(<%= f.barangay || '—' %>)</span></td>
+                <td><%= f.followup_type %></td>
+                <td class="row-muted"><%= h.formatDisplayDate(f.scheduled_date) %></td>
+                <td class="row-muted"><%= f.description || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

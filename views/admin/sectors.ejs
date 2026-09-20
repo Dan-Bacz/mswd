@@ -1,0 +1,73 @@
+<% var pageTitle = 'Sectors'; var title = 'Sectors'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Sectors</h1>
+    <p class="page-sub">Groups, services and membership of each welfare sector.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="/admin/sectors" class="toolbar" style="padding:0;border:none">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="name" class="form-control compact" style="min-width:180px" placeholder="New sector name" required>
+      <input type="text" name="slug" class="form-control compact" style="min-width:160px" placeholder="slug (e.g. solo-parent)" required>
+      <input type="text" name="description" class="form-control compact grow" placeholder="Short description (optional)">
+      <button type="submit" class="btn btn-primary">Add Sector</button>
+    </form>
+  </div>
+  <div class="card-body flush">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Sector</th><th>Slug</th><th>Description</th><th>Beneficiaries</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% sectors.forEach(function(s) { %>
+            <tr>
+              <td class="row-primary"><%= s.name %></td>
+              <td><code><%= s.slug %></code></td>
+              <td class="row-muted"><%= s.description || '—' %></td>
+              <td><%= s.beneficiaryCount %></td>
+              <td><span class="badge <%= s.is_active ? 'badge-green' : 'badge-gray' %>"><%= s.is_active ? 'Active' : 'Inactive' %></span></td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn btn-ghost btn-sm" data-modal-open="edit-<%= s.id %>">Edit</button>
+                  <form method="POST" action="/admin/sectors/<%= s.id %>/toggle">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-ghost btn-sm"><%= s.is_active ? 'Disable' : 'Enable' %></button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<% sectors.forEach(function(s) { %>
+  <div class="modal-backdrop" id="edit-<%= s.id %>">
+    <div class="modal">
+      <h3>Edit <%= s.name %></h3>
+      <p class="modal-sub">Update sector details.</p>
+      <form method="POST" action="/admin/sectors/<%= s.id %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-group" style="margin-bottom:14px">
+          <label for="edit-name-<%= s.id %>">Name</label>
+          <input type="text" id="edit-name-<%= s.id %>" name="name" class="form-control" value="<%= s.name %>" required>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label for="edit-desc-<%= s.id %>">Description</label>
+          <input type="text" id="edit-desc-<%= s.id %>" name="description" class="form-control" value="<%= s.description || '' %>">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% }) %>

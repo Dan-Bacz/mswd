@@ -1,0 +1,121 @@
+<% var pageTitle = 'Reports'; var title = 'Reports'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Reports &amp; Analytics</h1>
+    <p class="page-sub">Consolidated statistics across all welfare sectors.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Cases by Sector</h3></div>
+  <div class="card-body">
+    <div class="bar-list">
+      <% var maxTotal = 1; perSector.forEach(function(s) { if (s.total > maxTotal) maxTotal = s.total; }); %>
+      <% perSector.forEach(function(s) { %>
+        <div class="bar-row">
+          <span class="bar-label"><%= s.name %></span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: <%= Math.max(4, Math.round(s.total / maxTotal * 100)) %>%" title="<%= s.total %> records"><%= s.total %></div>
+          </div>
+          <span class="muted" style="font-size:12.5px"><%= s.active %> active</span>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Monthly Registrations (12 months)</h3></div>
+    <div class="card-body">
+      <div class="bar-list">
+        <% var maxReg = 1; monthlyRegistrations.forEach(function(m) { if (m.c > maxReg) maxReg = m.c; }); %>
+        <% monthlyRegistrations.forEach(function(m) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= m.label %></span>
+            <div class="bar-track"><div class="bar-fill dark" style="width:<%= Math.max(3, Math.round(m.c / maxReg * 100)) %>%"><%= m.c %></div></div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Beneficiaries by Sex</h3></div>
+    <div class="card-body">
+      <div class="pie-list">
+        <% var totalSex = 0; genderRows.forEach(function(g) { totalSex += g.c; }); %>
+        <% var colors = { Male: '#0B5ED7', Female: '#7FD4A6', Other: '#9AA7B8' }; %>
+        <% genderRows.forEach(function(g) { %>
+          <% var pct = totalSex > 0 ? Math.round(g.c / totalSex * 100) : 0; %>
+          <div class="pie-item">
+            <span class="pie-dot" style="background:<%= colors[g.sex] || '#0B5ED7' %>"></span>
+            <span class="pie-label"><%= g.sex || 'Unspecified' %></span>
+            <span class="pie-val"><%= g.c %> (<%= pct %>%)</span>
+          </div>
+        <% }) %>
+        <% if (genderRows.length === 0) { %><div class="empty-state"><p>No data yet.</p></div><% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Top Barangays</h3></div>
+    <div class="card-body">
+      <% var maxB = 1; barangayRows.forEach(function(b) { if (b.c > maxB) maxB = b.c; }); %>
+      <div class="bar-list">
+        <% barangayRows.forEach(function(b) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= b.barangay %></span>
+            <div class="bar-track"><div class="bar-fill warn" style="width:<%= Math.max(4, Math.round(b.c / maxB * 100)) %>%"><%= b.c %></div></div>
+          </div>
+        <% }) %>
+        <% if (barangayRows.length === 0) { %><div class="empty-state"><p>No data yet.</p></div><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Officer Workload</h3></div>
+    <div class="card-body">
+      <div class="bar-list">
+        <% var maxW = 1; officerWorkload.forEach(function(o) { if (o.total > maxW) maxW = o.total; }); %>
+        <% officerWorkload.slice(0, 10).forEach(function(o) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= o.name %></span>
+            <div class="bar-track"><div class="bar-fill cyan" style="background:linear-gradient(90deg,#0E7490,#0B5ED7);width:<%= Math.max(4, Math.round(o.total / maxW * 100)) %>%"><%= o.total %></div></div>
+          </div>
+        <% }) %>
+        <% if (officerWorkload.length === 0) { %><div class="empty-state"><p>No officers yet.</p></div><% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Upcoming Follow-ups (next 7 days)</h3></div>
+  <div class="card-body flush">
+    <% if (upcoming.length === 0) { %>
+      <div class="empty-state"><p>No scheduled follow-ups in the next 7 days.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Beneficiary</th><th>Type</th><th>Scheduled</th><th>Description</th></tr></thead>
+          <tbody>
+            <% upcoming.forEach(function(f) { %>
+              <tr>
+                <td class="row-primary"><%= f.ben_first %> <%= f.ben_last %> <span class="muted">(<%= f.barangay || '—' %>)</span></td>
+                <td><%= f.followup_type %></td>
+                <td class="row-muted"><%= h.formatDisplayDate(f.scheduled_date) %></td>
+                <td class="row-muted"><%= f.description || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

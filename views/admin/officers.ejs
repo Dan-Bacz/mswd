@@ -1,0 +1,62 @@
+<% var pageTitle = 'Sector Officers'; var title = 'Officers'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Sector Officers</h1>
+    <p class="page-sub">Manage officer accounts and their sector assignments.</p>
+  </div>
+  <a class="btn btn-primary" href="/admin/officers/new">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Officer
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body flush">
+    <% if (officers.length === 0) { %>
+      <div class="empty-state"><p>No officers yet.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Officer</th><th>Username</th><th>Contact / Email</th><th>Sector</th><th>Status</th><th>Last Login</th><th></th></tr>
+          </thead>
+          <tbody>
+            <% officers.forEach(function(o) { %>
+              <tr>
+                <td class="row-primary">
+                  <%= o.first_name %> <%= o.last_name %><%= o.suffix ? ', ' + o.suffix : '' %>
+                </td>
+                <td><%= o.username %></td>
+                <td class="row-muted"><%= o.contact_number || '—' %><br><%= o.email %></td>
+                <td><span class="badge badge-blue"><%= o.sector_name || 'Unassigned' %></span></td>
+                <td>
+                  <% if (!o.is_approved) { %><span class="badge badge-amber">Pending</span>
+                  <% } else if (o.is_active) { %><span class="badge badge-green">Active</span>
+                  <% } else { %><span class="badge badge-gray">Inactive</span><% } %>
+                </td>
+                <td class="row-muted"><%= o.last_login ? h.formatDateTime(o.last_login) : 'Never' %></td>
+                <td>
+                  <div class="row-actions">
+                    <a class="btn btn-ghost btn-sm" href="/admin/officers/<%= o.id %>/edit">Edit</a>
+                    <% if (o.is_approved && o.is_active) { %>
+                      <form method="POST" action="/admin/officers/<%= o.id %>/toggle" data-confirm="Deactivate this officer?">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-ghost btn-sm">Deactivate</button>
+                      </form>
+                    <% } else if (o.is_approved) { %>
+                      <form method="POST" action="/admin/officers/<%= o.id %>/toggle">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-ghost btn-sm">Activate</button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

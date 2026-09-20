@@ -17,6 +17,7 @@ function csrfProtection(req, res, next) {
 
 function csrfVerify(req, res, next) {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    if (req.is('multipart/form-data')) return next(); // verified again after multer parses the body
     const token = req.body._csrf || req.headers['x-csrf-token'];
     if (!token || token !== req.session.csrfToken) {
       return res.status(403).redirect('/login?error=csrf');

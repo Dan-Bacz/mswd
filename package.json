@@ -1,15 +1,18 @@
 {
   "name": "mswd-management-system",
-  "version": "1.0.0",
-  "description": "Municipal Social Welfare and Development (MSWD) Management System",
+  "version": "2.0.0",
+  "description": "Mahayag Social Welfare and Development (MSWD) Management System - Municipal social welfare platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["mswd", "social-welfare", "management-system"],
-  "author": "",
+  "keywords": ["mswd", "social-welfare", "municipal", "management-system", "beneficiaries", "cases"],
+  "author": "Mahayag MSWD",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "connect-flash": "^0.1.1",
@@ -21,6 +24,7 @@
     "express-session": "^1.18.0",
     "helmet": "^7.1.0",
     "method-override": "^3.0.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.0"
   },
   "devDependencies": {

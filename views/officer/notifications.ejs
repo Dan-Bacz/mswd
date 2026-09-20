@@ -1,0 +1,46 @@
+<% var pageTitle = 'Notifications'; var title = 'Notifications'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Notifications</h1>
+    <p class="page-sub">Updates and alerts for your account.</p>
+  </div>
+  <form method="POST" action="/officer/notifications/read-all">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-outline">Mark all as read</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-body flush">
+    <% if (rows.length === 0) { %>
+      <div class="empty-state"><p>You have no notifications.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Type</th><th>Message</th><th>Received</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <% rows.forEach(function(n) { %>
+              <tr>
+                <td><span class="badge <%= n.type === 'success' ? 'badge-green' : n.type === 'danger' ? 'badge-red' : n.type === 'warning' ? 'badge-amber' : 'badge-blue' %>"><%= n.type %></span></td>
+                <td><strong><%= n.title %></strong><br><span class="row-muted"><%= n.message || '' %></span></td>
+                <td class="row-muted"><%= h.formatDateTime(n.created_at) %></td>
+                <td><span class="badge <%= n.is_read ? 'badge-gray' : 'badge-blue' %>"><%= n.is_read ? 'Read' : 'Unread' %></span></td>
+                <td>
+                  <% if (!n.is_read) { %>
+                    <form method="POST" action="/officer/notifications/<%= n.id %>/read">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <input type="hidden" name="back" value="/officer/notifications">
+                      <button type="submit" class="btn btn-ghost btn-sm">Mark read</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+  <div class="pagination"><span class="pg-info"><%= pg.total %> notification(s)</span></div>
+</div>

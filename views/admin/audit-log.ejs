@@ -1,0 +1,60 @@
+<% var pageTitle = 'Audit Log'; var title = 'Audit Log'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Audit Log</h1>
+    <p class="page-sub">A record of important actions performed in the system.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="toolbar">
+    <form method="GET" action="/admin/audit-log">
+      <select name="action" class="form-control compact">
+        <option value="">All actions</option>
+        <% actions.forEach(function(a) { %>
+          <option value="<%= a %>" <%= filterAction === a ? 'selected' : '' %>><%= a %></option>
+        <% }) %>
+      </select>
+      <input type="text" name="user" value="<%= filterUser %>" class="form-control compact" style="min-width:180px" placeholder="Filter by user...">
+      <button type="submit" class="btn btn-outline">Filter</button>
+    </form>
+  </div>
+  <div class="card-body flush">
+    <% if (rows.length === 0) { %>
+      <div class="empty-state"><p>No audit entries found.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>When</th><th>User</th><th>Action</th><th>Module</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            <% rows.forEach(function(a) { %>
+              <tr>
+                <td class="row-muted"><%= h.formatDateTime(a.created_at) %></td>
+                <td><span class="badge badge-blue"><%= a.username || a.first_name ? (a.first_name ? a.first_name + ' ' + (a.last_name || '') : a.username) : 'System' %></span></td>
+                <td><span class="badge <%= a.action.startsWith('failed') || a.action === 'delete' ? 'badge-red' : 'badge-green' %>"><%= a.action %></span></td>
+                <td><%= a.module || '—' %></td>
+                <td class="row-muted"><%= a.details || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+  <div class="pagination">
+    <% if (pg.totalPages > 1) { %>
+      <% var base = '/admin/audit-log?page='; %>
+      <% if (pg.hasPrev) { %><a class="page-link" href="<%= base + (pg.page - 1) %>">&laquo;</a><% } %>
+      <% for (var p = Math.max(1, pg.page - 2); p <= Math.min(pg.totalPages, pg.page + 2); p++) { %>
+        <a class="page-link <%= p === pg.page ? 'current' : '' %>" href="<%= base + p %>"><%= p %></a>
+      <% } %>
+      <% if (pg.hasNext) { %><a class="page-link" href="<%= base + (pg.page + 1) %>">&raquo;</a><% } %>
+      <span class="pg-info"><%= pg.total %> entries</span>
+    <% } else { %>
+      <span class="pg-info"><%= pg.total %> entries</span>
+    <% } %>
+  </div>
+</div>

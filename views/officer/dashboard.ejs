@@ -1,0 +1,103 @@
+<% var pageTitle = 'Officer Dashboard'; var title = 'Dashboard'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%= cfg.title %><% if (allowedSector) { %> — <%= allowedSector.name %><% } %> Dashboard</h1>
+    <p class="page-sub">Your scope is limited to the assigned sector.</p>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    <div><div class="stat-value"><%= data.beneficiaries %></div><div class="stat-label">Active Beneficiaries</div></div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 11v4c0 1.5 2.7 3 6 3s6-1.5 6-3v-4"/></svg></span>
+    <div><div class="stat-value"><%= data.totalRecords %></div><div class="stat-label">Total <%= cfg.title %></div></div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+    <div><div class="stat-value"><%= data.activeRecords %></div><div class="stat-label">Active / Open Records</div></div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+    <div><div class="stat-value"><%= upcoming.length %></div><div class="stat-label">Follow-ups in 7 days</div></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Records by Status</h3></div>
+    <div class="card-body">
+      <% var maxS = 1; data.statusBreakdown.forEach(function(sb) { if (sb.c > maxS) maxS = sb.c; }); %>
+      <div class="bar-list">
+        <% data.statusBreakdown.forEach(function(sb) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= sb.status %></span>
+            <div class="bar-track"><div class="bar-fill" style="width:<%= Math.max(4, Math.round(sb.c / maxS * 100)) %>%"><%= sb.c %></div></div>
+          </div>
+        <% }) %>
+        <% if (data.statusBreakdown.length === 0) { %><div class="empty-state"><p>No records yet.</p></div><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3 class="card-title">Upcoming Follow-ups</h3>
+      <a class="btn btn-outline btn-sm" href="/officer/cases">View cases</a>
+    </div>
+    <div class="card-body flush">
+      <% if (upcoming.length === 0) { %>
+        <div class="empty-state"><p>None scheduled in the next 7 days.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Beneficiary</th><th>Type</th><th>Date</th></tr></thead>
+            <tbody>
+              <% upcoming.forEach(function(f) { %>
+                <tr>
+                  <td class="row-primary"><%= f.ben_first %> <%= f.ben_last %></td>
+                  <td><%= f.followup_type %></td>
+                  <td class="row-muted"><%= h.formatDisplayDate(f.scheduled_date) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h3 class="card-title">Recent Records</h3>
+    <a class="btn btn-outline btn-sm" href="/officer/cases">All cases</a>
+  </div>
+  <div class="card-body flush">
+    <% if (data.recent.length === 0) { %>
+      <div class="empty-state">
+        <p>No records in your sector yet.</p>
+        <a class="btn btn-primary btn-sm" href="/officer/beneficiaries/new">Register a beneficiary</a>
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Beneficiary</th><th>Reference</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody>
+            <% data.recent.forEach(function(r) { %>
+              <tr>
+                <td class="row-primary"><a href="/officer/cases/<%= r.id %>"><%= h.fullName(r) %></a></td>
+                <td><%= r[cfg.numberColumn] %></td>
+                <td><span class="badge <%= h.badgeClass(r[cfg.statusColumn]) %>"><%= r[cfg.statusColumn] %></span></td>
+                <td class="row-muted"><%= h.formatDisplayDate(r.created_at) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>

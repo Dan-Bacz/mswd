@@ -1,0 +1,181 @@
+<% var pageTitle = 'Case — ' + (rec[cfg.numberColumn] || rec.id); var title = pageTitle; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title"><%= rec[cfg.numberColumn] || ('#' + rec.id) %></h1>
+    <p class="page-sub">
+      <span class="badge badge-blue"><%= cfg.title %></span>
+      <span class="badge <%= h.badgeClass(rec[cfg.statusColumn]) %>"><%= rec[cfg.statusColumn] %></span>
+    </p>
+  </div>
+  <a class="btn btn-outline" href="/officer/cases">&laquo; Back to cases</a>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Case Information</h3></div>
+    <div class="card-body">
+      <div class="detail-list">
+        <div class="detail-item"><span class="k">Beneficiary</span><span class="v"><a href="/officer/beneficiaries/<%= rec.beneficiary_id %>"><%= h.fullName(rec) %></a> <span class="muted"><%= rec.barangay ? '· ' + rec.barangay : '' %></span></span></div>
+        <% if (rec.assigned_officer_id) { %>
+          <div class="detail-item"><span class="k">Assigned Officer</span><span class="v"><%= rec.officer_first %> <%= rec.officer_last %></span></div>
+        <% } %>
+        <% cfg.fields.forEach(function(f) { %>
+          <% var v = rec[f.col]; if (v === null || v === undefined || v === '') return; %>
+          <div class="detail-item">
+            <span class="k"><%= f.label %></span>
+            <% if (f.col === cfg.statusColumn) { %>
+              <span class="v"><span class="badge <%= h.badgeClass(v) %>"><%= v %></span></span>
+            <% } else if (f.type === 'date') { %>
+              <span class="v"><%= h.formatDisplayDate(v) %></span>
+            <% } else if (f.type === 'number') { %>
+              <span class="v"><%= h.money(v) %></span>
+            <% } else { %>
+              <span class="v"><%= v %></span>
+            <% } %>
+          </div>
+        <% }) %>
+        <div class="detail-item"><span class="k">Created</span><span class="v"><%= h.formatDateTime(rec.created_at) %></span></div>
+        <div class="detail-item"><span class="k">Last Updated</span><span class="v"><%= h.formatDateTime(rec.updated_at) %></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Update Status</h3></div>
+    <div class="card-body">
+      <form method="POST" action="/officer/cases/<%= rec.id %>/status">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-actions">
+          <select name="status" class="form-control compact" style="flex:1">
+            <% cfg.statuses.forEach(function(st) { %>
+              <option value="<%= st %>" <%= rec[cfg.statusColumn] === st ? 'selected' : '' %>><%= st %></option>
+            <% }) %>
+          </select>
+          <button type="submit" class="btn btn-primary">Apply</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Case Notes</h3></div>
+    <div class="card-body">
+      <form method="POST" action="/officer/cases/<%= rec.id %>/notes" style="margin-bottom:18px">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <textarea name="note" class="form-control mb-2" placeholder="Add a case note..." required></textarea>
+        <button type="submit" class="btn btn-primary btn-sm">Add Note</button>
+      </form>
+
+      <% if (notes.length === 0) { %>
+        <div class="empty-state"><p>No notes yet.</p></div>
+      <% } else { %>
+        <ul class="timeline">
+          <% notes.forEach(function(n) { %>
+            <li class="timeline-item">
+              <div class="timeline-head">
+                <span class="timeline-actor"><%= n.first_name %> <%= n.last_name %></span>
+                <span class="timeline-time"><%= h.formatDateTime(n.created_at) %></span>
+              </div>
+              <p class="timeline-body"><%= n.note %></p>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Follow-ups</h3></div>
+    <div class="card-body">
+      <form method="POST" action="/officer/cases/<%= rec.id %>/followups" style="margin-bottom:18px">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+          <div class="form-group">
+            <label for="fu-type">Type</label>
+            <select id="fu-type" name="followup_type" class="form-control">
+              <option value="Home Visit">Home Visit</option>
+              <option value="Evaluation">Evaluation</option>
+              <option value="Reassessment">Reassessment</option>
+              <option value="Service Delivery">Service Delivery</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="fu-date">Scheduled Date</label>
+            <input type="date" id="fu-date" name="scheduled_date" class="form-control" required>
+          </div>
+          <div class="form-group full">
+            <label for="fu-desc">Description</label>
+            <textarea id="fu-desc" name="description" class="form-control" style="min-height:64px"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Schedule Follow-up</button>
+      </form>
+
+      <% if (followups.length === 0) { %>
+        <div class="empty-state"><p>No follow-ups scheduled.</p></div>
+      <% } else { %>
+        <ul class="timeline">
+          <% followups.forEach(function(f) { %>
+            <li class="timeline-item">
+              <div class="timeline-head">
+                <span class="timeline-actor"><%= f.followup_type %></span>
+                <span class="badge <%= h.badgeClass(f.status) %>"><%= f.status %></span>
+                <span class="timeline-time"><%= h.formatDisplayDate(f.scheduled_date) %></span>
+              </div>
+              <p class="timeline-body"><%= f.description || '' %></p>
+              <% if (f.result) { %><p class="timeline-body muted"><strong>Result:</strong> <%= f.result %></p><% } %>
+              <% if (f.status !== 'Completed') { %>
+                <form method="POST" action="/officer/cases/<%= rec.id %>/followups/<%= f.id %>/status" class="mt-2">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="followup_id" value="<%= f.id %>">
+                  <select name="status" class="form-control compact" style="width:130px">
+                    <% ['Scheduled','Completed','Missed','Cancelled'].forEach(function(st) { %>
+                      <option value="<%= st %>" <%= f.status === st ? 'selected' : '' %>><%= st %></option>
+                    <% }) %>
+                  </select>
+                  <input type="text" name="result" class="form-control compact" style="width:180px" placeholder="Result / note">
+                  <button type="submit" class="btn btn-ghost btn-sm">Update</button>
+                </form>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Documents</h3></div>
+  <div class="card-body">
+    <form method="POST" action="/officer/cases/<%= rec.id %>/documents" enctype="multipart/form-data" class="toolbar" style="padding:0;border:none">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="text" name="document_name" class="form-control compact grow" placeholder="Document name (optional)">
+      <input type="text" name="document_type" class="form-control compact" style="width:140px" placeholder="Type">
+      <input type="file" name="file" class="form-control compact" required>
+      <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+    </form>
+
+    <% if (documents.length === 0) { %>
+      <div class="empty-state"><p>No documents uploaded.</p></div>
+    <% } else { %>
+      <% documents.forEach(function(d) { %>
+        <div class="file-item">
+          <span class="file-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+          <div style="min-width:0;flex:1">
+            <a class="file-name" href="<%= d.file_path %>" target="_blank"><%= d.document_name %></a>
+            <div class="file-meta"><%= d.document_type || 'General' %> &middot; <%= d.first_name ? d.first_name + ' ' + d.last_name : 'System' %> &middot; <%= h.formatDisplayDate(d.created_at) %></div>
+          </div>
+          <form method="POST" action="/officer/cases/<%= rec.id %>/documents/<%= d.id %>/delete" data-confirm="Delete this document?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>

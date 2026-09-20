@@ -1,0 +1,49 @@
+<% var pageTitle = 'Settings'; var title = 'Settings'; %>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">System Settings</h1>
+    <p class="page-sub">General configuration used across the system.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" action="/admin/settings">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="system_name">System Name</label>
+          <input type="text" id="system_name" name="system_name" class="form-control" value="<%= settings.system_name || '' %>">
+        </div>
+        <div class="form-group">
+          <label for="municipality">Municipality</label>
+          <input type="text" id="municipality" name="municipality" class="form-control" value="<%= settings.municipality || '' %>">
+        </div>
+        <div class="form-group">
+          <label for="contact_email">Contact Email</label>
+          <input type="email" id="contact_email" name="contact_email" class="form-control" value="<%= settings.contact_email || '' %>">
+        </div>
+        <div class="form-group">
+          <label for="contact_phone">Contact Phone</label>
+          <input type="text" id="contact_phone" name="contact_phone" class="form-control" value="<%= settings.contact_phone || '' %>">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3 class="card-title">Security Notes</h3></div>
+  <div class="card-body">
+    <ul class="muted" style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.9">
+      <li>Default administrator credentials are <code>admin / admin123</code>. Change the password immediately after your first login.</li>
+      <li>Sessions last 8 hours. Failed logins are throttled by IP (10 per 15 minutes).</li>
+      <li>All state-changing actions are protected with CSRF tokens and recorded in the Audit Log.</li>
+      <li>Uploaded documents are stored in <code>public/uploads</code> and are excluded from the repository.</li>
+    </ul>
+  </div>
+</div>
