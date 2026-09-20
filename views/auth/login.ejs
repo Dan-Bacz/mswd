@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0B5ED7">
   <meta name="description" content="Mahayag Social Welfare and Development Management System - Login">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B5ED7'/%3E%3Ctext x='32' y='45' font-family='Arial, sans-serif' font-size='36' font-weight='bold' fill='%23ffffff' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
   <title><%= typeof title !== 'undefined' ? title : 'Login | Mahayag MSWD Management System' %></title>
   <style>
     :root {
@@ -46,6 +47,13 @@
 
     a { color: var(--blue); text-decoration: none; }
     a:hover { color: var(--blue-dark); text-decoration: underline; }
+
+    ::selection { background: var(--light); color: var(--navy); }
+
+    :focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
 
     .login-shell {
       display: grid;
@@ -198,6 +206,8 @@
     }
 
     .login-card {
+      position: relative;
+      overflow: hidden;
       width: min(100%, 452px);
       background: var(--white);
       border: 1px solid var(--border);
@@ -206,7 +216,31 @@
       padding: 40px 40px 30px;
     }
 
+    .login-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--blue-deep) 0%, var(--blue) 50%, var(--blue-dark) 100%);
+    }
+
     .login-header { text-align: center; margin-bottom: 26px; }
+
+    .login-eyebrow {
+      display: inline-block;
+      margin: 0 0 16px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--blue-dark);
+      background: var(--light);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
 
     .login-header .brand-mark-sm {
       width: 58px;
@@ -481,6 +515,10 @@
       .login-main { align-items: flex-start; }
       .login-card { margin-top: 4vh; }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body class="login-body">
@@ -550,6 +588,7 @@
       <div class="login-card">
 
         <header class="login-header">
+          <p class="login-eyebrow">Municipal Office Portal</p>
           <div class="brand-mark-sm">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
