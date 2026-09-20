@@ -11,227 +11,292 @@
   <style>
     :root {
       --blue: #0B5ED7;
-      --blue-strong: #0A4FC0;
+      --blue-strong: #0847A8;
       --blue-dark: #073B7A;
-      --blue-deep: #062E60;
-      --navy: #12355B;
-      --muted: #6B7C93;
-      --border: #D8E3F0;
+      --blue-deep: #052C5C;
+      --blue-ink: #06213F;
       --light: #EAF3FF;
       --white: #FFFFFF;
+      --text: #12355B;
+      --muted: #6B7C93;
+      --border: #DCE7F5;
       --danger-soft: #FDF0EF;
       --danger-border: #F5C6C2;
       --danger-text: #B42318;
-      --radius-lg: 22px;
-      --radius-md: 12px;
-      --shadow-card: 0 18px 50px rgba(7, 59, 122, 0.14), 0 4px 14px rgba(7, 59, 122, 0.08);
+      --success-soft: #EAFBF1;
+      --success-border: #BBE6CC;
+      --success-text: #126E44;
+      --bg: #F2F6FB;
+      --shadow-card: 0 22px 60px rgba(4, 35, 84, 0.18), 0 6px 18px rgba(11, 94, 215, 0.10);
+      --radius-xl: 22px;
+      --radius-lg: 14px;
+      --radius-md: 11px;
     }
+
+    *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
       margin: 0;
       padding: 0;
-      overflow-x: hidden;
       height: 100%;
+      overflow-x: hidden;
     }
 
-    body.login-body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #F2F6FB;
-      color: var(--navy);
+    body.lg-body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
 
-    *, *::before, *::after { box-sizing: border-box; }
-
     a { color: var(--blue); text-decoration: none; }
     a:hover { color: var(--blue-dark); text-decoration: underline; }
 
-    ::selection { background: var(--light); color: var(--navy); }
+    ::selection { background: var(--light); color: var(--text); }
+    :focus-visible { outline: 3px solid rgba(11, 94, 215, 0.5); outline-offset: 2px; border-radius: 4px; }
 
-    :focus-visible {
-      outline: 2px solid var(--blue);
-      outline-offset: 2px;
-    }
+    svg { flex-shrink: 0; }
 
-    .login-shell {
+    .lg-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
       min-height: 100vh;
+      width: 100%;
     }
 
-    .login-visual {
+    /* ================= LEFT VISUAL PANEL ================= */
+    .lg-visual {
       position: relative;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 44px 52px 40px;
+      padding: 46px 56px 40px;
       color: var(--white);
       overflow: hidden;
-      background: linear-gradient(160deg, var(--blue-deep) 0%, var(--blue-dark) 34%, var(--blue) 100%);
+      background:
+        radial-gradient(120% 90% at 85% 8%, rgba(11, 94, 215, 0.75) 0%, rgba(5, 44, 92, 0) 55%),
+        radial-gradient(130% 100% at 10% 105%, rgba(8, 71, 168, 0.9) 0%, rgba(5, 44, 92, 0) 60%),
+        linear-gradient(160deg, var(--blue-ink) 0%, var(--blue-deep) 30%, var(--blue-dark) 62%, var(--blue) 130%);
     }
 
-    .login-visual::before {
+    .lg-visual::before {
       content: "";
-      position: absolute;
-      width: 560px;
-      height: 560px;
-      left: -180px;
-      top: -160px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 62%);
-      pointer-events: none;
-    }
-
-    .login-visual::after {
-      content: "";
-      position: absolute;
-      width: 640px;
-      height: 640px;
-      right: -240px;
-      bottom: -240px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(11, 94, 215, 0.9) 0%, rgba(6, 46, 96, 0) 64%);
-      pointer-events: none;
-    }
-
-    .login-visual .visual-pattern {
       position: absolute;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Ccircle cx='2' cy='2' r='1.3' fill='none' stroke='%23ffffff' stroke-width='1' opacity='0.28'/%3E%3C/svg%3E");
+      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.20) 1px, transparent 1.6px);
+      background-size: 26px 26px;
+      opacity: 0.35;
+      -webkit-mask-image: radial-gradient(110% 90% at 50% 20%, #000 30%, transparent 80%);
+      mask-image: radial-gradient(110% 90% at 50% 20%, #000 30%, transparent 80%);
       pointer-events: none;
     }
 
-    .visual-inner {
+    .lg-visual::after {
+      content: "";
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      right: -190px;
+      top: -150px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 0 0 48px rgba(255, 255, 255, 0.04), 0 0 0 96px rgba(255, 255, 255, 0.03);
+      pointer-events: none;
+    }
+
+    .vh-inner {
       position: relative;
       z-index: 1;
-      max-width: 520px;
       display: flex;
       flex-direction: column;
-      gap: 72px;
+      justify-content: space-between;
+      gap: 44px;
+      height: 100%;
+      max-width: 560px;
     }
 
-    .visual-brand {
-      display: flex;
+    .lg-chip {
+      align-self: flex-start;
+      display: inline-flex;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 64px;
-    }
-
-    .brand-mark {
-      width: 52px;
-      height: 52px;
-      flex-shrink: 0;
-      border-radius: 15px;
-      background: linear-gradient(145deg, var(--blue-strong) 0%, var(--blue-dark) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      box-shadow: 0 8px 22px rgba(6, 46, 96, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-    }
-
-    .visual-brand .brand-name { display: flex; flex-direction: column; line-height: 1.2; }
-    .visual-brand .brand-name .brand-main { font-size: 20px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; }
-    .visual-brand .brand-name .brand-sub { font-size: 12.5px; color: rgba(255, 255, 255, 0.78); letter-spacing: 0.4px; }
-
-    .visual-message h1 {
-      font-size: clamp(34px, 4vw, 52px);
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin: 0 0 6px;
+      gap: 10px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      line-height: 1.1;
+      color: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(6px);
     }
 
-    .visual-message .visual-title {
+    .lg-chip svg { width: 15px; height: 15px; color: var(--light); }
+
+    .lg-hero { margin: auto 0; }
+
+    .lg-hero .lg-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 14px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: rgba(255, 255, 255, 0.86);
+      text-transform: uppercase;
+    }
+
+    .lg-kicker .rule { width: 30px; height: 2px; background: linear-gradient(90deg, var(--blue-strong), transparent); }
+
+    .lg-hero h1 {
+      margin: 0;
+      font-size: clamp(40px, 5vw, 60px);
+      font-weight: 900;
+      letter-spacing: 3px;
+      line-height: 1.02;
+      text-transform: uppercase;
+    }
+
+    .lg-hero .lg-org {
+      margin: 8px 0 20px;
       font-size: clamp(15px, 1.6vw, 19px);
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.94);
-      margin: 0 0 18px;
+      letter-spacing: 0.6px;
+      color: rgba(255, 255, 255, 0.95);
+      text-transform: uppercase;
     }
 
-    .visual-message .visual-tagline {
-      font-size: clamp(14px, 1.5vw, 16.5px);
-      color: rgba(255, 255, 255, 0.8);
-      line-height: 1.7;
-      margin: 0 0 40px;
+    .lg-tagline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 38px;
+      font-size: clamp(14px, 1.5vw, 16px);
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.65;
+      max-width: 460px;
     }
 
-    .visual-services {
+    .lg-tagline .tmark { color: var(--light); font-size: 11px; flex-shrink: 0; }
+
+    .lg-services {
       list-style: none;
       margin: 0;
       padding: 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px 22px;
-      max-width: 460px;
+      gap: 13px 16px;
+      max-width: 520px;
     }
 
-    .visual-services li {
+    .lg-services li {
       display: flex;
       align-items: center;
-      gap: 11px;
-      font-size: 14px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.92);
-      padding: 11px 14px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.1);
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(5px);
+      font-size: 13.5px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.94);
+      letter-spacing: 0.2px;
     }
 
-    .visual-services .svc-icon {
-      width: 22px;
-      height: 22px;
+    .lg-services .svc-ico {
+      width: 36px;
+      height: 36px;
       flex-shrink: 0;
-      color: var(--light);
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: linear-gradient(150deg, var(--blue-strong), var(--blue-deep));
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 6px 14px rgba(4, 28, 66, 0.35);
+      color: var(--white);
     }
 
-    .visual-footer {
+    .lg-services .svc-ico svg { width: 18px; height: 18px; }
+
+    .lg-visual-foot {
       position: relative;
       z-index: 1;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.62);
+      color: rgba(255, 255, 255, 0.60);
       letter-spacing: 0.3px;
+      line-height: 1.7;
     }
 
-    .login-main {
+    /* ================= RIGHT LOGIN PANEL ================= */
+    .lg-main {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px 24px;
+      padding: 44px 26px;
+      overflow: hidden;
+      background:
+        radial-gradient(70% 45% at 100% 0%, rgba(11, 94, 215, 0.06) 0%, rgba(11, 94, 215, 0) 55%),
+        var(--bg);
     }
 
-    .login-card {
+    .lg-card {
       position: relative;
-      overflow: hidden;
-      width: min(100%, 452px);
+      width: min(100%, 460px);
       background: var(--white);
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-xl);
       box-shadow: var(--shadow-card);
-      padding: 40px 40px 30px;
+      padding: 42px 42px 28px;
+      overflow: hidden;
     }
 
-    .login-card::before {
+    .lg-card::before {
       content: "";
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 6px;
-      background: linear-gradient(90deg, var(--blue-deep) 0%, var(--blue) 50%, var(--blue-dark) 100%);
+      background: linear-gradient(90deg, var(--blue-deep) 0%, var(--blue) 52%, var(--blue-dark) 100%);
+      pointer-events: none;
     }
 
-    .login-header { text-align: center; margin-bottom: 26px; }
+    .lg-card-brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 22px;
+    }
 
-    .login-eyebrow {
+    .lg-card-brand .brand-tile {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(150deg, var(--blue-strong) 0%, var(--blue-dark) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 8px 20px rgba(7, 59, 122, 0.28);
+      color: var(--white);
+    }
+
+    .lg-card-brand .brand-tile svg { width: 23px; height: 23px; }
+
+    .lg-card-brand .brand-name { display: flex; flex-direction: column; line-height: 1.2; }
+    .lg-card-brand .brand-main { font-size: 18px; font-weight: 800; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text); }
+    .lg-card-brand .brand-sub { font-size: 12px; color: var(--blue-dark); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+
+    .lg-eyebrow {
       display: inline-block;
-      margin: 0 0 16px;
-      padding: 5px 14px;
+      margin: 0 0 12px;
+      padding: 5px 13px;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 1.4px;
@@ -242,53 +307,10 @@
       border-radius: 999px;
     }
 
-    .login-header .brand-mark-sm {
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 14px;
-      border-radius: 16px;
-      background: linear-gradient(145deg, var(--blue-strong) 0%, var(--blue-dark) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 24px rgba(7, 59, 122, 0.28);
-      color: var(--white);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    .lg-welcome { margin: 0 0 4px; font-size: 25px; font-weight: 800; color: var(--text); letter-spacing: 0.3px; }
+    .lg-intro { margin: 0 0 22px; font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-    .login-header h1 {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-      color: var(--navy);
-      margin: 0 0 3px;
-      text-transform: uppercase;
-      line-height: 1.15;
-    }
-
-    .login-header .login-brand-sub {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--blue-dark);
-      letter-spacing: 0.4px;
-      margin: 0;
-    }
-
-    .login-welcome {
-      font-size: 23px;
-      font-weight: 800;
-      color: var(--navy);
-      margin: 4px 0 6px;
-    }
-
-    .login-intro {
-      font-size: 14px;
-      color: var(--muted);
-      margin: 0 0 22px;
-      line-height: 1.6;
-    }
-
-    .login-alert {
+    .lg-alert {
       display: flex;
       align-items: flex-start;
       gap: 10px;
@@ -299,38 +321,25 @@
       line-height: 1.5;
     }
 
-    .login-alert-error {
-      background: var(--danger-soft);
-      border: 1px solid var(--danger-border);
-      color: var(--danger-text);
-    }
+    .lg-alert svg { width: 19px; height: 19px; flex-shrink: 0; margin-top: 1px; }
+    .lg-alert-error { background: var(--danger-soft); border: 1px solid var(--danger-border); color: var(--danger-text); }
+    .lg-alert-success { background: var(--success-soft); border: 1px solid var(--success-border); color: var(--success-text); }
 
-    .login-alert-success {
-      background: #EAFBF1;
-      border: 1px solid #BBE6CC;
-      color: #126E44;
-    }
+    .lg-field { margin-bottom: 16px; }
 
-    .login-alert .alert-icon {
-      width: 19px;
-      height: 19px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .login-field { margin-bottom: 18px; }
-
-    .login-field label {
-      display: block;
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--navy);
+    .lg-field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 7px;
     }
 
-    .login-input-wrap { position: relative; }
+    .lg-field-label label { font-size: 13.5px; font-weight: 600; color: var(--text); }
+    .lg-field-label .hint { font-size: 12px; color: var(--blue); font-weight: 600; }
 
-    .login-input-wrap .field-icon {
+    .lg-input-wrap { position: relative; }
+
+    .lg-input-wrap .field-icon {
       position: absolute;
       left: 14px;
       top: 50%;
@@ -341,32 +350,28 @@
       pointer-events: none;
     }
 
-    .login-input {
+    .lg-input {
       width: 100%;
-      height: 49px;
+      height: 50px;
       padding: 0 46px 0 44px;
       font-size: 14.5px;
       font-family: inherit;
-      color: var(--navy);
+      color: var(--text);
       background: var(--white);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       transition: border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
-    .login-input[type="password"].login-input { padding-right: 48px; }
+    .lg-input::placeholder { color: #9DB0C6; opacity: 1; }
 
-    .login-input::placeholder { color: #9DB0C6; opacity: 1; }
-
-    .login-input:focus {
+    .lg-input:focus {
       outline: none;
       border-color: var(--blue);
       box-shadow: 0 0 0 4px rgba(11, 94, 215, 0.14);
     }
 
-    .login-input:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
-
-    .login-pw-toggle {
+    .lg-pw-toggle {
       position: absolute;
       right: 6px;
       top: 50%;
@@ -384,13 +389,47 @@
       transition: color 0.15s, background 0.15s;
     }
 
-    .login-pw-toggle:hover { color: var(--blue); background: var(--light); }
+    .lg-pw-toggle:hover { color: var(--blue); background: var(--light); }
+    .lg-pw-toggle svg { width: 19px; height: 19px; }
+    .lg-pw-toggle .pw-show { display: none; }
+    .lg-pw-toggle.is-showing .pw-show { display: block; }
+    .lg-pw-toggle.is-showing .pw-hide { display: none; }
 
-    .login-pw-toggle svg { width: 19px; height: 19px; }
+    .lg-remember {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 2px 0 18px;
+    }
 
-    .login-pw-toggle .pw-ico-show { display: none; }
-    .login-pw-toggle.is-showing .pw-ico-show { display: block; }
-    .login-pw-toggle.is-showing .pw-ico-hide { display: none; }
+    .lg-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text); cursor: pointer; user-select: none; }
+
+    .lg-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+    .lg-check .box {
+      width: 19px;
+      height: 19px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--white);
+      transition: background 0.15s, border-color 0.15s;
+      color: transparent;
+    }
+
+    .lg-check .box svg { width: 12px; height: 12px; }
+
+    .lg-check input:checked + .box {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
+    }
+
+    .lg-check input:focus-visible + .box { outline: 3px solid rgba(11, 94, 215, 0.4); outline-offset: 2px; }
+
+    .lg-remember .forgot { font-size: 13px; font-weight: 600; color: var(--blue); }
 
     .login-btn {
       display: flex;
@@ -398,8 +437,8 @@
       justify-content: center;
       gap: 9px;
       width: 100%;
-      height: 51px;
-      margin-top: 6px;
+      height: 52px;
+      margin-top: 4px;
       border: none;
       border-radius: var(--radius-md);
       background: linear-gradient(180deg, var(--blue-strong) 0%, var(--blue) 55%, var(--blue-dark) 100%);
@@ -424,9 +463,7 @@
 
     .login-btn:active { transform: translateY(0); box-shadow: 0 6px 14px rgba(11, 94, 215, 0.28); }
 
-    .login-btn:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; }
-
-    .login-secure {
+    .lg-secure {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -436,9 +473,9 @@
       color: var(--muted);
     }
 
-    .login-secure svg { width: 14px; height: 14px; }
+    .lg-secure svg { width: 14px; height: 14px; }
 
-    .login-divider {
+    .lg-divider {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -447,79 +484,44 @@
       font-size: 12.5px;
     }
 
-    .login-divider::before,
-    .login-divider::after {
+    .lg-divider::before,
+    .lg-divider::after {
       content: "";
       flex: 1;
       height: 1px;
       background: var(--border);
     }
 
-    .login-register {
-      text-align: center;
-      font-size: 13.5px;
-      color: var(--muted);
-      margin: 0 0 22px;
-    }
+    .lg-register { text-align: center; font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }
+    .lg-register a { font-weight: 700; }
 
-    .login-register a {
-      font-weight: 700;
-    }
-
-    .login-foot {
+    .lg-card-foot {
       text-align: center;
       border-top: 1px solid var(--border);
       padding-top: 18px;
     }
 
-    .login-foot p {
-      margin: 0;
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.3px;
-      line-height: 1.7;
-    }
+    .lg-card-foot p { margin: 0; font-size: 12px; color: var(--muted); letter-spacing: 0.3px; line-height: 1.7; }
+    .lg-card-foot .foot-brand { font-weight: 700; color: var(--text); letter-spacing: 0.6px; text-transform: uppercase; }
 
-    .login-foot .foot-brand {
-      font-weight: 700;
-      color: var(--navy);
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-    }
-
-    @media (min-width: 901px) and (max-width: 1180px) {
-      .login-shell { grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr); }
-      .login-visual { padding: 32px 28px 28px; }
-      .visual-inner { gap: 44px; max-width: 420px; }
-      .visual-brand { margin-bottom: 34px; }
-      .visual-brand .brand-main { font-size: 17px; }
-      .visual-message h1 { font-size: clamp(28px, 3.4vw, 40px); }
-      .visual-message .visual-tagline { font-size: 14px; margin-bottom: 26px; }
-      .visual-services { grid-template-columns: 1fr; gap: 10px; max-width: 330px; }
-      .visual-services li { padding: 10px 12px; font-size: 13px; }
+    @media (min-width: 901px) and (max-width: 1220px) {
+      .lg-shell { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr); }
+      .lg-visual { padding: 34px 30px 30px; }
+      .vh-inner { gap: 34px; }
+      .lg-hero h1 { font-size: clamp(34px, 4vw, 46px); letter-spacing: 2px; }
+      .lg-services { grid-template-columns: 1fr; gap: 10px; max-width: 340px; }
+      .lg-services li { padding: 11px 12px; font-size: 13px; }
+      .lg-card { padding: 36px 32px 24px; }
     }
 
     @media (max-width: 900px) {
-      .login-shell { grid-template-columns: 1fr; }
-      .login-visual { display: none; }
-      .login-main { padding: 28px 18px; min-height: 100vh; }
-      .login-card { box-shadow: 0 14px 40px rgba(7, 59, 122, 0.16); }
-    }
-
-    @media (max-width: 480px) {
-      .login-main { padding: 20px 14px; align-items: flex-start; }
-      .login-card {
-        padding: 32px 22px 26px;
-        border-radius: 18px;
-        margin-top: 8vh;
-      }
-      .login-input { height: 50px; }
-      .login-btn { height: 52px; }
-    }
-
-    @media (max-height: 640px) and (max-width: 900px) {
-      .login-main { align-items: flex-start; }
-      .login-card { margin-top: 4vh; }
+      .lg-shell { grid-template-columns: 1fr; }
+      .lg-visual { display: none; }
+      .lg-main { padding: 24px 16px; min-height: 100vh; }
+      .lg-card { padding: 34px 22px 24px; box-shadow: 0 14px 40px rgba(7, 59, 122, 0.16); }
+      .lg-card-brand { margin-bottom: 18px; }
+      .lg-input { height: 52px; }
+      .login-btn { height: 53px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -527,99 +529,106 @@
     }
   </style>
 </head>
-<body class="login-body">
-  <section class="login-shell">
+<body class="lg-body">
+  <section class="lg-shell">
 
     <!-- LEFT VISUAL PANEL -->
-    <div class="login-visual" aria-hidden="true">
-      <div class="visual-pattern"></div>
-      <div class="visual-inner">
-        <div class="visual-brand">
-          <span class="brand-mark">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <div class="lg-visual" aria-hidden="true">
+      <div class="vh-inner">
+        <div>
+          <span class="lg-chip">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 7.6 6.4 3 8l2.6 3-2.6 3 4.6 1.6L12 20l4.4-4.4L21 14l-2.6-3L21 8l-4.6-1.6z"/></svg>
+            Municipal Social Welfare and Development Office
+          </span>
+        </div>
+
+        <div class="lg-hero">
+          <span class="lg-kicker">
+            <span class="rule"></span>
+            Public Service Portfolio
+          </span>
+          <h1>Mahayag</h1>
+          <p class="lg-org">Social Welfare and Development</p>
+          <p class="lg-tagline">
+            <span class="tmark">&#9679;</span>
+            <span>Empowering People &bull; Building Communities<br>for a Brighter Future</span>
+          </p>
+
+          <ul class="lg-services">
+            <li>
+              <span class="svc-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </span>
+              Children &amp; Youth
+            </li>
+            <li>
+              <span class="svc-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </span>
+              Solo Parents &amp; Families
+            </li>
+            <li>
+              <span class="svc-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="5.2" r="2.1"/><path d="M11 8.5 9 14"/><path d="M11 13l2.5 1.8"/>
+                  <path d="M11 13l-2 3.5"/><path d="M8.5 16.5 5.5 20"/><path d="M13 8.5l1.2 3 2.8 2.3"/>
+                </svg>
+              </span>
+              Senior Citizens
+            </li>
+            <li>
+              <span class="svc-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="13" cy="4" r="1.8"/><path d="M12 6.5 9.5 17"/><path d="M9.5 11h5l1 2 2 2"/>
+                  <circle cx="11.5" cy="18.5" r="2.6"/>
+                </svg>
+              </span>
+              Persons with Disabilities
+            </li>
+          </ul>
+        </div>
+
+        <div class="lg-visual-foot">Municipal Social Welfare and Development Office &bull; Mahayag, Zamboanga del Sur</div>
+      </div>
+    </div>
+
+    <!-- RIGHT LOGIN AREA -->
+    <main class="lg-main">
+      <div class="lg-card">
+
+        <div class="lg-card-brand">
+          <span class="brand-tile">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
           </span>
           <div class="brand-name">
             <span class="brand-main">Mahayag</span>
-            <span class="brand-sub">Social Welfare and Development</span>
+            <span class="brand-sub">Social Welfare &amp; Development</span>
           </div>
         </div>
 
-        <div class="visual-message">
-          <h1>Mahayag</h1>
-          <p class="visual-title">Social Welfare and Development</p>
-          <p class="visual-tagline">
-            Empowering People &bull; Building Communities<br>
-            for a Brighter Future
-          </p>
-
-          <ul class="visual-services">
-            <li>
-              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 11v4c0 1.5 2.7 3 6 3s6-1.5 6-3v-4"/>
-              </svg>
-              Children &amp; Youth
-            </li>
-            <li>
-              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-              Solo Parents &amp; Families
-            </li>
-            <li>
-              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="5.2" r="2.1"/><path d="M11 8.5 9 14"/><path d="M11 13l2.5 1.8"/>
-                <path d="M11 13l-2 3.5"/><path d="M8.5 16.5 5.5 20"/><path d="M13 8.5l1.2 3 2.8 2.3"/>
-              </svg>
-              Senior Citizens
-            </li>
-            <li>
-              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="13" cy="4" r="1.8"/><path d="M12 6.5 9.5 17"/><path d="M9.5 11h5l1 2 2 2"/>
-                <circle cx="11.5" cy="18.5" r="2.6"/>
-              </svg>
-              Persons with Disabilities
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="visual-footer">Municipal Social Welfare and Development Office &bull; Mahayag, Zamboanga del Sur</div>
-    </div>
-
-    <!-- RIGHT LOGIN AREA -->
-    <main class="login-main">
-      <div class="login-card">
-
-        <header class="login-header">
-          <p class="login-eyebrow">Municipal Office Portal</p>
-          <div class="brand-mark-sm">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-          </div>
-          <h1>Mahayag</h1>
-          <p class="login-brand-sub">Social Welfare &amp; Development</p>
-        </header>
-
-        <h2 class="login-welcome">Welcome Back</h2>
-        <p class="login-intro">Login to access the system and continue making a difference.</p>
+        <span class="lg-eyebrow">Municipal Office Portal</span>
+        <h2 class="lg-welcome">Welcome Back</h2>
+        <p class="lg-intro">Login to access the system and continue making a difference.</p>
 
         <% if (typeof success !== 'undefined' && success) { %>
-          <div class="login-alert login-alert-success" role="status">
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
+          <div class="lg-alert lg-alert-success" role="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
             <span><%= success %></span>
           </div>
         <% } %>
 
         <% if (typeof error !== 'undefined' && error) { %>
-          <div class="login-alert login-alert-error" role="alert">
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <div class="lg-alert lg-alert-error" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
@@ -627,39 +636,55 @@
           </div>
         <% } %>
 
-        <form method="POST" action="/login" class="login-form">
+        <form method="POST" action="/login" class="lg-form">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
-          <div class="login-field">
-            <label for="username">Username or Email</label>
-            <div class="login-input-wrap">
+          <div class="lg-field">
+            <div class="lg-field-label">
+              <label for="username">Username or Email</label>
+            </div>
+            <div class="lg-input-wrap">
               <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/>
               </svg>
-              <input type="text" id="username" name="username" class="login-input"
+              <input type="text" id="username" name="username" class="lg-input"
                      placeholder="Enter your username or email" required autofocus autocomplete="username">
             </div>
           </div>
 
-          <div class="login-field">
-            <label for="password">Password</label>
-            <div class="login-input-wrap">
+          <div class="lg-field">
+            <div class="lg-field-label">
+              <label for="password">Password</label>
+              <a href="/login" class="hint" tabindex="-1">Forgot?</a>
+            </div>
+            <div class="lg-input-wrap">
               <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              <input type="password" id="password" name="password" class="login-input"
+              <input type="password" id="password" name="password" class="lg-input"
                      placeholder="Enter your password" required autocomplete="current-password">
-              <button type="button" class="login-pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false">
-                <svg class="pw-ico-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <button type="button" class="lg-pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false">
+                <svg class="pw-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
-                <svg class="pw-ico-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="pw-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
                   <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
                   <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
               </button>
             </div>
+          </div>
+
+          <div class="lg-remember">
+            <label class="lg-check">
+              <input type="checkbox" id="remember" name="remember">
+              <span class="box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              Remember me
+            </label>
+            <a href="/login" class="forgot">Forgot password?</a>
           </div>
 
           <button type="submit" class="login-btn">
@@ -669,18 +694,18 @@
             </svg>
           </button>
 
-          <p class="login-secure">
+          <p class="lg-secure">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
             Secure Access
           </p>
 
-          <div class="login-divider"><span>Are you a sector officer?</span></div>
-          <p class="login-register"><a href="/register">Register here</a></p>
+          <div class="lg-divider"><span>Are you a sector officer?</span></div>
+          <p class="lg-register"><a href="/register">Register here</a></p>
         </form>
 
-        <footer class="login-foot">
+        <footer class="lg-card-foot">
           <p class="foot-brand">Mahayag Social Welfare and Development</p>
           <p>Service &bull; Care &bull; Empowerment</p>
         </footer>
