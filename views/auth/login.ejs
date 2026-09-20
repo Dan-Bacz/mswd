@@ -1,15 +1,179 @@
-<form method="POST" action="/login" autocomplete="off">
-  <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
-  <div class="form-group">
-    <label for="username">Username or Email</label>
-    <input type="text" id="username" name="username" class="form-control" required autofocus>
-  </div>
-  <div class="form-group">
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" class="form-control" required>
-  </div>
-  <button type="submit" class="btn btn-primary btn-lg btn-block mb-16">Login</button>
-  <div class="auth-footer">
-    Are you a sector officer? <a href="/auth/register">Register here</a>
-  </div>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0B5ED7">
+  <meta name="description" content="Mahayag Social Welfare and Development Management System - Login">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= typeof title !== 'undefined' ? title : 'Login | Mahayag MSWD Management System' %></title>
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body class="login-body">
+  <section class="login-shell">
+
+    <!-- LEFT VISUAL PANEL -->
+    <div class="login-visual" aria-hidden="true">
+      <div class="visual-pattern"></div>
+      <div class="visual-inner">
+        <div class="visual-brand">
+          <span class="brand-mark">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </span>
+          <div class="brand-name">
+            <span class="brand-main">Mahayag</span>
+            <span class="brand-sub">Social Welfare and Development</span>
+          </div>
+        </div>
+
+        <div class="visual-message">
+          <h1>Mahayag</h1>
+          <p class="visual-title">Social Welfare and Development</p>
+          <p class="visual-tagline">
+            Empowering People &bull; Building Communities<br>
+            for a Brighter Future
+          </p>
+
+          <ul class="visual-services">
+            <li>
+              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 11v4c0 1.5 2.7 3 6 3s6-1.5 6-3v-4"/>
+              </svg>
+              Children &amp; Youth
+            </li>
+            <li>
+              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Solo Parents &amp; Families
+            </li>
+            <li>
+              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="5.2" r="2.1"/><path d="M11 8.5 9 14"/><path d="M11 13l2.5 1.8"/>
+                <path d="M11 13l-2 3.5"/><path d="M8.5 16.5 5.5 20"/><path d="M13 8.5l1.2 3 2.8 2.3"/>
+              </svg>
+              Senior Citizens
+            </li>
+            <li>
+              <svg class="svc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="13" cy="4" r="1.8"/><path d="M12 6.5 9.5 17"/><path d="M9.5 11h5l1 2 2 2"/>
+                <circle cx="11.5" cy="18.5" r="2.6"/>
+              </svg>
+              Persons with Disabilities
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="visual-footer">Municipal Social Welfare and Development Office &bull; Mahayag, Zamboanga del Sur</div>
+    </div>
+
+    <!-- RIGHT LOGIN AREA -->
+    <main class="login-main">
+      <div class="login-card">
+
+        <header class="login-header">
+          <div class="brand-mark-sm">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
+          <h1>Mahayag</h1>
+          <p class="login-brand-sub">Social Welfare &amp; Development</p>
+        </header>
+
+        <h2 class="login-welcome">Welcome Back</h2>
+        <p class="login-intro">Login to access the system and continue making a difference.</p>
+
+        <% if (flashMessages && flashMessages.error && flashMessages.error.length) { %>
+          <div class="login-alert login-alert-error" role="alert">
+            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span><%= flashMessages.error.join('<br>') %></span>
+          </div>
+        <% } %>
+
+        <form method="POST" action="/login" class="login-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>">
+
+          <div class="login-field">
+            <label for="username">Username or Email</label>
+            <div class="login-input-wrap">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="username" name="username" class="login-input"
+                     placeholder="Enter your username or email" required autofocus autocomplete="username">
+            </div>
+          </div>
+
+          <div class="login-field">
+            <label for="password">Password</label>
+            <div class="login-input-wrap">
+              <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input type="password" id="password" name="password" class="login-input"
+                     placeholder="Enter your password" required autocomplete="current-password">
+              <button type="button" class="login-pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false">
+                <svg class="pw-ico-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="pw-ico-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="login-btn">
+            Login
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+
+          <p class="login-secure">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Secure Access
+          </p>
+
+          <div class="login-divider"><span>Are you a sector officer?</span></div>
+          <p class="login-register"><a href="/auth/register">Register here</a></p>
+        </form>
+
+        <footer class="login-foot">
+          <p class="foot-brand">Mahayag Social Welfare and Development</p>
+          <p>Service &bull; Care &bull; Empowerment</p>
+        </footer>
+
+      </div>
+    </main>
+  </section>
+
+  <script>
+    (function () {
+      var toggle = document.getElementById('pw-toggle');
+      var input = document.getElementById('password');
+      if (!toggle || !input) return;
+      toggle.addEventListener('click', function () {
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        toggle.classList.toggle('is-showing', show);
+        toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+        toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        input.focus();
+      });
+    })();
+  </script>
+</body>
+</html>
