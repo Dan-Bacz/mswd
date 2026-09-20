@@ -447,9 +447,16 @@
       text-transform: uppercase;
     }
 
-    @media (max-width: 1024px) {
-      .login-visual { padding: 36px 40px 32px; }
-      .login-visual .visual-brand { margin-bottom: 44px; }
+    @media (min-width: 901px) and (max-width: 1180px) {
+      .login-shell { grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr); }
+      .login-visual { padding: 32px 28px 28px; }
+      .visual-inner { gap: 44px; max-width: 420px; }
+      .visual-brand { margin-bottom: 34px; }
+      .visual-brand .brand-main { font-size: 17px; }
+      .visual-message h1 { font-size: clamp(28px, 3.4vw, 40px); }
+      .visual-message .visual-tagline { font-size: 14px; margin-bottom: 26px; }
+      .visual-services { grid-template-columns: 1fr; gap: 10px; max-width: 330px; }
+      .visual-services li { padding: 10px 12px; font-size: 13px; }
     }
 
     @media (max-width: 900px) {
