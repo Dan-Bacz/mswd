@@ -8,7 +8,7 @@ const rateLimit = require('express-rate-limit');
 const methodOverride = require('method-override');
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const { testConnection } = require('./config/database');
 const { csrfProtection, csrfVerify, generateCsrfToken } = require('./utils/csrf');
