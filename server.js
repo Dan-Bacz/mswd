@@ -24,6 +24,7 @@ const NODE_ENV = process.env.NODE_ENV || 'production';
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('view cache', false);
 app.set('trust proxy', 1);
 
 app.use(helmet({
