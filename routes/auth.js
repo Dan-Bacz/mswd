@@ -31,6 +31,7 @@ const registerLimiter = rateLimit({
 
 router.use(csrfProtection);
 
+router.get('/', requireGuest, (req, res) => res.redirect('/login'));
 router.get('/login', requireGuest, auth.getLoginView);
 router.post('/login', loginLimiter, csrfVerify, auth.postLogin);
 
