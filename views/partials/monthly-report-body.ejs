@@ -1,0 +1,195 @@
+<style>
+  @media print {
+    .sidebar, .app-header, .app-footer, .no-print, .alert { display: none !important; }
+    .app-shell { display: block !important; }
+    .app-main { margin: 0 !important; padding: 0 !important; }
+    .app-content { padding: 0 !important; }
+    .card { border: 1px solid #ccc !important; box-shadow: none !important; break-inside: avoid; }
+    body { background: #fff !important; }
+  }
+</style>
+
+<div class="page-head no-print" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; justify-content:space-between;">
+  <div>
+    <h1 class="page-title">Monthly Accomplishment Report</h1>
+    <p class="page-sub">
+      <% if (typeof sectorName !== 'undefined' && sectorName) { %><%= sectorName %> · <% } %>
+      <%= data.monthLabel %> · Generated <span id="genDate"><%= new Date().toLocaleDateString() %></span>
+    </p>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <form method="GET" action="<%= base %>/reports/monthly" style="display:flex; gap:8px; align-items:center;">
+      <select name="month" class="form-control compact" onchange="this.form.submit()">
+        <% data.months.forEach(function(m) { %>
+          <option value="<%= m.value %>" <%= data.month === m.value ? 'selected' : '' %>><%= m.label %></option>
+        <% }) %>
+      </select>
+    </form>
+    <a class="btn btn-outline" href="<%= csvUrl %>">Download Excel (CSV)</a>
+    <button type="button" class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-value"><%= data.totals.activeBeneficiaries %></div>
+    <div class="stat-label">Active Beneficiaries</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= data.totals.newRegistrations %></div>
+    <div class="stat-label">New Registrations</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= data.totals.openedAllTime %></div>
+    <div class="stat-label">Cases Opened</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= data.totals.closedAllTime %></div>
+    <div class="stat-label">Cases Closed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value"><%= data.totals.servicesTotal %></div>
+    <div class="stat-label">Services Provided</div>
+  </div>
+</div>
+
+<h3 class="section-title" style="margin:26px 0 10px;">Monthly Summary — <%= data.monthLabel %></h3>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Consolidated Figures</h3></div>
+    <div class="card-body">
+      <div class="bar-list">
+        <div class="bar-row"><span class="k">Total Beneficiaries on File</span><span class="v"><%= data.totals.totalBeneficiaries %></span></div>
+        <div class="bar-row"><span class="k">New Registrations</span><span class="v"><%= data.totals.newRegistrations %></span></div>
+        <div class="bar-row"><span class="k">Total Cases on File</span><span class="v"><%= data.totals.casesAllTime %></span></div>
+        <div class="bar-row"><span class="k">Active / Open Cases</span><span class="v"><%= data.totals.openAllTime %></span></div>
+        <div class="bar-row"><span class="k">Cases Opened This Month</span><span class="v"><%= data.totals.openedAllTime %></span></div>
+        <div class="bar-row"><span class="k">Cases Closed This Month</span><span class="v"><%= data.totals.closedAllTime %></span></div>
+        <div class="bar-row"><span class="k">Services / Interventions Provided</span><span class="v"><%= data.totals.servicesTotal %></span></div>
+        <div class="bar-row"><span class="k">Case Notes Added</span><span class="v"><%= data.totals.notesAdded %></span></div>
+        <div class="bar-row"><span class="k">Follow-ups Scheduled</span><span class="v"><%= data.totals.followupsScheduled %></span></div>
+        <div class="bar-row"><span class="k">Follow-ups Completed</span><span class="v"><%= data.totals.followupsCompleted %></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Cases by Group</h3></div>
+    <div class="card-body">
+      <% if (data.perSector.length === 0) { %>
+        <div class="empty-state"><p>No data yet.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Group</th><th>On File</th><th>Open</th><th>Opened</th><th>Closed</th></tr>
+            </thead>
+            <tbody>
+              <% data.perSector.forEach(function(r) { %>
+                <tr>
+                  <td><%= r.name %></td>
+                  <td><%= r.cases %></td>
+                  <td><%= r.openCases %></td>
+                  <td><%= r.openedInMonth %></td>
+                  <td><%= r.closedInMonth %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Staff Caseload</h3></div>
+    <div class="card-body">
+      <% if (data.officerCaseload.length === 0) { %>
+        <div class="empty-state"><p>No officers with active assignments.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Officer</th><th>Sector</th><th>Assigned</th><th>Open</th><th>Closed</th></tr>
+            </thead>
+            <tbody>
+              <% data.officerCaseload.forEach(function(o) { %>
+                <tr>
+                  <td><strong><%= o.name %></strong></td>
+                  <td><%= o.sector || '—' %></td>
+                  <td><%= o.totalAssigned %></td>
+                  <td><%= o.openCases %></td>
+                  <td><%= o.closedInMonth %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Services Provided by Group</h3></div>
+    <div class="card-body">
+      <% if (data.servicesBySector.length === 0) { %>
+        <div class="empty-state"><p>No services recorded for this month.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Group</th><th>Services Provided</th></tr></thead>
+            <tbody>
+              <% data.servicesBySector.forEach(function(r) { %>
+                <tr><td><%= r.sector_name %></td><td><%= r.total %></td></tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">New Registrations — <%= data.monthLabel %></h3></div>
+    <div class="card-body">
+      <% if (data.recentRegistrations.length === 0) { %>
+        <div class="empty-state"><p>No registrations this month.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Beneficiary No.</th><th>Name</th><th>Barangay</th><th>Date</th></tr></thead>
+            <tbody>
+              <% data.recentRegistrations.forEach(function(r) { %>
+                <tr><td><%= r.beneficiary_number %></td><td><%= r.name %></td><td><%= r.barangay || '—' %></td><td><%= r.registration_date %></td></tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Cases Opened — <%= data.monthLabel %></h3></div>
+    <div class="card-body">
+      <% if (data.recentCases.length === 0) { %>
+        <div class="empty-state"><p>No cases opened this month.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Group</th><th>Case No.</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+              <% data.recentCases.forEach(function(r) { %>
+                <tr><td><%= r.sector %></td><td><%= r.number %></td><td><span class="badge <%= h.badgeClass(r.status) %>"><%= r.status %></span></td><td><%= r.on_date %></td></tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

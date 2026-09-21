@@ -16,6 +16,7 @@ function sectorRoutes(slug) {
   r.post('/:rid/notes', c.postRecordNote);
   r.post('/:rid/followups', c.postRecordFollowup);
   r.post('/:rid/followups/:fid/status', c.setFollowupStatus);
+  r.post('/:rid/services', c.postRecordService);
   r.post('/:rid/documents', upload.single('file'), csrfVerify, c.uploadDocument);
   r.post('/:rid/documents/:docId/delete', c.deleteDocument);
   return r;
@@ -32,6 +33,11 @@ router.get('/beneficiaries/:id', c.viewBeneficiary);
 router.get('/beneficiaries/:id/edit', c.beneficiaryForm);
 router.post('/beneficiaries/:id', c.updateBeneficiary);
 router.post('/beneficiaries/:id/status', c.setBeneficiaryStatus);
+router.post('/beneficiaries/:id/household', c.addHouseholdMember);
+router.post('/beneficiaries/:id/household/:mid/delete', c.deleteHouseholdMember);
+router.post('/beneficiaries/:id/services', c.postBeneficiaryService);
+router.post('/beneficiaries/:id/documents', upload.single('file'), csrfVerify, c.uploadBeneficiaryDocument);
+router.post('/beneficiaries/:id/documents/:docId/delete', c.deleteBeneficiaryDocument);
 
 // Officers
 router.get('/officers', c.listOfficers);
@@ -71,8 +77,15 @@ router.get('/notifications', c.listNotifications);
 router.post('/notifications/read-all', c.markAllNotificationsRead);
 router.post('/notifications/:id/read', c.markNotificationRead);
 
+// Services catalog (interventions)
+router.get('/services', c.services);
+router.post('/services', c.createService);
+router.post('/services/:id/toggle', c.toggleService);
+
 // Reports
 router.get('/reports', c.reports);
+router.get('/reports/monthly', c.monthlyReport);
+router.get('/reports/monthly.csv', c.monthlyReportCsv);
 
 // Settings
 router.get('/settings', c.settings);

@@ -150,6 +150,50 @@
 </div>
 
 <div class="card">
+  <div class="card-head"><h3 class="card-title">Services / Interventions Provided</h3></div>
+  <div class="card-body">
+    <form method="POST" action="/officer/cases/<%= rec.id %>/services" class="toolbar" style="padding:0;border:none;margin-bottom:16px">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <select name="service_id" class="form-control compact grow" required>
+        <option value="">-- Select service --</option>
+        <% catalog.forEach(function(s) { %>
+          <option value="<%= s.id %>"><%= s.name %><%= s.sector_name ? ' (' + s.sector_name + ')' : '' %></option>
+        <% }) %>
+      </select>
+      <input type="date" name="date_provided" class="form-control compact" style="width:150px">
+      <select name="status" class="form-control compact" style="width:130px">
+        <% ['Completed','Ongoing','Pending','Cancelled'].forEach(function(st) { %>
+          <option value="<%= st %>" <%= st === 'Completed' ? 'selected' : '' %>><%= st %></option>
+        <% }) %>
+      </select>
+      <input type="text" name="details" class="form-control compact grow" placeholder="Remarks (e.g. amount, items)">
+      <button type="submit" class="btn btn-primary btn-sm">Record Service</button>
+    </form>
+
+    <% if (provided.length === 0) { %>
+      <div class="empty-state"><p>No services recorded for this case.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Service</th><th>Date</th><th>Status</th><th>Remarks</th><th>Recorded by</th></tr></thead>
+          <tbody>
+            <% provided.forEach(function(p) { %>
+              <tr>
+                <td><strong><%= p.service_name %></strong> <% if (p.category) { %><span class="muted">· <%= p.category %></span><% } %></td>
+                <td><%= h.formatDisplayDate(p.date_provided) %></td>
+                <td><span class="badge <%= h.badgeClass(p.status) %>"><%= p.status %></span></td>
+                <td><%= p.details || '—' %></td>
+                <td><%= p.provided_first ? p.provided_first + ' ' + p.provided_last : '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="card">
   <div class="card-head"><h3 class="card-title">Documents</h3></div>
   <div class="card-body">
     <form method="POST" action="/officer/cases/<%= rec.id %>/documents" enctype="multipart/form-data" class="toolbar" style="padding:0;border:none">

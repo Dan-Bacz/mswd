@@ -7,11 +7,14 @@ const recordModel = require('../models/recordModel');
 const noteModel = require('../models/noteModel');
 const followupModel = require('../models/followupModel');
 const documentModel = require('../models/documentModel');
+const householdModel = require('../models/householdModel');
+const servicesModel = require('../models/servicesModel');
+const reportModel = require('../models/reportModel');
 const notificationModel = require('../models/notificationModel');
 const auditModel = require('../models/auditModel');
 const { logAudit } = require('../utils/audit');
 const { createNotification, createNotificationToRole, markAllRead } = require('../utils/notify');
-const { paginate, toInt } = require('../utils/helpers');
+const { paginate, toInt, fullName } = require('../utils/helpers');
 const { getClientIp } = require('../utils/request');
 
 const P = (page, req) => ({
@@ -65,7 +68,8 @@ exports.beneficiaryForm = async (req, res) => {
   try {
     const sectors = await sectorModel.listActive();
     const b = req.params.id ? await beneficiaryModel.findById(req.params.id) : null;
-    res.render('admin/beneficiaries-form', { b, sectors, layout: 'layouts/app', active: 'beneficiaries' });
+    const dupMatches = b ? await beneficiaryModel.findDuplicates(b, b.id) : [];
+    res.render('admin/beneficiaries-form', { b, sectors, dupMatches, layout: 'layouts/app', active: 'beneficiaries' });
   } catch (err) {
     console.error('beneficiary form error:', err.message);
     res.status(500).render('errors/500', { title: 'Server Error', layout: false });
@@ -79,9 +83,15 @@ exports.createBeneficiary = async (req, res) => {
     return res.redirect('/admin/beneficiaries/new');
   }
   try {
+    const dups = await beneficiaryModel.findDuplicates(req.body);
     const id = await beneficiaryModel.create(Object.assign(req.body, { registered_by: req.session.user.id }));
     await logAudit(req.session.user.id, 'create', 'beneficiaries', id, 'Added beneficiary: ' + first_name + ' ' + last_name, getClientIp(req));
-    req.flash('success', 'Beneficiary registered successfully.');
+    if (dups.length) {
+      const names = dups.slice(0, 3).map(d => fullName(d)).join(', ');
+      req.flash('warning', 'Saved, but it may be a duplicate of: ' + names + (dups.length > 3 ? ' (+' + (dups.length - 3) + ' more)' : '') + '.');
+    } else {
+      req.flash('success', 'Beneficiary registered successfully.');
+    }
     res.redirect('/admin/beneficiaries/' + id);
   } catch (err) {
     console.error('create beneficiary error:', err.message);
@@ -98,9 +108,15 @@ exports.updateBeneficiary = async (req, res) => {
     return res.redirect('/admin/beneficiaries/' + id + '/edit');
   }
   try {
+    const dups = await beneficiaryModel.findDuplicates(req.body, id);
     await beneficiaryModel.update(id, req.body);
     await logAudit(req.session.user.id, 'update', 'beneficiaries', id, 'Updated beneficiary details', getClientIp(req));
-    req.flash('success', 'Beneficiary updated successfully.');
+    if (dups.length) {
+      const names = dups.slice(0, 3).map(d => fullName(d)).join(', ');
+      req.flash('warning', 'Saved, but it may be a duplicate of: ' + names + (dups.length > 3 ? ' (+' + (dups.length - 3) + ' more)' : '') + '.');
+    } else {
+      req.flash('success', 'Beneficiary updated successfully.');
+    }
     res.redirect('/admin/beneficiaries/' + id);
   } catch (err) {
     console.error('update beneficiary error:', err.message);
@@ -115,13 +131,109 @@ exports.viewBeneficiary = async (req, res) => {
     if (!b) return res.status(404).render('errors/404', { title: 'Not Found', layout: false });
     const notes = await noteModel.listForBeneficiary(b.id, 30);
     const documents = await documentModel.list(b.id);
+    const household = await householdModel.list(b.id);
+    const provided = await servicesModel.listProvided(b.id);
+    const catalog = await servicesModel.listServices({});
     res.render('admin/beneficiaries-view', {
-      b, notes, documents, layout: 'layouts/app', active: 'beneficiaries'
+      b, notes, documents, household, provided, catalog, layout: 'layouts/app', active: 'beneficiaries'
     });
   } catch (err) {
     console.error('view beneficiary error:', err.message);
     res.status(500).render('errors/500', { title: 'Server Error', layout: false });
   }
+};
+
+exports.postBeneficiaryService = async (req, res) => {
+  const benId = req.params.id;
+  if (!req.body.service_id) {
+    req.flash('error', 'Please choose a service.');
+    return res.redirect('/admin/beneficiaries/' + benId);
+  }
+  try {
+    const b = await beneficiaryModel.findById(benId);
+    if (!b) { req.flash('error', 'Beneficiary not found.'); return res.redirect('/admin/beneficiaries'); }
+    const svc = await servicesModel.findById(req.body.service_id);
+    if (!svc) { req.flash('error', 'Service not found.'); return res.redirect('/admin/beneficiaries/' + benId); }
+    const csId = await servicesModel.provide(benId, req.body, req.session.user.id);
+    await logAudit(req.session.user.id, 'create', 'case_services', csId, 'Provided service: ' + svc.name, getClientIp(req));
+    req.flash('success', 'Service recorded.');
+  } catch (err) {
+    console.error('beneficiary service error:', err.message);
+    req.flash('error', 'Could not record service.');
+  }
+  res.redirect('/admin/beneficiaries/' + benId);
+};
+
+exports.addHouseholdMember = async (req, res) => {
+  const benId = req.params.id;
+  const member_name = (req.body.member_name || '').trim();
+  if (!member_name) {
+    req.flash('error', 'Household member name is required.');
+    return res.redirect('/admin/beneficiaries/' + benId);
+  }
+  try {
+    const b = await beneficiaryModel.findById(benId);
+    if (!b) { req.flash('error', 'Beneficiary not found.'); return res.redirect('/admin/beneficiaries'); }
+    await householdModel.add(benId, Object.assign(req.body, { member_name }));
+    await logAudit(req.session.user.id, 'create', 'beneficiary_household', benId, 'Added household member ' + member_name, getClientIp(req));
+    req.flash('success', 'Household member added.');
+  } catch (err) {
+    console.error('add household error:', err.message);
+    req.flash('error', 'Could not add household member.');
+  }
+  res.redirect('/admin/beneficiaries/' + benId);
+};
+
+exports.deleteHouseholdMember = async (req, res) => {
+  const benId = req.params.id;
+  try {
+    const member = await householdModel.findById(req.params.mid);
+    if (member) await householdModel.remove(member.id);
+    await logAudit(req.session.user.id, 'delete', 'beneficiary_household', req.params.mid, 'Removed household member', getClientIp(req));
+    req.flash('success', 'Household member removed.');
+  } catch (err) {
+    req.flash('error', 'Could not remove household member.');
+  }
+  res.redirect('/admin/beneficiaries/' + benId);
+};
+
+exports.uploadBeneficiaryDocument = async (req, res) => {
+  const benId = req.params.id;
+  try {
+    const b = await beneficiaryModel.findById(benId);
+    if (!b) { req.flash('error', 'Beneficiary not found.'); return res.redirect('/admin/beneficiaries'); }
+    if (!req.file) {
+      req.flash('error', 'Please attach a file.');
+      return res.redirect('/admin/beneficiaries/' + benId);
+    }
+    const docName = (req.body.document_name || '').trim();
+    await documentModel.create(benId, {
+      document_name: docName || req.file.originalname,
+      document_type: req.body.document_type,
+      file_path: '/uploads/' + req.file.filename,
+      file_size: req.file.size,
+      notes: req.body.notes
+    }, req.session.user.id);
+    await logAudit(req.session.user.id, 'upload', 'documents', benId, 'Uploaded ' + req.file.originalname, getClientIp(req));
+    req.flash('success', 'Document uploaded.');
+  } catch (err) {
+    console.error('upload beneficiary doc error:', err.message);
+    req.flash('error', 'Could not upload document.');
+  }
+  res.redirect('/admin/beneficiaries/' + benId);
+};
+
+exports.deleteBeneficiaryDocument = async (req, res) => {
+  const benId = req.params.id;
+  try {
+    const doc = await documentModel.findById(req.params.docId);
+    if (doc) await documentModel.remove(doc.id);
+    await logAudit(req.session.user.id, 'delete', 'documents', req.params.docId, 'Deleted document', getClientIp(req));
+    req.flash('success', 'Document deleted.');
+  } catch (err) {
+    req.flash('error', 'Could not delete document.');
+  }
+  res.redirect('/admin/beneficiaries/' + benId);
 };
 
 exports.setBeneficiaryStatus = async (req, res) => {
@@ -451,10 +563,13 @@ exports.viewRecord = async (req, res) => {
     const notes = await noteModel.list(slug, rec.id);
     const followups = await followupModel.list(slug, rec.id);
     const documents = await documentModel.list(rec.beneficiary_id);
-    const beneficiaries = await beneficiaryModel.list({ sectorId: (await sectorModel.findBySlug(slug)).id, perPage: 500, status: 'all' });
-    const officers = await userModel.officersForSector((await sectorModel.findBySlug(slug)).id);
+    const provided = await servicesModel.listProvided(rec.beneficiary_id);
+    const sector = await sectorModel.findBySlug(slug);
+    const catalog = await servicesModel.listServices({ sectorId: sector ? sector.id : null });
+    const beneficiaries = await beneficiaryModel.list({ sectorId: sector ? sector.id : null, perPage: 500, status: 'all' });
+    const officers = await userModel.officersForSector(sector ? sector.id : null);
     res.render('admin/records-view', {
-      slug, cfg, rec, notes, followups, documents, beneficiaries: beneficiaries.rows, officers,
+      slug, cfg, rec, notes, followups, documents, provided, catalog, beneficiaries: beneficiaries.rows, officers,
       layout: 'layouts/app', active: 'records'
     });
   } catch (err) {
@@ -473,8 +588,13 @@ exports.setRecordStatus = async (req, res) => {
       req.flash('error', 'Invalid status.');
       return res.redirect('/admin/records/' + slug + '/' + id);
     }
+    const rec = await recordModel.findById(slug, id);
+    const prev = rec ? rec[cfg.statusColumn] : null;
     await recordModel.setStatus(slug, id, status);
     await logAudit(req.session.user.id, 'update', 'records', id, 'Status set to ' + status + ' (' + slug + ')', getClientIp(req));
+    if (rec && prev && prev !== status) {
+      await noteModel.create(slug, id, rec.beneficiary_id, 'Status change: ' + prev + ' → ' + status + ' (by ' + fullName(req.session.user) + ')', req.session.user.id);
+    }
     if (status === 'Closed') {
       await query(`UPDATE ${cfg.table} SET date_closed = COALESCE(date_closed, CURDATE()) WHERE id = ?`, [id]);
     }
@@ -514,6 +634,29 @@ exports.postRecordFollowup = async (req, res) => {
     req.flash('success', 'Follow-up scheduled.');
   } catch (err) {
     req.flash('error', 'Could not schedule follow-up.');
+  }
+  res.redirect('/admin/records/' + slug + '/' + id);
+};
+
+exports.postRecordService = async (req, res) => {
+  const slug = req.sectorSlug || req.params.slug;
+  const id = req.params.rid;
+  if (!req.body.service_id) {
+    req.flash('error', 'Please choose a service.');
+    return res.redirect('/admin/records/' + slug + '/' + id);
+  }
+  try {
+    const rec = await recordModel.findById(slug, id);
+    if (!rec) { req.flash('error', 'Record not found.'); return res.redirect('/admin/records'); }
+    const svc = await servicesModel.findById(req.body.service_id);
+    if (!svc) { req.flash('error', 'Service not found.'); return res.redirect('/admin/records/' + slug + '/' + id); }
+    const csId = await servicesModel.provide(rec.beneficiary_id, req.body, req.session.user.id);
+    await logAudit(req.session.user.id, 'create', 'case_services', csId, 'Provided service: ' + svc.name, getClientIp(req));
+    await noteModel.create(slug, id, rec.beneficiary_id, 'Service provided: ' + svc.name + ' (by ' + fullName(req.session.user) + ')', req.session.user.id);
+    req.flash('success', 'Service recorded.');
+  } catch (err) {
+    console.error('record service error:', err.message);
+    req.flash('error', 'Could not record service.');
   }
   res.redirect('/admin/records/' + slug + '/' + id);
 };
@@ -603,6 +746,50 @@ exports.markAllNotificationsRead = async (req, res) => {
 };
 
 // ---------------------------------------------------------------
+// SERVICES (INTERVENTIONS) CATALOG
+// ---------------------------------------------------------------
+exports.services = async (req, res) => {
+  try {
+    const sectors = await sectorModel.listAll();
+    const services = await servicesModel.listServices({ includeInactive: true });
+    res.render('admin/services', { sectors, services, layout: 'layouts/app', active: 'services' });
+  } catch (err) {
+    console.error('list services error:', err.message);
+    res.status(500).render('errors/500', { title: 'Server Error', layout: false });
+  }
+};
+
+exports.createService = async (req, res) => {
+  const name = (req.body.name || '').trim();
+  if (!name) {
+    req.flash('error', 'Service name is required.');
+    return res.redirect('/admin/services');
+  }
+  try {
+    const id = await servicesModel.create(req.body);
+    await logAudit(req.session.user.id, 'create', 'services', id, 'Added service: ' + name, getClientIp(req));
+    req.flash('success', 'Service added.');
+  } catch (err) {
+    console.error('create service error:', err.message);
+    req.flash('error', 'Could not add service.');
+  }
+  res.redirect('/admin/services');
+};
+
+exports.toggleService = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const svc = await servicesModel.findById(id);
+    if (svc) await servicesModel.setActive(id, !svc.is_active);
+    await logAudit(req.session.user.id, 'update', 'services', id, 'Service marked ' + (svc && svc.is_active ? 'inactive' : 'active'), getClientIp(req));
+    req.flash('success', 'Service status updated.');
+  } catch (err) {
+    req.flash('error', 'Could not update service.');
+  }
+  res.redirect('/admin/services');
+};
+
+// ---------------------------------------------------------------
 // REPORTS
 // ---------------------------------------------------------------
 exports.reports = async (req, res) => {
@@ -659,6 +846,34 @@ exports.reports = async (req, res) => {
   } catch (err) {
     console.error('reports error:', err.message);
     res.status(500).render('errors/500', { title: 'Server Error', layout: false });
+  }
+};
+
+exports.monthlyReport = async (req, res) => {
+  try {
+    const month = /^\d{4}-\d{2}$/.test(req.query.month || '') ? req.query.month : new Date().toISOString().slice(0, 7);
+    const data = await reportModel.monthly(month);
+    const csvUrl = '/admin/reports/monthly.csv?month=' + data.month;
+    res.render('admin/reports-monthly', {
+      data, csvUrl, title: 'Monthly Accomplishment Report',
+      layout: 'layouts/app', active: 'reports'
+    });
+  } catch (err) {
+    console.error('monthly report error:', err.message);
+    res.status(500).render('errors/500', { title: 'Server Error', layout: false });
+  }
+};
+
+exports.monthlyReportCsv = async (req, res) => {
+  try {
+    const month = /^\d{4}-\d{2}$/.test(req.query.month || '') ? req.query.month : new Date().toISOString().slice(0, 7);
+    const data = await reportModel.monthly(month);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="mswd-monthly-${data.month}.csv"`);
+    res.send('\uFEFF' + reportModel.buildCsv(data));
+  } catch (err) {
+    console.error('monthly csv error:', err.message);
+    res.status(500).json({ error: 'Could not generate report' });
   }
 };
 

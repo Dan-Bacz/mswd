@@ -1,0 +1,81 @@
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Services &amp; Interventions</h1>
+    <p class="page-sub">The catalog of services officers can record under each beneficiary or case.</p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Add Service</h3></div>
+    <div class="card-body">
+      <form method="POST" action="/admin/services">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-grid">
+          <div>
+            <label for="s-name">Service Name *</label>
+            <input id="s-name" name="name" class="form-control" placeholder="e.g. Livelihood Assistance" required>
+          </div>
+          <div>
+            <label for="s-category">Category</label>
+            <input id="s-category" name="category" class="form-control" placeholder="e.g. Financial / Social / Health">
+          </div>
+          <div>
+            <label for="s-sector">Applied to Sector</label>
+            <select id="s-sector" name="sector_id" class="form-control">
+              <option value="">All sectors</option>
+              <% sectors.forEach(function(s) { %>
+                <option value="<%= s.id %>"><%= s.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="s-desc">Description</label>
+            <input id="s-desc" name="description" class="form-control" placeholder="Short description">
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <button type="submit" class="btn btn-primary">Add Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3 class="card-title">Service Catalog</h3></div>
+    <div class="card-body">
+      <% if (services.length === 0) { %>
+        <div class="empty-state"><p>No services defined yet. Add your first service above.</p></div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>Service</th><th>Category</th><th>Sector</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% services.forEach(function(s) { %>
+                <tr>
+                  <td>
+                    <strong><%= s.name %></strong>
+                    <% if (s.description) { %><div class="muted" style="font-size:12px;"><%= s.description %></div><% } %>
+                  </td>
+                  <td><%= s.category || '—' %></td>
+                  <td><%= s.sector_name || 'All sectors' %></td>
+                  <td><span class="badge <%= s.is_active ? 'badge-success' : 'badge-muted' %>"><%= s.is_active ? 'Active' : 'Inactive' %></span></td>
+                  <td>
+                    <form method="POST" action="/admin/services/<%= s.id %>/toggle">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button type="submit" class="btn btn-outline" style="padding:5px 10px;">
+                        <%= s.is_active ? 'Deactivate' : 'Activate' %>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

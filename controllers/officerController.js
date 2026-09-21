@@ -6,10 +6,13 @@ const recordModel = require('../models/recordModel');
 const noteModel = require('../models/noteModel');
 const followupModel = require('../models/followupModel');
 const documentModel = require('../models/documentModel');
+const householdModel = require('../models/householdModel');
+const servicesModel = require('../models/servicesModel');
+const reportModel = require('../models/reportModel');
 const notificationModel = require('../models/notificationModel');
 const { logAudit } = require('../utils/audit');
 const { markAllRead } = require('../utils/notify');
-const { paginate, toInt } = require('../utils/helpers');
+const { paginate, toInt, fullName } = require('../utils/helpers');
 const { getClientIp } = require('../utils/request');
 
 function guard(req, res) {
@@ -69,7 +72,8 @@ exports.beneficiaryForm = async (req, res) => {
     if (req.params.id && (!b || b.sector_slug !== req.allowedSector.slug)) {
       return res.status(403).render('errors/403', { title: 'Access Denied', message: 'Not your sector.', layout: false });
     }
-    res.render('officer/beneficiaries-form', { b, layout: 'layouts/app', active: 'beneficiaries' });
+    const dupMatches = b ? await beneficiaryModel.findDuplicates(b, b.id) : [];
+    res.render('officer/beneficiaries-form', { b, dupMatches, layout: 'layouts/app', active: 'beneficiaries' });
   } catch (err) {
     res.status(500).render('errors/500', { title: 'Server Error', layout: false });
   }
@@ -85,11 +89,17 @@ exports.createBeneficiary = async (req, res) => {
   }
   try {
     const sector = await sectorModel.findBySlug(req.allowedSector.slug);
+    const dups = await beneficiaryModel.findDuplicates(req.body);
     const id = await beneficiaryModel.create(Object.assign(req.body, {
       sector_id: sector.id, registered_by: req.session.user.id
     }));
     await logAudit(req.session.user.id, 'create', 'beneficiaries', id, 'Officer registered beneficiary', getClientIp(req));
-    req.flash('success', 'Beneficiary added to ' + req.allowedSector.name + ' sector.');
+    if (dups.length) {
+      const names = dups.slice(0, 3).map(d => fullName(d)).join(', ');
+      req.flash('warning', 'Saved, but it may be a duplicate of: ' + names + (dups.length > 3 ? ' (+' + (dups.length - 3) + ' more)' : '') + '.');
+    } else {
+      req.flash('success', 'Beneficiary added to ' + req.allowedSector.name + ' sector.');
+    }
     res.redirect('/officer/beneficiaries/' + id);
   } catch (err) {
     console.error('officer create beneficiary error:', err.message);
@@ -109,9 +119,15 @@ exports.updateBeneficiary = async (req, res) => {
   try {
     // Officers may only update records of their own sector; sector_id is locked.
     const body = Object.assign(req.body, { sector_id: b.sector_id });
+    const dups = await beneficiaryModel.findDuplicates(req.body, id);
     await beneficiaryModel.update(id, body);
     await logAudit(req.session.user.id, 'update', 'beneficiaries', id, 'Officer updated beneficiary', getClientIp(req));
-    req.flash('success', 'Beneficiary updated.');
+    if (dups.length) {
+      const names = dups.slice(0, 3).map(d => fullName(d)).join(', ');
+      req.flash('warning', 'Saved, but it may be a duplicate of: ' + names + (dups.length > 3 ? ' (+' + (dups.length - 3) + ' more)' : '') + '.');
+    } else {
+      req.flash('success', 'Beneficiary updated.');
+    }
     res.redirect('/officer/beneficiaries/' + id);
   } catch (err) {
     req.flash('error', 'Could not update beneficiary.');
@@ -130,10 +146,129 @@ exports.viewBeneficiary = async (req, res) => {
     }
     const notes = await noteModel.listForBeneficiary(b.id, 30);
     const documents = await documentModel.list(b.id);
-    res.render('officer/beneficiaries-view', { b, notes, documents, layout: 'layouts/app', active: 'beneficiaries' });
+    const household = await householdModel.list(b.id);
+    const provided = await servicesModel.listProvided(b.id);
+    const catalog = await servicesModel.listServices({});
+    res.render('officer/beneficiaries-view', {
+      b, notes, documents, household, provided, catalog, layout: 'layouts/app', active: 'beneficiaries'
+    });
   } catch (err) {
     res.status(500).render('errors/500', { title: 'Server Error', layout: false });
   }
+};
+
+exports.postBeneficiaryService = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  const benId = req.params.id;
+  const b = await beneficiaryModel.findById(benId);
+  if (!b || b.sector_slug !== req.allowedSector.slug) {
+    return res.status(403).render('errors/403', { title: 'Access Denied', message: 'Not your sector.', layout: false });
+  }
+  if (!req.body.service_id) {
+    req.flash('error', 'Please choose a service.');
+    return res.redirect('/officer/beneficiaries/' + benId);
+  }
+  try {
+    const svc = await servicesModel.findById(req.body.service_id);
+    if (!svc) { req.flash('error', 'Service not found.'); return res.redirect('/officer/beneficiaries/' + benId); }
+    const csId = await servicesModel.provide(benId, req.body, req.session.user.id);
+    await logAudit(req.session.user.id, 'create', 'case_services', csId, 'Officer provided service: ' + svc.name, getClientIp(req));
+    req.flash('success', 'Service recorded.');
+  } catch (err) {
+    console.error('officer beneficiary service error:', err.message);
+    req.flash('error', 'Could not record service.');
+  }
+  res.redirect('/officer/beneficiaries/' + benId);
+};
+
+exports.addHouseholdMember = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  const benId = req.params.id;
+  const b = await beneficiaryModel.findById(benId);
+  if (!b || b.sector_slug !== req.allowedSector.slug) {
+    return res.status(403).render('errors/403', { title: 'Access Denied', message: 'Not your sector.', layout: false });
+  }
+  const member_name = (req.body.member_name || '').trim();
+  if (!member_name) {
+    req.flash('error', 'Household member name is required.');
+    return res.redirect('/officer/beneficiaries/' + benId);
+  }
+  try {
+    await householdModel.add(benId, Object.assign(req.body, { member_name }));
+    await logAudit(req.session.user.id, 'create', 'beneficiary_household', benId, 'Added household member ' + member_name, getClientIp(req));
+    req.flash('success', 'Household member added.');
+  } catch (err) {
+    console.error('add household error:', err.message);
+    req.flash('error', 'Could not add household member.');
+  }
+  res.redirect('/officer/beneficiaries/' + benId);
+};
+
+exports.deleteHouseholdMember = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  const benId = req.params.id;
+  const b = await beneficiaryModel.findById(benId);
+  if (!b || b.sector_slug !== req.allowedSector.slug) {
+    return res.status(403).render('errors/403', { title: 'Access Denied', message: 'Not your sector.', layout: false });
+  }
+  try {
+    const member = await householdModel.findById(req.params.mid);
+    if (member) await householdModel.remove(member.id);
+    await logAudit(req.session.user.id, 'delete', 'beneficiary_household', req.params.mid, 'Removed household member', getClientIp(req));
+    req.flash('success', 'Household member removed.');
+  } catch (err) {
+    req.flash('error', 'Could not remove household member.');
+  }
+  res.redirect('/officer/beneficiaries/' + benId);
+};
+
+exports.uploadBeneficiaryDocument = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  const benId = req.params.id;
+  const b = await beneficiaryModel.findById(benId);
+  if (!b || b.sector_slug !== req.allowedSector.slug) {
+    return res.status(403).render('errors/403', { title: 'Access Denied', message: 'Not your sector.', layout: false });
+  }
+  try {
+    if (!req.file) {
+      req.flash('error', 'Please attach a file.');
+      return res.redirect('/officer/beneficiaries/' + benId);
+    }
+    await documentModel.create(benId, {
+      document_name: (req.body.document_name || '').trim() || req.file.originalname,
+      document_type: req.body.document_type,
+      file_path: '/uploads/' + req.file.filename,
+      file_size: req.file.size,
+      notes: req.body.notes
+    }, req.session.user.id);
+    await logAudit(req.session.user.id, 'upload', 'documents', benId, 'Officer uploaded ' + req.file.originalname, getClientIp(req));
+    req.flash('success', 'Document uploaded.');
+  } catch (err) {
+    req.flash('error', 'Could not upload document.');
+  }
+  res.redirect('/officer/beneficiaries/' + benId);
+};
+
+exports.deleteBeneficiaryDocument = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  const benId = req.params.id;
+  const b = await beneficiaryModel.findById(benId);
+  if (!b || b.sector_slug !== req.allowedSector.slug) {
+    return res.status(403).render('errors/403', { title: 'Access Denied', message: 'Not your sector.', layout: false });
+  }
+  try {
+    const doc = await documentModel.findById(req.params.docId);
+    if (doc) await documentModel.remove(doc.id);
+    req.flash('success', 'Document deleted.');
+  } catch (err) {
+    req.flash('error', 'Could not delete document.');
+  }
+  res.redirect('/officer/beneficiaries/' + benId);
 };
 
 exports.setBeneficiaryStatus = async (req, res) => {
@@ -189,8 +324,10 @@ exports.caseView = async (req, res) => {
     const notes = await noteModel.list(slug, id);
     const followups = await followupModel.list(slug, id);
     const documents = await documentModel.list(rec.beneficiary_id);
+    const provided = await servicesModel.listProvided(rec.beneficiary_id);
+    const catalog = await servicesModel.listServices({});
     res.render('officer/cases-view', {
-      slug, cfg: recordModel.sectorConfig(slug), rec, notes, followups, documents,
+      slug, cfg: recordModel.sectorConfig(slug), rec, notes, followups, documents, provided, catalog,
       layout: 'layouts/app', active: 'cases'
     });
   } catch (err) {
@@ -232,6 +369,31 @@ exports.postFollowup = async (req, res) => {
   res.redirect('/officer/cases/' + id);
 };
 
+exports.postService = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  const slug = req.allowedSector.slug;
+  const id = req.params.rid;
+  if (!req.body.service_id) {
+    req.flash('error', 'Please choose a service.');
+    return res.redirect('/officer/cases/' + id);
+  }
+  try {
+    const rec = await recordModel.findById(slug, id);
+    if (!rec) { req.flash('error', 'Case not found.'); return res.redirect('/officer/cases'); }
+    const svc = await servicesModel.findById(req.body.service_id);
+    if (!svc) { req.flash('error', 'Service not found.'); return res.redirect('/officer/cases/' + id); }
+    const csId = await servicesModel.provide(rec.beneficiary_id, req.body, req.session.user.id);
+    await logAudit(req.session.user.id, 'create', 'case_services', csId, 'Officer provided service: ' + svc.name, getClientIp(req));
+    await noteModel.create(slug, id, rec.beneficiary_id, 'Service provided: ' + svc.name + ' (by ' + fullName(req.session.user) + ')', req.session.user.id);
+    req.flash('success', 'Service recorded.');
+  } catch (err) {
+    console.error('officer service error:', err.message);
+    req.flash('error', 'Could not record service.');
+  }
+  res.redirect('/officer/cases/' + id);
+};
+
 exports.changeStatus = async (req, res) => {
   const g = guard(req, res);
   if (g) return g;
@@ -243,8 +405,13 @@ exports.changeStatus = async (req, res) => {
       req.flash('error', 'Invalid status.');
       return res.redirect('/officer/cases/' + id);
     }
+    const rec = await recordModel.findById(slug, id);
+    const prev = rec ? rec[cfg.statusColumn] : null;
     await recordModel.setStatus(slug, id, req.body.status);
     await logAudit(req.session.user.id, 'update', 'records', id, 'Officer changed status to ' + req.body.status, getClientIp(req));
+    if (rec && prev && prev !== req.body.status) {
+      await noteModel.create(slug, id, rec.beneficiary_id, 'Status change: ' + prev + ' → ' + req.body.status + ' (by ' + fullName(req.session.user) + ')', req.session.user.id);
+    }
     req.flash('success', 'Status updated.');
   } catch (err) {
     req.flash('error', 'Could not update status.');
@@ -420,5 +587,41 @@ exports.reports = async (req, res) => {
   } catch (err) {
     console.error('officer reports error:', err.message);
     res.status(500).render('errors/500', { title: 'Server Error', layout: false });
+  }
+};
+
+exports.monthlyReport = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  try {
+    const slug = req.allowedSector.slug;
+    const sector = await sectorModel.findBySlug(slug);
+    const month = /^\d{4}-\d{2}$/.test(req.query.month || '') ? req.query.month : new Date().toISOString().slice(0, 7);
+    const data = await reportModel.monthly(month, { sectorId: sector ? sector.id : null });
+    const csvUrl = '/officer/reports/monthly.csv?month=' + data.month;
+    res.render('officer/reports-monthly', {
+      data, csvUrl, sectorName: req.allowedSector.name,
+      title: 'Monthly Accomplishment Report', layout: 'layouts/app', active: 'reports'
+    });
+  } catch (err) {
+    console.error('officer monthly report error:', err.message);
+    res.status(500).render('errors/500', { title: 'Server Error', layout: false });
+  }
+};
+
+exports.monthlyReportCsv = async (req, res) => {
+  const g = guard(req, res);
+  if (g) return g;
+  try {
+    const slug = req.allowedSector.slug;
+    const sector = await sectorModel.findBySlug(slug);
+    const month = /^\d{4}-\d{2}$/.test(req.query.month || '') ? req.query.month : new Date().toISOString().slice(0, 7);
+    const data = await reportModel.monthly(month, { sectorId: sector ? sector.id : null });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="mswd-monthly-${req.allowedSector.slug}-${data.month}.csv"`);
+    res.send('\uFEFF' + reportModel.buildCsv(data));
+  } catch (err) {
+    console.error('officer monthly csv error:', err.message);
+    res.status(500).json({ error: 'Could not generate report' });
   }
 };

@@ -328,6 +328,7 @@ a:hover { color: var(--blue-dark); }
 .alert-ico { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
 .alert-success { background: #EFFCF4; border: 1px solid #BCEBD2; color: #12683B; }
 .alert-danger { background: #FDF0EF; border: 1px solid #F5C6C2; color: #B42318; }
+.alert-warning { background: #FFF8E6; border: 1px solid #F5DFA8; color: #8A5A00; }
 
 /* ---------- Cards ---------- */
 .card {

@@ -59,6 +59,34 @@ async function findById(id) {
   return rows.length ? rows[0] : null;
 }
 
+async function findDuplicates(data, excludeId = null) {
+  const clauses = [];
+  const params = [];
+  if (data.first_name && data.last_name) {
+    clauses.push('(LOWER(first_name) = LOWER(?) AND LOWER(last_name) = LOWER(?))');
+    params.push(String(data.first_name).trim(), String(data.last_name).trim());
+  }
+  if (data.date_of_birth) {
+    clauses.push('date_of_birth = ?');
+    params.push(data.date_of_birth);
+  }
+  if (data.contact_number) {
+    clauses.push('contact_number = ?');
+    params.push(String(data.contact_number).trim());
+  }
+  if (!clauses.length) return [];
+  let sql = `SELECT id, beneficiary_number, first_name, middle_name, last_name, suffix, date_of_birth, barangay, contact_number, status
+             FROM beneficiaries
+             WHERE (${clauses.join(' OR ')}) AND status != 'Archived'`;
+  if (excludeId) {
+    sql += ' AND id != ?';
+    params.push(Number(excludeId));
+  }
+  sql += ' LIMIT 10';
+  const rows = await query(sql, params);
+  return rows;
+}
+
 async function create(data) {
   const result = await query(
     `INSERT INTO beneficiaries
@@ -96,4 +124,4 @@ async function barangays() {
   return rows.map(r => r.barangay);
 }
 
-module.exports = { generateNumber, list, findById, create, update, setStatus, barangays };
+module.exports = { generateNumber, list, findById, findDuplicates, create, update, setStatus, barangays };

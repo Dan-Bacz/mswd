@@ -11,7 +11,11 @@ A professional municipal social-welfare management system for the MSWD Office of
 - **Officer management** — create, activate/deactivate, assign/change sector, reset password.
 - **User approval queue** (officer self-registrations pending admin approval).
 - **Reports** — totals, cases by sector/status, monthly registrations, officer workload (CSS charts, no external libraries).
+- **Monthly Accomplishment Report** — month-picker summary of beneficiaries, registrations, cases opened/closed per group, staff caseload, services provided, and activity; export as **Excel (CSV)** or **PDF (Print)** with no extra libraries.
+- **Household / family composition** per beneficiary and **duplicate-record detection** on registration.
+- **Services catalog** (`/admin/services`) and recording of **services/interventions** under any beneficiary or case record.
 - **Notifications** & **audit log** for important actions.
+- **Automatic database backup** (`npm run db:backup`) and restore (`npm run db:restore`) — safe to run on a daily cron.
 - Secure sessions, **CSRF** protection, **Helmet**, **rate-limited login**, **bcrypt** hashing, parameterized queries.
 
 ## Quick start
@@ -46,3 +50,16 @@ database/schema.sql
 - App listens on `process.env.PORT || 3000` and `0.0.0.0`.
 - Set `NODE_ENV=production` and a strong `SESSION_SECRET` in `.env` on the server.
 - Never upload `.env` to the repository.
+- New tables (`services`, `case_services`, `beneficiary_household`) require a fresh schema load on first deploy:
+  `mysql -u your_user -p your_db < database/schema.sql` (idempotent) or run `database/migrations/001_household.sql`.
+
+## Backup & recovery
+Configure the same values as `.env` (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
+
+- **Backup:** `npm run db:backup`
+  Writes `backups/mswd-YYYYMMDD-<timestamp>.sql` (with `--single-transaction --routines --triggers`) and automatically keeps the newest 14 backups.
+- **Restore:** `npm run db:restore -- backups/<file>.sql`
+  Runs that SQL dump back into the database. The app should be stopped during a restore.
+- **Automate (cPanel / cron):** create a daily cron job, e.g.
+  `cd /path/to/app && /usr/bin/node scripts/backup.js`
+  Add a second cron entry to download a copy of the newest `backups/*.sql` off the server for off-site storage.

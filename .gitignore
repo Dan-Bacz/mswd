@@ -6,3 +6,6 @@ npm-debug.log
 
 # Uploaded documents are stored at runtime, not in the repository
 public/uploads/
+
+# Database backups (created by npm run db:backup)
+backups/
