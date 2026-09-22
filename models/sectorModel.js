@@ -46,7 +46,7 @@ async function setActive(id, active) {
 
 async function countBeneficiaries(sectorId) {
   const rows = await query(
-    'SELECT COUNT(*) AS c FROM beneficiaries WHERE sector_id = ? AND is_active = 1',
+    'SELECT COUNT(*) AS c FROM beneficiaries WHERE sector_id = ? AND status = \'Active\'',
     [sectorId]
   );
   return rows[0].c;
