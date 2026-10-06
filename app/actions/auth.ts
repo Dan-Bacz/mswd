@@ -139,11 +139,11 @@ export async function createOfficerAction(formData: FormData) {
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
-    categoryIds: String(formData.get("categoryIds") ?? ""),
+    categoryIds: formData.getAll("categoryIds").flatMap((item) => String(item).split(",")).filter(Boolean),
   };
 
-  if (!raw.name || !raw.email || !raw.password || !raw.categoryIds) {
-    throw new Error("Please complete all fields and pick an authorized category.");
+  if (!raw.name || !raw.email || !raw.password || raw.categoryIds.length === 0) {
+    throw new Error("Please complete all fields and pick at least one authorized category.");
   }
 
   const officerRole = await db.role.upsert({
@@ -160,10 +160,7 @@ export async function createOfficerAction(formData: FormData) {
       roleId: officerRole.id,
       status: "ACTIVE",
       userCategories: {
-        create: raw.categoryIds
-          .split(",")
-          .filter(Boolean)
-          .map((categoryId) => ({ categoryId })),
+        create: raw.categoryIds.map((categoryId) => ({ categoryId })),
       },
     },
   });

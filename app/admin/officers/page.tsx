@@ -37,11 +37,18 @@ export default async function OfficersPage() {
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">Assigned categories</label>
-              <select name="categoryIds" className="w-full rounded-xl border border-slate-300 px-3 py-2.5" required>
+              <select
+                name="categoryIds"
+                multiple
+                size={7}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2.5"
+                required
+              >
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>{category.name}</option>
                 ))}
               </select>
+              <p className="mt-2 text-xs text-slate-500">Hold Ctrl/Cmd to select multiple categories.</p>
             </div>
             <button type="submit" className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800">
               Save officer
