@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MSWD Management Information System
 
-## Getting Started
+A production-ready Municipal Social Welfare and Development management platform built with Next.js, Prisma, PostgreSQL, and secure role-based authorization.
 
-First, run the development server:
+## Project overview
+
+This project includes the foundation for:
+
+- Admin dashboards and configuration
+- Officer permission boundaries by category
+- Beneficiary and household management
+- Case tracking and history
+- Service and intervention records
+- Notification, audit, and reporting modules
+- Deployment for Vercel and Neon PostgreSQL
+
+## Technology stack
+
+- Next.js App Router
+- TypeScript
+- React
+- Tailwind CSS
+- Prisma ORM
+- PostgreSQL (Neon-ready)
+- Secure cookie session authentication
+- Zod validation
+- Recharts-ready dashboard structure
+
+## Local development setup
+
+1. Install dependencies:
+   npm install
+2. Create a local environment file based on .env.example.
+3. Set DATABASE_URL and AUTH_SECRET.
+4. Run Prisma generate:
+   npx prisma generate
+5. Start the app:
+   npm run dev
+
+## Neon setup
+
+1. Create a PostgreSQL database in Neon.
+2. Copy the connection string into DATABASE_URL.
+3. If necessary, add DIRECT_URL in environments that require a direct connection for Prisma migrations.
+4. Configure production variables separately in Vercel.
+
+## Environment variables
+
+Use .env.example as the template. Required values include:
+
+- DATABASE_URL
+- DIRECT_URL
+- AUTH_SECRET
+- MSWD_SETUP_KEY
+- APP_URL
+
+## Prisma setup
+
+The Prisma schema includes the main models required for the MSWD system, including User, Role, Category, UserCategory, Household, Beneficiary, Case, CaseHistory, ServiceType, Intervention, Document, Notification, AuditLog, and SystemSetting.
+
+Run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx prisma generate
+npx prisma migrate dev
+npx prisma db seed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Database migration
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+For local development:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx prisma migrate dev --name init
+```
 
-## Learn More
+For deployment:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx prisma migrate deploy
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Seed process
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The seed routine creates the required roles and the core categories for the MSWD administration model. It does not generate fake beneficiary or case records for production use.
 
-## Deploy on Vercel
+## Vercel deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push code to GitHub.
+2. Import the repository into Vercel.
+3. Add the environment variables from .env.example.
+4. Deploy the app.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Initial administrator setup
+
+Set a strong MSWD_SETUP_KEY in the environment, then visit /setup and create the first administrator account.
+
+## Security notes
+
+- Secrets remain server-only.
+- Session cookies are secure and HTTP-only in production.
+- Access checks are enforced server-side.
+- Officer access is restricted by authorized category assignment.
+- Upload and document access must be validated against the user's permissions.
+
+## Production deployment checklist
+
+- Configure DATABASE_URL in Vercel
+- Configure AUTH_SECRET, MSWD_SETUP_KEY, and APP_URL
+- Run Prisma migration on production
+- Validate admin and officer routes
+- Confirm category restrictions are enforced on protected resources
+- Test login, logout, and unauthorized access scenarios
+
+## Commands to run locally
+
+```bash
+npm install
+npx prisma generate
+npm run dev
+```
+
+## Commands to deploy
+
+```bash
+npx prisma migrate deploy
+npm run build
+npm run start
+```

@@ -1,0 +1,286 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleName {
+  ADMIN
+  OFFICER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum CivilStatus {
+  SINGLE
+  MARRIED
+  WIDOWED
+  SEPARATED
+  DIVORCED
+  OTHERS
+}
+
+enum BeneficiaryStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CaseStatus {
+  NEW
+  PENDING
+  UNDER_ASSESSMENT
+  ACTIVE
+  FOR_REFERRAL
+  FOR_FOLLOW_UP
+  RESOLVED
+  CLOSED
+  CANCELLED
+}
+
+model Role {
+  id    String   @id @default(uuid())
+  name  RoleName @unique
+  users User[]
+}
+
+model User {
+  id                   String          @id @default(uuid())
+  name                 String
+  email                String          @unique
+  passwordHash         String
+  roleId               String
+  status               UserStatus      @default(ACTIVE)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  role                 Role            @relation(fields: [roleId], references: [id])
+  userCategories       UserCategory[]
+  households           Household[]
+  assignedCases        Case[]          @relation("OfficerCases")
+  assignedBeneficiaries Beneficiary[]  @relation("OfficerBeneficiaries")
+  interventions        Intervention[]  @relation("OfficerInterventions")
+  documents            Document[]      @relation("UploaderDocuments")
+  assignments          Assignment[]    @relation("AssignedOfficer")
+  assignedBy           Assignment[]    @relation("AssignedBy")
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+  caseHistory          CaseHistory[]
+}
+
+model UserCategory {
+  id         String   @id @default(uuid())
+  userId     String
+  categoryId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+}
+
+model Category {
+  id             String         @id @default(uuid())
+  name           String         @unique
+  description    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  userCategories UserCategory[]
+  beneficiaries  Beneficiary[]
+  cases          Case[]
+  assignments    Assignment[]
+}
+
+model Household {
+  id              String       @id @default(uuid())
+  headName        String
+  numberOfMembers Int          @default(1)
+  address         String
+  barangay        String?
+  municipality    String?
+  province        String?
+  estimatedIncome Decimal?     @db.Decimal(12, 2)
+  incomeSource    String?
+  housingInfo     String?
+  remarks         String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  createdById     String?
+  createdBy       User?        @relation(fields: [createdById], references: [id])
+  beneficiaries   Beneficiary[]
+}
+
+model Beneficiary {
+  id                String            @id @default(uuid())
+  beneficiaryNumber String            @unique
+  firstName         String
+  middleName        String?
+  lastName          String
+  suffix            String?
+  sex               Sex
+  dateOfBirth       DateTime?
+  age               Int?
+  civilStatus       CivilStatus?
+  contactNumber     String?
+  email             String?
+  address           String
+  barangay          String?
+  municipality      String?
+  province          String?
+  categoryId        String
+  subcategory       String?
+  householdId       String?
+  assignedOfficerId String?
+  registrationDate  DateTime          @default(now())
+  status            BeneficiaryStatus @default(ACTIVE)
+  remarks           String?
+  category          Category          @relation(fields: [categoryId], references: [id])
+  household         Household?        @relation(fields: [householdId], references: [id])
+  assignedOfficer   User?             @relation("OfficerBeneficiaries", fields: [assignedOfficerId], references: [id])
+  cases             Case[]
+  documents         Document[]
+  assignments       Assignment[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Case {
+  id               String          @id @default(uuid())
+  caseNumber       String          @unique
+  beneficiaryId    String
+  categoryId       String
+  caseType         String
+  description      String
+  dateOpened       DateTime        @default(now())
+  priority         CasePriority    @default(MEDIUM)
+  status           CaseStatus      @default(NEW)
+  assignedOfficerId String?
+  dateClosed       DateTime?
+  closingReason    String?
+  remarks          String?
+  beneficiary      Beneficiary     @relation(fields: [beneficiaryId], references: [id])
+  category         Category        @relation(fields: [categoryId], references: [id])
+  assignedOfficer  User?           @relation("OfficerCases", fields: [assignedOfficerId], references: [id])
+  history          CaseHistory[]
+  interventions   Intervention[]
+  documents       Document[]
+  notifications    Notification[]
+  assignments      Assignment[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model CaseHistory {
+  id          String   @id @default(uuid())
+  caseId      String
+  userId      String?
+  event       String
+  description String
+  createdAt   DateTime @default(now())
+  case        Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model ServiceType {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  description   String?
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  interventions Intervention[]
+}
+
+model Intervention {
+  id            String      @id @default(uuid())
+  caseId        String
+  serviceTypeId String
+  officerId     String
+  description   String
+  amount        Decimal?    @db.Decimal(12, 2)
+  createdAt     DateTime    @default(now())
+  case          Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  officer       User        @relation("OfficerInterventions", fields: [officerId], references: [id])
+}
+
+model Document {
+  id            String      @id @default(uuid())
+  caseId        String?
+  beneficiaryId String?
+  uploaderId    String
+  fileName      String
+  originalName  String
+  mimeType      String
+  size          Int
+  storageUrl    String
+  uploadedAt    DateTime    @default(now())
+  case          Case?       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  uploader      User        @relation("UploaderDocuments", fields: [uploaderId], references: [id])
+}
+
+model Assignment {
+  id             String      @id @default(uuid())
+  officerId      String
+  categoryId     String?
+  beneficiaryId  String?
+  caseId         String?
+  assignedById   String
+  createdAt      DateTime    @default(now())
+  officer        User        @relation("AssignedOfficer", fields: [officerId], references: [id])
+  assignedBy     User        @relation("AssignedBy", fields: [assignedById], references: [id])
+  category       Category?   @relation(fields: [categoryId], references: [id])
+  beneficiary    Beneficiary? @relation(fields: [beneficiaryId], references: [id])
+  case           Case?       @relation(fields: [caseId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  caseId    String?
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  case      Case?    @relation(fields: [caseId], references: [id])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  module      String
+  recordId    String?
+  description String
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
