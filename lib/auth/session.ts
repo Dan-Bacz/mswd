@@ -12,7 +12,7 @@ export type SessionUser = {
 };
 
 const secretKey = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "change-me-to-a-long-production-secret"
+  process.env.AUTH_SECRET || "mswd-development-secret-key-2026"
 );
 
 export async function createSession(user: SessionUser) {
