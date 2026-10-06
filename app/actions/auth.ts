@@ -8,7 +8,7 @@ import { createSession, clearSession } from "@/lib/auth/session";
 import { loginSchema, setupSchema } from "@/lib/validation";
 
 export async function loginAction(
-  _previousState: { ok: boolean; error: string } | null,
+  _previousState: { ok: boolean; error: string; redirectTo?: string } | null,
   formData: FormData
 ) {
   const raw = {
@@ -39,6 +39,8 @@ export async function loginAction(
     return { ok: false, error: "This account is inactive." };
   }
 
+  const redirectTo = user.role.name === "ADMIN" ? "/admin/dashboard" : "/officer/dashboard";
+
   await createSession({
     id: user.id,
     name: user.name,
@@ -48,7 +50,8 @@ export async function loginAction(
   });
 
   revalidatePath("/");
-  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : "/officer/dashboard");
+
+  return { ok: true, error: "", redirectTo };
 }
 
 export async function setupAction(

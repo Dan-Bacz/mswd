@@ -1,13 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { loginAction } from "@/app/actions/auth";
 
-const initialState = { ok: true, error: "" };
+const initialState = { ok: true, error: "", redirectTo: undefined as string | undefined };
 
 export default function LoginPage() {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+
+  useEffect(() => {
+    if (state.ok && state.redirectTo) {
+      router.push(state.redirectTo);
+    }
+  }, [state, router]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
