@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { BarChart3, Briefcase, ChevronDown, FileText, FolderTree, LogOut, Menu, Settings, ShieldCheck, UserCircle2, Users, ClipboardList } from "lucide-react";
+import { BarChart3, Briefcase, FileText, FolderTree, LogOut, Menu, Settings, ShieldCheck, UserCircle2, Users, ClipboardList } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 import { db } from "@/lib/db";
-import { cn, shouldShowBeneficiaryCategory } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -18,21 +18,6 @@ const officerLinks = [
   { href: "/admin/settings", label: "My Profile", icon: UserCircle2 },
 ];
 
-function getCategoryDisplayName(name: string) {
-  const normalizedName = name.trim().toLowerCase();
-
-  if (normalizedName.startsWith("assistance to individuals in crisis situation")) return "AICS";
-  if (normalizedName === "children in need of special protection") return "CICL-CNSP";
-  if (normalizedName === "disaster-affected families/individuals") return "DAFI";
-  if (normalizedName.startsWith("person with disabilities")) return "PWD";
-  if (normalizedName === "senior citizens") return "Senior Citizens";
-  if (normalizedName === "solo parents") return "Solo Parents";
-  if (normalizedName === "vawc victims") return "VAWC";
-  if (normalizedName.startsWith("women especially in difficult circumstances")) return "WEDC";
-
-  return name;
-}
-
 export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   const links = role === "ADMIN" ? adminLinks : officerLinks;
   const settings = await db.systemSetting.findMany({
@@ -41,10 +26,6 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   const municipality =
     settings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
     "Municipal Government";
-  const categories = role === "ADMIN"
-    ? (await db.category.findMany({ orderBy: { name: "asc" } })).filter((category) => shouldShowBeneficiaryCategory(category.name))
-    : [];
-
   if (role === "OFFICER") {
     return (
       <aside className="w-full max-w-[260px] shrink-0 border-r border-slate-200 bg-sky-950 text-sky-50">
@@ -126,34 +107,13 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
 
           {role === "ADMIN" && (
             <li>
-              <details open className="group">
-                <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80">
-                  <span className="flex items-center gap-3">
-                    <Users className="h-4 w-4" />
-                    Beneficiaries
-                  </span>
-                  <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-                </summary>
-
-                <div className="mt-2 max-h-72 space-y-1 overflow-y-auto border-l border-sky-700/80 pl-3">
-                  <Link
-                    href="/admin/beneficiaries"
-                    className="flex items-center rounded-lg px-2.5 py-1.5 text-xs text-sky-100/90 transition hover:bg-sky-800/70 hover:text-white"
-                  >
-                    All beneficiaries
-                  </Link>
-                  {categories.map((category) => (
-                    <Link
-                      key={category.id}
-                      href={`/admin/beneficiaries?category=${encodeURIComponent(category.name)}`}
-                      title={category.name}
-                      className="flex items-center rounded-lg px-2.5 py-1.5 text-xs text-sky-100/80 transition hover:bg-sky-800/70 hover:text-white"
-                    >
-                      {getCategoryDisplayName(category.name)}
-                    </Link>
-                  ))}
-                </div>
-              </details>
+              <Link
+                href="/admin/beneficiaries"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80"
+              >
+                <Users className="h-4 w-4" />
+                Beneficiaries
+              </Link>
             </li>
           )}
 
