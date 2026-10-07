@@ -71,12 +71,13 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   }
 
   return (
-    <details className="group fixed left-4 top-4 z-50 lg:static lg:z-auto">
-      <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl bg-[#0f172a] text-white shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-300 lg:hidden">
+    <div className="contents">
+      <input id="admin-navigation-toggle" type="checkbox" className="peer sr-only" />
+      <label htmlFor="admin-navigation-toggle" className="fixed left-4 top-4 z-50 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-[#0f172a] text-white shadow-lg focus-within:ring-4 focus-within:ring-sky-300 lg:hidden">
         <Menu className="h-5 w-5" aria-hidden="true" />
-        <span className="sr-only">Open navigation menu</span>
-      </summary>
-      <aside className="absolute left-0 top-14 hidden h-[calc(100dvh-4.5rem)] w-[280px] flex-col border-r border-sky-800 bg-[#0f172a] text-sky-50 shadow-2xl group-open:flex lg:sticky lg:top-0 lg:flex lg:h-screen lg:shadow-none">
+        <span className="sr-only">Toggle navigation menu</span>
+      </label>
+      <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-[280px] flex-col border-r border-sky-800 bg-[#0f172a] text-sky-50 shadow-2xl peer-checked:flex lg:sticky lg:z-auto lg:flex lg:h-screen lg:shadow-none">
       <div className="border-b border-sky-800/80 p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/90 text-sm font-bold text-white shadow-lg shadow-sky-900/20">
@@ -181,6 +182,6 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
         <p className="mt-1 text-xs text-sky-200/80">{municipality}</p>
       </div>
       </aside>
-    </details>
+    </div>
   );
 }
