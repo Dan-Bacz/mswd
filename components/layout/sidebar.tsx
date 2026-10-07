@@ -18,6 +18,21 @@ const officerLinks = [
   { href: "/admin/settings", label: "My Profile", icon: UserCircle2 },
 ];
 
+function getCategoryDisplayName(name: string) {
+  const normalizedName = name.trim().toLowerCase();
+
+  if (normalizedName.startsWith("assistance to individuals in crisis situation")) return "AICS";
+  if (normalizedName === "children in need of special protection") return "CICL-CNSP";
+  if (normalizedName === "disaster-affected families/individuals") return "DAFI";
+  if (normalizedName.startsWith("person with disabilities")) return "PWD";
+  if (normalizedName === "senior citizens") return "Senior Citizens";
+  if (normalizedName === "solo parents") return "Solo Parents";
+  if (normalizedName === "vawc victims") return "VAWC";
+  if (normalizedName.startsWith("women especially in difficult circumstances")) return "WEDC";
+
+  return name;
+}
+
 export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   const links = role === "ADMIN" ? adminLinks : officerLinks;
   const settings = await db.systemSetting.findMany({
@@ -129,9 +144,10 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
                     <Link
                       key={category.id}
                       href={`/admin/beneficiaries?category=${encodeURIComponent(category.name)}`}
+                      title={category.name}
                       className="flex items-center rounded-lg px-2.5 py-1.5 text-xs text-sky-100/80 transition hover:bg-sky-800/70 hover:text-white"
                     >
-                      {category.name}
+                      {getCategoryDisplayName(category.name)}
                     </Link>
                   ))}
                 </div>
