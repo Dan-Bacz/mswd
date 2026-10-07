@@ -1,5 +1,6 @@
 import { createBeneficiaryAction } from "@/app/actions/mswd";
 import { db } from "@/lib/db";
+import { shouldShowBeneficiaryCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export default async function BeneficiariesPage({
       select: { id: true, name: true, userCategories: { select: { categoryId: true } } },
     }),
   ]);
+  const availableCategories = categories.filter((category) => shouldShowBeneficiaryCategory(category.name));
 
   return (
     <div className="space-y-6">
@@ -78,7 +80,7 @@ export default async function BeneficiariesPage({
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Category</label>
                 <select name="categoryId" className="w-full rounded-xl border border-slate-300 px-3 py-2.5" required>
-                  {categories.map((category) => (
+                  {availableCategories.map((category) => (
                     <option key={category.id} value={category.id}>{category.name}</option>
                   ))}
                 </select>

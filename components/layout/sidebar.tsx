@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BarChart3, Briefcase, ChevronDown, FileText, FolderTree, LogOut, Menu, Settings, ShieldCheck, UserCircle2, Users, ClipboardList } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 import { db } from "@/lib/db";
-import { cn } from "@/lib/utils";
+import { cn, shouldShowBeneficiaryCategory } from "@/lib/utils";
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -41,7 +41,9 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   const municipality =
     settings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
     "Municipal Government";
-  const categories = role === "ADMIN" ? await db.category.findMany({ orderBy: { name: "asc" } }) : [];
+  const categories = role === "ADMIN"
+    ? (await db.category.findMany({ orderBy: { name: "asc" } })).filter((category) => shouldShowBeneficiaryCategory(category.name))
+    : [];
 
   if (role === "OFFICER") {
     return (

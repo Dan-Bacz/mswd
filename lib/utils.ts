@@ -18,3 +18,14 @@ export function getInitials(name: string) {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
+
+export function shouldShowBeneficiaryCategory(name: string) {
+  const normalizedName = name.trim().toLowerCase();
+
+  return !(
+    normalizedName === "juvenile" ||
+    normalizedName.startsWith("eccd") ||
+    normalizedName === "women" ||
+    normalizedName.includes("maifip")
+  );
+}
