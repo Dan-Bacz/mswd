@@ -3,9 +3,17 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default async function BeneficiariesPage() {
+export default async function BeneficiariesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ category?: string }> | { category?: string };
+}) {
+  const params = await Promise.resolve(searchParams ?? {});
+  const selectedCategory = typeof params.category === "string" ? params.category : undefined;
+
   const [beneficiaries, categories, officers] = await Promise.all([
     db.beneficiary.findMany({
+      where: selectedCategory ? { category: { name: selectedCategory } } : undefined,
       include: { category: true, assignedOfficer: true },
       orderBy: { registrationDate: "desc" },
       take: 25,
