@@ -3,7 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema, caseSchema } from "@/lib/validation";
+
+const CASE_STATUSES = [
+  "NEW",
+  "PENDING",
+  "UNDER_ASSESSMENT",
+  "ACTIVE",
+  "FOR_REFERRAL",
+  "FOR_FOLLOW_UP",
+  "RESOLVED",
+  "CLOSED",
+  "CANCELLED",
+] as const;
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -175,4 +188,62 @@ export async function createCaseAction(formData: FormData) {
   revalidatePath("/admin/cases");
   revalidatePath("/officer/cases");
   redirect("/admin/cases");
+}
+
+export async function updateCaseStatusAction(formData: FormData) {
+  const user = await requireAuth();
+
+  const caseId = String(formData.get("caseId") ?? "");
+  const status = String(formData.get("status") ?? "");
+
+  if (!caseId || !CASE_STATUSES.includes(status as (typeof CASE_STATUSES)[number])) {
+    throw new Error("Invalid case update.");
+  }
+
+  const nextStatus = status as (typeof CASE_STATUSES)[number];
+  const caseRecord = await db.case.findUnique({ where: { id: caseId } });
+
+  if (!caseRecord) {
+    throw new Error("Case was not found.");
+  }
+
+  if (user.role !== "ADMIN") {
+    const isAssignedOfficer = caseRecord.assignedOfficerId === user.id;
+    const hasCategoryAccess = user.categoryIds.includes(caseRecord.categoryId);
+
+    if (!isAssignedOfficer || !hasCategoryAccess) {
+      throw new Error("You are not authorized to update this case.");
+    }
+  }
+
+  if (caseRecord.status === nextStatus) {
+    return;
+  }
+
+  const closing = nextStatus === "CLOSED" || nextStatus === "CANCELLED";
+
+  await db.$transaction([
+    db.case.update({
+      where: { id: caseId },
+      data: {
+        status: nextStatus,
+        dateClosed: closing ? new Date() : null,
+      },
+    }),
+    db.caseHistory.create({
+      data: {
+        caseId,
+        userId: user.id,
+        event: "STATUS_UPDATED",
+        description: `${user.name} changed status from ${caseRecord.status} to ${nextStatus}.`,
+      },
+    }),
+  ]);
+
+  revalidatePath("/admin/cases");
+  revalidatePath("/officer/cases");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/officer/dashboard");
+  revalidatePath(`/admin/categories/${caseRecord.categoryId}`);
+  revalidatePath(`/officer/categories/${caseRecord.categoryId}`);
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { createOfficerAction } from "@/app/actions/auth";
 
@@ -64,6 +65,7 @@ export default async function OfficersPage() {
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Email</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Authorized categories</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -73,6 +75,14 @@ export default async function OfficersPage() {
                     <td className="px-4 py-3 text-slate-600">{officer.email}</td>
                     <td className="px-4 py-3 text-slate-600">
                       {officer.userCategories.map((assignment) => assignment.category.name).join(", ") || "None"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/officers/${officer.id}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                      >
+                        Manage
+                      </Link>
                     </td>
                   </tr>
                 ))}

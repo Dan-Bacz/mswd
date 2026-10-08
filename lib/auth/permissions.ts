@@ -17,8 +17,14 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     return null;
   }
 
+  const assignments = await db.userCategory.findMany({
+    where: { userId: session.id },
+    select: { categoryId: true },
+  });
+
   return {
     ...session,
+    categoryIds: assignments.map((item) => item.categoryId),
   };
 }
 

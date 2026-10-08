@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { createCategoryAction } from "@/app/actions/auth";
 
@@ -40,6 +41,7 @@ export default async function CategoriesPage() {
                 <tr>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Description</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -47,6 +49,14 @@ export default async function CategoriesPage() {
                   <tr key={category.id}>
                     <td className="px-4 py-3 font-medium text-slate-900">{category.name}</td>
                     <td className="px-4 py-3 text-slate-600">{category.description ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/categories/${category.id}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
+                      >
+                        Open dashboard
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

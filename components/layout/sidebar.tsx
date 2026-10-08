@@ -1,32 +1,64 @@
-import Link from "next/link";
-import { BarChart3, Briefcase, FileText, FolderTree, LogOut, Menu, Settings, ShieldCheck, UserCircle2, Users, ClipboardList } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 import { db } from "@/lib/db";
-import { cn } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth/permissions";
+import { NavLinks, type NavLinkItem } from "@/components/layout/nav-links";
 
-const adminLinks = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/admin/cases", label: "Cases", icon: Briefcase },
-  { href: "/admin/reports", label: "Reports", icon: FileText },
+const adminLinks: NavLinkItem[] = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/admin/cases", label: "Cases", icon: "cases" },
+  { href: "/admin/reports", label: "Reports", icon: "reports" },
+  { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
+  { href: "/admin/officers", label: "Users", icon: "users" },
+  { href: "/admin/categories", label: "Categories", icon: "categories" },
+  { href: "/admin/settings", label: "Settings", icon: "settings" },
 ];
 
-const officerLinks = [
-  { href: "/officer/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/officer/beneficiaries", label: "My Beneficiaries", icon: Users },
-  { href: "/officer/cases", label: "My Cases", icon: ClipboardList },
-  { href: "/officer/reports", label: "Reports", icon: FileText },
-  { href: "/admin/settings", label: "My Profile", icon: UserCircle2 },
+const officerLinks: NavLinkItem[] = [
+  { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/officer/beneficiaries", label: "My Beneficiaries", icon: "beneficiaries" },
+  { href: "/officer/cases", label: "My Cases", icon: "tasks" },
+  { href: "/officer/reports", label: "Reports", icon: "reports" },
+  { href: "/admin/settings", label: "My Profile", icon: "profile" },
 ];
 
 export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
-  const links = role === "ADMIN" ? adminLinks : officerLinks;
-  const settings = await db.systemSetting.findMany({
-    select: { key: true, value: true },
-  });
+  const [settings, currentUser] = await Promise.all([
+    db.systemSetting.findMany({
+      select: { key: true, value: true },
+    }),
+    getCurrentUser(),
+  ]);
+
   const municipality =
     settings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
     "Municipal Government";
+
   if (role === "OFFICER") {
+    const assignedCategories = currentUser
+      ? await db.category.findMany({
+          where: { userCategories: { some: { userId: currentUser.id } } },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        })
+      : [];
+
+    const sections = [
+      { items: officerLinks },
+      ...(assignedCategories.length > 0
+        ? [
+            {
+              title: "My category dashboards",
+              items: assignedCategories.map<NavLinkItem>((category) => ({
+                href: `/officer/categories/${category.id}`,
+                label: category.name,
+                icon: "categories",
+              })),
+            },
+          ]
+        : []),
+    ];
+
     return (
       <aside className="w-full max-w-[260px] shrink-0 border-r border-slate-200 bg-sky-950 text-sky-50">
         <div className="border-b border-sky-800 p-6">
@@ -39,22 +71,7 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
           </div>
         </div>
         <nav className="p-4">
-          <ul className="space-y-1">
-            {links.map(({ href, label, icon: Icon }) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition hover:bg-sky-800/80",
-                    href.includes("dashboard") && "bg-sky-800/90",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <NavLinks sections={sections} className="space-y-1" activeClassName="bg-sky-800/90" />
           <div className="mt-6 border-t border-sky-800 pt-4">
             <form action={logoutAction}>
               <button type="submit" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-sky-100 transition hover:bg-sky-800/80">
@@ -89,57 +106,11 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="space-y-1.5">
-          {links.map(({ href, label, icon: Icon }) => (
-            <li key={href}>
-              <Link
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80",
-                  href.includes("dashboard") && "bg-sky-800/90 text-white"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            </li>
-          ))}
-
-          {role === "ADMIN" && (
-            <li>
-              <Link
-                href="/admin/beneficiaries"
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80"
-              >
-                <Users className="h-4 w-4" />
-                Beneficiaries
-              </Link>
-            </li>
-          )}
-
-          {role === "ADMIN" && (
-            <>
-              <li>
-                <Link href="/admin/officers" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80">
-                  <ShieldCheck className="h-4 w-4" />
-                  Users
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/categories" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80">
-                  <FolderTree className="h-4 w-4" />
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin/settings" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
+        <NavLinks
+          sections={[{ items: adminLinks }]}
+          className="space-y-1.5"
+          activeClassName="bg-sky-800/90 text-white"
+        />
 
         <div className="mt-6 border-t border-sky-800 pt-4">
           <form action={logoutAction}>
