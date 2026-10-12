@@ -1,4 +1,5 @@
 import { LogOut, Menu } from "lucide-react";
+import Image from "next/image";
 import { logoutAction } from "@/app/actions/auth";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/permissions";
@@ -95,12 +96,13 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
       <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-[280px] flex-col border-r border-sky-800 bg-[#0f172a] text-sky-50 shadow-2xl peer-checked:flex lg:sticky lg:z-auto lg:flex lg:h-screen lg:shadow-none">
       <div className="border-b border-sky-800/80 p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/90 text-sm font-bold text-white shadow-lg shadow-sky-900/20">
-            MS
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-lg shadow-sky-950/30">
+            <Image src="/images/logo.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-sky-300">Municipal</p>
-            <h1 className="text-xl font-bold tracking-wide">MSWD</h1>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-sky-300">Mahayag</p>
+            <h1 className="text-lg font-bold tracking-wide text-white">MSWD</h1>
+            <p className="text-[10px] text-sky-200/75">Management System</p>
           </div>
         </div>
       </div>
@@ -109,7 +111,7 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
         <NavLinks
           sections={[{ items: adminLinks }]}
           className="space-y-1.5"
-          activeClassName="bg-sky-800/90 text-white"
+          activeClassName="bg-gradient-to-r from-[#176bc5] to-[#0d4f9b] text-white shadow-md shadow-blue-950/30 ring-1 ring-white/10"
         />
 
         <div className="mt-6 border-t border-sky-800 pt-4">

@@ -3,13 +3,11 @@ import {
   AlertCircle,
   ArrowRight,
   BriefcaseBusiness,
-  CheckCircle2,
   ChevronRight,
-  CircleDashed,
+  CalendarDays,
   FileText,
   Landmark,
   ShieldCheck,
-  TrendingUp,
   Users,
   UserRound,
 } from "lucide-react";
@@ -122,6 +120,20 @@ export default async function AdminDashboardPage() {
   const municipality =
     systemSettings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
     "Municipal Government";
+  const now = new Date();
+  const manilaHour = Number(new Intl.DateTimeFormat("en-PH", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: "Asia/Manila",
+  }).format(now));
+  const greeting = manilaHour < 12 ? "Good Morning," : manilaHour < 18 ? "Good Afternoon," : "Good Evening,";
+  const currentDate = new Intl.DateTimeFormat("en-PH", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Manila",
+  }).format(now);
 
   const quickActions = [
     { label: "Add New Beneficiary", href: "/admin/beneficiaries", icon: Users },
@@ -138,56 +150,34 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-[30px] border border-sky-100 bg-white shadow-[0_18px_50px_-28px_rgba(15,23,42,0.35)]">
-        <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="p-6 lg:p-8">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700">Good morning,</p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">Administrator</h1>
-            <p className="mt-3 max-w-lg text-sm text-slate-600">
+        <div
+          className="relative isolate min-h-[220px] overflow-hidden bg-[#0b2e59] bg-cover bg-center px-5 py-6 text-white sm:min-h-[238px] sm:px-8 sm:py-7 lg:px-10"
+          style={{
+            backgroundImage: "linear-gradient(90deg, rgba(7,35,73,0.92) 0%, rgba(9,55,108,0.84) 52%, rgba(9,55,108,0.35) 100%), url('/images/background.png')",
+          }}
+        >
+          <div className="pointer-events-none absolute -right-10 -top-32 -z-10 h-72 w-72 rounded-full border border-white/15" />
+          <div className="pointer-events-none absolute -right-1 -top-24 -z-10 h-56 w-56 rounded-full border border-white/10" />
+          <div className="relative max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.17em] text-blue-100">{greeting}</p>
+            <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">Administrator</h1>
+            <p className="mt-2 max-w-xl text-sm text-white/90 sm:text-base">
               Here&apos;s what&apos;s happening with your MSWD system today.
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700">
-                <CheckCircle2 className="h-4 w-4" />
-                {beneficiaries} beneficiaries
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
-                <TrendingUp className="h-4 w-4" />
-                {activeCases} active cases
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
-                <CircleDashed className="h-4 w-4" />
-                {pendingCases} pending
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden bg-sky-50/80 p-6 lg:flex lg:items-center lg:justify-center">
-            <div className="relative h-52 w-full max-w-[320px] rounded-[28px] border border-sky-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(37,99,235,0.65)]">
-              <div className="absolute inset-x-5 top-4 h-16 rounded-2xl bg-sky-50" />
-              <div className="relative mt-12 flex items-end gap-3">
-                <div className="h-20 w-16 rounded-t-[18px] bg-sky-200" />
-                <div className="h-28 w-16 rounded-t-[18px] bg-sky-300" />
-                <div className="h-24 w-16 rounded-t-[18px] bg-sky-400" />
-                <div className="h-16 w-16 rounded-t-[18px] bg-sky-100" />
-              </div>
-              <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-2xl border border-sky-100 bg-slate-50 px-3 py-2">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Location</p>
-                  <p className="text-sm font-semibold text-slate-800">{municipality}</p>
-                </div>
-                <Landmark className="h-5 w-5 text-sky-600" />
-              </div>
+            <p className="mt-3 text-xs font-medium text-blue-100 sm:text-sm">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/85 sm:text-sm">
+              <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4" />{currentDate}</span>
+              <span className="inline-flex items-center gap-2"><Landmark className="h-4 w-4" />{municipality}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Total beneficiaries" value={String(beneficiaries)} hint="Live beneficiary registry" icon={<Users className="h-5 w-5" />} />
-        <MetricCard label="Active cases" value={String(activeCases)} hint="Open and active workstreams" icon={<BriefcaseBusiness className="h-5 w-5" />} />
-        <MetricCard label="Pending cases" value={String(pendingCases)} hint="Awaiting action" icon={<AlertCircle className="h-5 w-5" />} />
-        <MetricCard label="Total officers" value={String(officers)} hint="Authorized field personnel" icon={<UserRound className="h-5 w-5" />} />
+        <MetricCard label="Total beneficiaries" value={String(beneficiaries)} hint="Live beneficiary registry" icon={<Users className="h-5 w-5" />} accent="blue" />
+        <MetricCard label="Active cases" value={String(activeCases)} hint="Open and active workstreams" icon={<BriefcaseBusiness className="h-5 w-5" />} accent="green" />
+        <MetricCard label="Pending cases" value={String(pendingCases)} hint="Awaiting action" icon={<AlertCircle className="h-5 w-5" />} accent="amber" />
+        <MetricCard label="Total officers" value={String(officers)} hint="Authorized field personnel" icon={<UserRound className="h-5 w-5" />} accent="violet" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
@@ -264,8 +254,8 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.45fr_0.55fr]">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,0.55fr)]">
+        <div className="min-w-0 rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h3 className="text-xl font-semibold text-slate-900">Recent Cases</h3>
             <Link href="/admin/cases" className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-800">
@@ -273,7 +263,7 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="min-w-0 overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500">
@@ -309,7 +299,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
             <h3 className="text-xl font-semibold text-slate-900">Quick Actions</h3>
             <div className="mt-4 space-y-2">
