@@ -53,8 +53,8 @@ Use .env.example as the template. Required values include:
 - AUTH_SECRET
 - MSWD_SETUP_KEY
 - APP_URL
-- RESEND_API_KEY (required for officer approval emails)
-- EMAIL_FROM (a sender address verified with Resend)
+- SMTP_HOST, SMTP_PORT, SMTP_USER, and SMTP_PASSWORD (required for officer approval emails)
+- EMAIL_FROM (the sender address authorized by your SMTP provider)
 
 ## Prisma setup
 
@@ -88,16 +88,35 @@ The seed routine creates the required roles and the core categories for the MSWD
 
 ## Officer registration and approval
 
-Officers can register from the login page. New registrations remain pending and cannot sign in until an administrator approves them from Officer management. Approval sends an email through Resend and activates the account; administrators can then assign the officer's categories.
+Officers can register from the login page. New registrations remain pending and cannot sign in until an administrator approves them from Officer management. Approval sends an email through the configured SMTP server and activates the account; administrators can then assign the officer's categories.
 
-Configure `RESEND_API_KEY` with a Resend API key and `EMAIL_FROM` with a sender address verified in Resend. Set `APP_URL` to the deployed application's absolute URL so the approval message contains the correct login link. Apply the pending-approval migration with `npx prisma migrate deploy` in deployed environments.
+Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` with the SMTP details from your email provider. Use an `EMAIL_FROM` sender address authorized by that provider. Set `APP_URL` to the deployed application's absolute URL so the approval message contains the correct login link. Apply the pending-approval migration with `npx prisma migrate deploy` in deployed environments.
 
 ## Vercel deployment
 
 1. Push code to GitHub.
 2. Import the repository into Vercel.
-3. Add the environment variables from .env.example.
-4. Deploy the app.
+3. Open the Vercel project and go to **Settings → Environment Variables**.
+4. Add the following variables for **Production** (and Preview/Development too, if those deployments need them):
+
+   | Name | Value |
+   | --- | --- |
+   | `DATABASE_URL` | PostgreSQL connection string from your database provider |
+   | `AUTH_SECRET` | A securely generated random secret; keep it private |
+   | `MSWD_SETUP_KEY` | A separate private key used for initial administrator setup |
+   | `APP_URL` | The deployed app's full base URL, e.g. `https://your-app.vercel.app` (no `/login`) |
+   | `SMTP_HOST` | SMTP hostname from your email provider |
+   | `SMTP_PORT` | Usually `587` for STARTTLS or `465` for SSL |
+   | `SMTP_USER` | SMTP username from your email provider |
+   | `SMTP_PASSWORD` | SMTP password or provider-issued app password |
+   | `EMAIL_FROM` | Sender address authorized by your SMTP provider |
+
+   Add `DIRECT_URL` only if your database provider supplies a separate direct connection string for migrations. SMTP credentials and database URLs must be entered as Vercel environment-variable values—do not commit them to `.env.example` or source control.
+
+5. Click **Save**, then redeploy so the deployment receives the new variables. If you change a variable later, redeploy again.
+6. Apply the pending-officer-approval database migration with `npx prisma migrate deploy` using the production database before using officer registration.
+
+Vercel does not provide an SMTP mailbox. Get the SMTP host, port, username, and password from an email provider that permits SMTP connections from Vercel, and ensure `EMAIL_FROM` is an approved sender address with that provider.
 
 ## Initial administrator setup
 
@@ -114,7 +133,7 @@ Set a strong MSWD_SETUP_KEY in the environment, then visit /setup and create the
 ## Production deployment checklist
 
 - Configure DATABASE_URL in Vercel
-- Configure AUTH_SECRET, MSWD_SETUP_KEY, and APP_URL
+- Configure AUTH_SECRET, MSWD_SETUP_KEY, APP_URL, and the SMTP variables in Vercel
 - Run Prisma migration on production
 - Validate admin and officer routes
 - Confirm category restrictions are enforced on protected resources

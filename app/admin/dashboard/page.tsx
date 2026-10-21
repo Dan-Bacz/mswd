@@ -1,132 +1,123 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
-  AlertCircle,
+  Accessibility,
   ArrowRight,
+  Baby,
   BriefcaseBusiness,
-  ChevronRight,
   CalendarDays,
+  ChevronRight,
   FileText,
+  HandHeart,
+  HeartHandshake,
   Landmark,
   ShieldCheck,
   Users,
   UserRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { db } from "@/lib/db";
-import { MetricCard } from "@/components/ui/metric-card";
+import { requireAdmin } from "@/lib/auth/permissions";
+import { BeneficiaryDistributionChart, ProgramStatisticsChart } from "@/components/admin/dashboard-charts";
 
-const categoryPalette = [
-  "#2563EB",
-  "#10B981",
-  "#8B5CF6",
-  "#F59E0B",
-  "#EF4444",
-  "#14B8A6",
-  "#EC4899",
-  "#3B82F6",
-  "#22C55E",
-  "#F97316",
-  "#A855F7",
-  "#F43F5E",
-  "#0EA5E9",
-];
+const chartPalette = ["#0645AD", "#E31837", "#FFD21F", "#58A5E8", "#8B9CB4", "#168653"];
 
-function buildDonutGradient(categories: Array<{ count: number; color: string }>, total: number) {
-  if (total === 0) {
-    return "conic-gradient(#e2e8f0 0 100%)";
+function categoryAppearance(name: string, index: number): { icon: LucideIcon; color: string } {
+  const normalized = name.toLowerCase();
+
+  if (normalized.includes("senior") || normalized.includes("citizen")) {
+    return { icon: UserRound, color: "#D9A900" };
+  }
+  if (normalized.includes("pwd") || normalized.includes("disab")) {
+    return { icon: Accessibility, color: "#E31837" };
+  }
+  if (normalized.includes("child") || normalized.includes("youth") || normalized.includes("juvenile")) {
+    return { icon: Baby, color: "#0645AD" };
+  }
+  if (normalized.includes("solo parent") || normalized.includes("parent")) {
+    return { icon: Users, color: "#168653" };
+  }
+  if (normalized.includes("indigenous") || normalized.includes("4ps")) {
+    return { icon: HandHeart, color: "#58A5E8" };
   }
 
-  let start = 0;
-  const segments = categories
-    .filter((category) => category.count > 0)
-    .map((category) => {
-      const segment = (category.count / total) * 100;
-      const end = start + segment;
-      const background = `${category.color} ${start}% ${end}%`;
-      start = end;
-      return background;
-    })
-    .join(", ");
-
-  return `conic-gradient(${segments})`;
+  return {
+    icon: [BriefcaseBusiness, HeartHandshake, ShieldCheck, Landmark][index % 4],
+    color: chartPalette[index % chartPalette.length],
+  };
 }
 
-function getCaseStatusClassName(status: string) {
-  const safeStatus = status?.toUpperCase() ?? "DEFAULT";
-
-  switch (safeStatus) {
-    case "ACTIVE":
-      return "bg-emerald-100 text-emerald-700";
-    case "PENDING":
-      return "bg-amber-100 text-amber-700";
-    case "CLOSED":
-      return "bg-slate-200 text-slate-700";
-    case "UNDER_ASSESSMENT":
-      return "bg-sky-100 text-sky-700";
-    case "FOR_REFERRAL":
-      return "bg-violet-100 text-violet-700";
-    case "FOR_FOLLOW_UP":
-      return "bg-orange-100 text-orange-700";
-    case "RESOLVED":
-      return "bg-emerald-100 text-emerald-700";
-    default:
-      return "bg-slate-100 text-slate-700";
-  }
-}
-
-function formatDate(value: Date | string) {
+function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-PH", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(value));
+    timeZone: "Asia/Manila",
+  }).format(value);
+}
+
+function caseStatusClass(status: string) {
+  switch (status) {
+    case "ACTIVE":
+    case "RESOLVED":
+      return "bg-emerald-50 text-emerald-700";
+    case "PENDING":
+      return "bg-amber-50 text-amber-800";
+    case "UNDER_ASSESSMENT":
+      return "bg-blue-50 text-blue-700";
+    case "FOR_REFERRAL":
+      return "bg-violet-50 text-violet-700";
+    case "FOR_FOLLOW_UP":
+      return "bg-orange-50 text-orange-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
 }
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [beneficiaries, activeCases, pendingCases, officers, categories, thisMonthBeneficiaries, caseCategoryCounts, recentCases, recentActivity, systemSettings] = await Promise.all([
-    db.beneficiary.count({}),
+  const user = await requireAdmin();
+  const [
+    beneficiaries,
+    activeCases,
+    pendingCases,
+    activeServices,
+    categories,
+    recentCases,
+    recentActivity,
+    systemSettings,
+  ] = await Promise.all([
+    db.beneficiary.count(),
     db.case.count({ where: { status: { in: ["ACTIVE", "UNDER_ASSESSMENT", "FOR_FOLLOW_UP", "FOR_REFERRAL"] } } }),
     db.case.count({ where: { status: "PENDING" } }),
-    db.user.count({ where: { role: { name: "OFFICER" } } }),
-    db.category.findMany({ orderBy: { name: "asc" } }),
-    db.beneficiary.count({ where: { createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } }),
-    db.case.groupBy({
-      by: ["categoryId"],
-      _count: { _all: true },
+    db.serviceType.count({ where: { isActive: true } }),
+    db.category.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { beneficiaries: true, cases: true } } },
     }),
     db.case.findMany({
-      include: { beneficiary: true, category: true },
+      include: { category: { select: { name: true } } },
       orderBy: { dateOpened: "desc" },
       take: 5,
     }),
     db.auditLog.findMany({
-      include: { user: true },
+      include: { user: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
-    db.systemSetting.findMany({
-      select: { key: true, value: true },
-    }),
+    db.systemSetting.findMany({ select: { key: true, value: true } }),
   ]);
 
-  const categoryMap = new Map(caseCategoryCounts.map((entry) => [entry.categoryId, entry._count._all]));
-  const categoryStats = categories.map((category, index) => ({
-    ...category,
-    count: categoryMap.get(category.id) ?? 0,
-    color: categoryPalette[index % categoryPalette.length],
-  }));
-  const totalCaseCount = categoryStats.reduce((sum, item) => sum + item.count, 0);
   const municipality =
-    systemSettings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
-    "Municipal Government";
+    systemSettings.find((setting) =>
+      ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()),
+    )?.value ?? "Municipal Government";
   const now = new Date();
-  const manilaHour = Number(new Intl.DateTimeFormat("en-PH", {
-    hour: "numeric",
-    hour12: false,
-    timeZone: "Asia/Manila",
-  }).format(now));
-  const greeting = manilaHour < 12 ? "Good Morning," : manilaHour < 18 ? "Good Afternoon," : "Good Evening,";
+  const manilaHour = Number(
+    new Intl.DateTimeFormat("en-PH", { hour: "numeric", hour12: false, timeZone: "Asia/Manila" }).format(now),
+  );
+  const greeting = manilaHour < 12 ? "Good morning" : manilaHour < 18 ? "Good afternoon" : "Good evening";
   const currentDate = new Intl.DateTimeFormat("en-PH", {
     weekday: "long",
     month: "long",
@@ -134,237 +125,226 @@ export default async function AdminDashboardPage() {
     year: "numeric",
     timeZone: "Asia/Manila",
   }).format(now);
-
+  const categoryStats = categories.map((category, index) => ({
+    name: category.name,
+    beneficiaries: category._count.beneficiaries,
+    cases: category._count.cases,
+    color: categoryAppearance(category.name, index).color,
+  }));
   const quickActions = [
-    { label: "Add New Beneficiary", href: "/admin/beneficiaries", icon: Users },
-    { label: "Create New Case", href: "/admin/cases", icon: BriefcaseBusiness },
-    { label: "Generate Report", href: "/admin/reports", icon: FileText },
-    { label: "Manage Users", href: "/admin/officers", icon: ShieldCheck },
+    { label: "Register beneficiary", href: "/admin/beneficiaries", icon: Users },
+    { label: "Manage cases", href: "/admin/cases", icon: BriefcaseBusiness },
+    { label: "Open reports", href: "/admin/reports", icon: FileText },
+    { label: "Manage users", href: "/admin/officers", icon: ShieldCheck },
+  ];
+  const metrics = [
+    { label: "Total beneficiaries", value: beneficiaries, icon: Users, color: "#0645AD", tint: "#EEF4FF" },
+    { label: "Active cases", value: activeCases, icon: BriefcaseBusiness, color: "#168653", tint: "#ECF8F1" },
+    { label: "Pending cases", value: pendingCases, icon: CalendarDays, color: "#D09A00", tint: "#FFF8DE" },
+    { label: "Available services", value: activeServices, icon: HandHeart, color: "#E31837", tint: "#FFF0F2" },
   ];
 
-  const donutGradient = buildDonutGradient(
-    categoryStats.map((category) => ({ count: category.count, color: category.color })),
-    totalCaseCount,
-  );
-
   return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-[30px] border border-sky-100 bg-white shadow-[0_18px_50px_-28px_rgba(15,23,42,0.35)]">
-        <div
-          className="relative isolate min-h-[220px] overflow-hidden bg-[#0b2e59] bg-cover bg-center px-5 py-6 text-white sm:min-h-[238px] sm:px-8 sm:py-7 lg:px-10"
-          style={{
-            backgroundImage: "linear-gradient(90deg, rgba(7,35,73,0.92) 0%, rgba(9,55,108,0.84) 52%, rgba(9,55,108,0.35) 100%), url('/images/background.png')",
-          }}
-        >
-          <div className="pointer-events-none absolute -right-10 -top-32 -z-10 h-72 w-72 rounded-full border border-white/15" />
-          <div className="pointer-events-none absolute -right-1 -top-24 -z-10 h-56 w-56 rounded-full border border-white/10" />
-          <div className="relative max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.17em] text-blue-100">{greeting}</p>
-            <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">Administrator</h1>
-            <p className="mt-2 max-w-xl text-sm text-white/90 sm:text-base">
-              Here&apos;s what&apos;s happening with your MSWD system today.
-            </p>
-            <p className="mt-3 text-xs font-medium text-blue-100 sm:text-sm">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/85 sm:text-sm">
-              <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4" />{currentDate}</span>
-              <span className="inline-flex items-center gap-2"><Landmark className="h-4 w-4" />{municipality}</span>
+    <div className="mx-auto max-w-[1500px] space-y-5">
+      <h1 className="sr-only">Administrator dashboard</h1>
+
+      <section className="relative isolate overflow-hidden rounded-xl border border-[#D9E5F5] bg-[#EAF2FC] px-5 py-5 sm:px-7 sm:py-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-52 overflow-hidden sm:block" aria-hidden="true">
+          <span className="absolute -right-5 top-0 h-full w-14 -skew-x-[25deg] bg-[#0645AD]/10" />
+          <span className="absolute right-12 top-0 h-full w-8 -skew-x-[25deg] bg-[#E31837]/15" />
+          <span className="absolute right-24 top-0 h-full w-5 -skew-x-[25deg] bg-[#FFD21F]/50" />
+        </div>
+        <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white bg-white p-1.5 shadow-sm">
+              <Image src="/images/logo.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold capitalize text-[#0645AD]">{greeting}, {user.name.split(" ")[0]}!</p>
+              <h2 className="mt-1 text-xl font-bold text-[#12335F] sm:text-2xl">MSWD Dashboard</h2>
+              <p className="mt-1 text-xs text-[#536E92] sm:text-sm">Here&apos;s the overview of programs and services in {municipality}.</p>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-2 text-xs font-medium text-[#405B80] sm:self-end sm:pb-1">
+            <CalendarDays className="h-4 w-4 text-[#0645AD]" />
+            <time>{currentDate}</time>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Total beneficiaries" value={String(beneficiaries)} hint="Live beneficiary registry" icon={<Users className="h-5 w-5" />} accent="blue" />
-        <MetricCard label="Active cases" value={String(activeCases)} hint="Open and active workstreams" icon={<BriefcaseBusiness className="h-5 w-5" />} accent="green" />
-        <MetricCard label="Pending cases" value={String(pendingCases)} hint="Awaiting action" icon={<AlertCircle className="h-5 w-5" />} accent="amber" />
-        <MetricCard label="Total officers" value={String(officers)} hint="Authorized field personnel" icon={<UserRound className="h-5 w-5" />} accent="violet" />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h3 className="text-xl font-semibold text-slate-900">Cases by Category</h3>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              {categories.length} categories
+      <section aria-label="System summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(({ label, value, icon: Icon, color, tint }) => (
+          <div key={label} className="flex min-h-[112px] items-center justify-between rounded-lg border border-[#D9E5F5] border-t-2 bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)]" style={{ borderTopColor: color }}>
+            <div>
+              <p className="text-xs font-medium text-[#6480A9]">{label}</p>
+              <p className="mt-2 text-3xl font-bold leading-none text-[#173B70]">{value.toLocaleString()}</p>
+            </div>
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg" style={{ backgroundColor: tint, color }}>
+              <Icon className="h-5 w-5" aria-hidden="true" />
             </span>
           </div>
+        ))}
+      </section>
 
-          <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-            <div className="flex items-center justify-center">
-              <div
-                className="relative flex h-44 w-44 items-center justify-center rounded-full shadow-inner shadow-slate-200/80"
-                style={{ background: donutGradient }}
-              >
-                <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-white shadow-inner shadow-slate-200/80">
-                  <span className="text-2xl font-bold text-slate-900">{totalCaseCount}</span>
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Cases</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {categoryStats.map((category) => {
-                const percentage = totalCaseCount > 0 ? Math.round((category.count / totalCaseCount) * 100) : 0;
-
-                return (
-                  <div key={category.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                    <div className="flex items-center gap-3">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: category.color }} />
-                      <span className="text-sm font-medium text-slate-700">{category.name}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-right">
-                      <span className="text-sm font-semibold text-slate-900">{category.count}</span>
-                      <span className="min-w-10 text-xs font-medium text-slate-500">{percentage}%</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      <section className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-[#173B70]">Programs &amp; Services</h2>
+            <span className="mt-2 block h-1 w-12 rounded-full bg-[#FFD21F]" />
           </div>
+          <Link href="/admin/categories" className="inline-flex items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
+            Manage programs <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
-
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-          <h3 className="text-xl font-semibold text-slate-900">Current Flow</h3>
-
-          <div className="mt-5 overflow-hidden rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="h-11 w-11 rounded-2xl bg-white shadow-sm ring-1 ring-emerald-100" />
-              <div className="flex-1 space-y-2">
-                <div className="h-2.5 w-2/3 rounded-full bg-emerald-200" />
-                <div className="h-2.5 w-1/2 rounded-full bg-emerald-100" />
-              </div>
-            </div>
-            <div className="mt-5 grid grid-cols-3 gap-2">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-12 rounded-2xl ${index % 2 === 0 ? "bg-emerald-100" : "bg-white"}`}
-                />
-              ))}
-            </div>
+        {categories.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {categories.map((category, index) => {
+              const appearance = categoryAppearance(category.name, index);
+              const Icon = appearance.icon;
+              return (
+                <Link
+                  key={category.id}
+                  href={`/admin/categories/${category.id}`}
+                  className="group flex min-h-[112px] items-start gap-3 rounded-md border border-[#D9E5F5] border-t-2 p-3.5 transition hover:bg-[#F8FAFE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
+                  style={{ borderTopColor: appearance.color }}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F2F6FC]" style={{ color: appearance.color }}>
+                    <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-[#173B70]">{category.name}</span>
+                    <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-[#6480A9]">
+                      {category.description || "View program beneficiaries and casework."}
+                    </span>
+                    <span className="mt-2 block text-[11px] font-medium text-[#405B80]">
+                      {category._count.beneficiaries.toLocaleString()} beneficiaries
+                    </span>
+                  </span>
+                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#8CA2BF] transition group-hover:translate-x-0.5 group-hover:text-[#0645AD]" />
+                </Link>
+              );
+            })}
           </div>
-
-          <div className="mt-5 flex items-center gap-2 text-emerald-700">
-            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="text-sm font-semibold">Dashboard Ready</span>
-          </div>
-          <p className="mt-2 text-sm text-slate-600">
-            Dashboard records are loaded from the MSWD database and ready for review.
+        ) : (
+          <p className="rounded-md border border-dashed border-[#D9E5F5] p-5 text-center text-sm text-[#6480A9]">
+            No programs are configured yet. Add a category to get started.
           </p>
-        </div>
-      </div>
+        )}
+      </section>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,0.55fr)]">
-        <div className="min-w-0 rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h3 className="text-xl font-semibold text-slate-900">Recent Cases</h3>
-            <Link href="/admin/cases" className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-800">
+      <section className="grid gap-4 xl:grid-cols-2">
+        <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+          <div className="mb-3">
+            <h2 className="text-base font-bold text-[#173B70]">Beneficiary Distribution</h2>
+            <p className="mt-1 text-xs text-[#6480A9]">Registered beneficiaries by program category</p>
+          </div>
+          <BeneficiaryDistributionChart categories={categoryStats} />
+        </div>
+        <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div>
+              <h2 className="text-base font-bold text-[#173B70]">Program Statistics</h2>
+              <p className="mt-1 text-xs text-[#6480A9]">Cases recorded by program category</p>
+            </div>
+            <Link href="/admin/reports" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
+              View reports <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <ProgramStatisticsChart categories={categoryStats} />
+        </div>
+      </section>
+
+      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
+        <div className="min-w-0 rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-[#173B70]">Recent Cases</h2>
+              <p className="mt-1 text-xs text-[#6480A9]">Latest case activity without beneficiary personal details</p>
+            </div>
+            <Link href="/admin/cases" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
               View all <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-
-          <div className="min-w-0 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500">
-                  <th className="pb-3 pr-4 font-medium">Case No.</th>
-                  <th className="pb-3 pr-4 font-medium">Beneficiary</th>
-                  <th className="pb-3 pr-4 font-medium">Category</th>
-                  <th className="pb-3 pr-4 font-medium">Status</th>
-                  <th className="pb-3 pr-4 font-medium">Date Filed</th>
-                  <th className="pb-3 pr-4 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {recentCases.map((item) => (
-                  <tr key={item.id} className="align-middle">
-                    <td className="py-3 pr-4 font-medium text-slate-900">{item.caseNumber}</td>
-                    <td className="py-3 pr-4 text-slate-600">{item.beneficiary.firstName} {item.beneficiary.lastName}</td>
-                    <td className="py-3 pr-4 text-slate-600">{item.category.name}</td>
-                    <td className="py-3 pr-4">
-                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${getCaseStatusClassName(item.status)}`}>
-                        {item.status.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td className="py-3 pr-4 text-slate-600">{formatDate(item.dateOpened)}</td>
-                    <td className="py-3 pr-4">
-                      <Link href="/admin/cases" className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100">
-                        View <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </td>
+          {recentCases.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[470px] text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#E7EEF8] text-[10px] uppercase tracking-wide text-[#6480A9]">
+                    <th className="pb-2 pr-3 font-semibold">Program</th>
+                    <th className="pb-2 pr-3 font-semibold">Status</th>
+                    <th className="pb-2 pr-3 font-semibold">Date opened</th>
+                    <th className="pb-2 font-semibold">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[#E7EEF8]">
+                  {recentCases.map((item) => (
+                    <tr key={item.id}>
+                      <td className="py-3 pr-3 font-medium text-[#173B70]">{item.category.name}</td>
+                      <td className="py-3 pr-3">
+                        <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${caseStatusClass(item.status)}`}>
+                          {item.status.replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-3 text-[#6480A9]">{formatDate(item.dateOpened)}</td>
+                      <td className="py-3">
+                        <Link href="/admin/cases" aria-label={`Open case management for ${item.category.name}`} className="font-semibold text-[#0645AD] hover:underline">
+                          Open
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="rounded-md border border-dashed border-[#D9E5F5] p-5 text-center text-sm text-[#6480A9]">No cases have been recorded yet.</p>
+          )}
         </div>
 
-        <div className="min-w-0 space-y-6">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-            <h3 className="text-xl font-semibold text-slate-900">Quick Actions</h3>
-            <div className="mt-4 space-y-2">
+        <div className="space-y-4">
+          <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+            <h2 className="text-base font-bold text-[#173B70]">Quick Actions</h2>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
               {quickActions.map(({ label, href, icon: Icon }) => (
                 <Link
                   key={label}
                   href={href}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium text-slate-700 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700"
+                  className="flex items-center justify-between gap-3 rounded-md border border-[#D9E5F5] px-3 py-2.5 text-xs font-semibold text-[#405B80] transition hover:border-[#9CB6DA] hover:bg-[#F4F7FC] hover:text-[#0645AD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
                 >
-                  <span className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-sky-700 shadow-sm">
-                      <Icon className="h-4 w-4" />
-                    </span>
+                  <span className="flex items-center gap-2.5">
+                    <Icon className="h-4 w-4 text-[#0645AD]" aria-hidden="true" />
                     {label}
                   </span>
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4 text-[#8CA2BF]" />
                 </Link>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-            <h3 className="text-xl font-semibold text-slate-900">Recent Activity</h3>
-
+          <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+            <h2 className="text-base font-bold text-[#173B70]">Recent Activities</h2>
             {recentActivity.length > 0 ? (
-              <ul className="mt-4 space-y-4">
+              <ul className="mt-3 space-y-3">
                 {recentActivity.map((activity) => (
-                  <li key={activity.id} className="flex items-start gap-3">
-                    <span className="mt-1.5 inline-flex h-2.5 w-2.5 rounded-full bg-sky-500" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-800">{activity.action}</p>
-                      <p className="mt-1 text-sm text-slate-600">{activity.description}</p>
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-400">
-                        {activity.user?.name ?? "System"} • {formatDate(activity.createdAt)}
+                  <li key={activity.id} className="flex gap-2.5 border-b border-[#EEF2F8] pb-3 last:border-0 last:pb-0">
+                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0645AD]" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-[#173B70]">{activity.action}</p>
+                      <p className="mt-0.5 text-[11px] text-[#6480A9]">
+                        {activity.module} · {activity.user?.name ?? "System"} · {formatDate(activity.createdAt)}
                       </p>
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                No recent activity recorded yet.
-              </div>
+              <p className="mt-3 rounded-md border border-dashed border-[#D9E5F5] p-4 text-xs text-[#6480A9]">
+                No recent activities have been recorded.
+              </p>
             )}
           </div>
         </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">This month</p>
-          <p className="mt-3 text-3xl font-bold text-slate-900">{thisMonthBeneficiaries}</p>
-          <p className="mt-2 text-sm text-slate-600">New beneficiary records</p>
-        </div>
-        <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Cases in review</p>
-          <p className="mt-3 text-3xl font-bold text-slate-900">{activeCases}</p>
-          <p className="mt-2 text-sm text-slate-600">Currently active workflows</p>
-        </div>
-        <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)]">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Categories</p>
-          <p className="mt-3 text-3xl font-bold text-slate-900">{categories.length}</p>
-          <p className="mt-2 text-sm text-slate-600">Configured MSWD service groups</p>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -25,7 +25,8 @@ export async function loginAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { email, password } = parsed.data;
+  const { password } = parsed.data;
+  const email = parsed.data.email.toLowerCase();
   const user = await db.user.findUnique({
     where: { email },
     include: {

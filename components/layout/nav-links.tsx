@@ -74,7 +74,7 @@ export function NavLinks({
                     href={href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 ease-out hover:translate-x-0.5 hover:bg-sky-800/80 hover:text-white",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 ease-out hover:translate-x-0.5 hover:bg-white/10 hover:text-white",
                       active && activeClassName,
                     )}
                   >

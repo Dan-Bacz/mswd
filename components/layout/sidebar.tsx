@@ -7,11 +7,11 @@ import { NavLinks, type NavLinkItem } from "@/components/layout/nav-links";
 
 const adminLinks: NavLinkItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/admin/cases", label: "Cases", icon: "cases" },
+  { href: "/admin/categories", label: "Programs & Services", icon: "categories" },
+  { href: "/admin/cases", label: "Case Management", icon: "cases" },
   { href: "/admin/reports", label: "Reports", icon: "reports" },
   { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
   { href: "/admin/officers", label: "Users", icon: "users" },
-  { href: "/admin/categories", label: "Categories", icon: "categories" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
 ];
 
@@ -89,20 +89,19 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   return (
     <div className="contents">
       <input id="admin-navigation-toggle" type="checkbox" className="peer sr-only" />
-      <label htmlFor="admin-navigation-toggle" className="fixed left-4 top-4 z-50 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-[#0f172a] text-white shadow-lg focus-within:ring-4 focus-within:ring-sky-300 lg:hidden">
+      <label htmlFor="admin-navigation-toggle" className="fixed left-4 top-4 z-50 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-[#073783] text-white shadow-lg focus-within:ring-4 focus-within:ring-sky-300 lg:hidden">
         <Menu className="h-5 w-5" aria-hidden="true" />
         <span className="sr-only">Toggle navigation menu</span>
       </label>
-      <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-[280px] flex-col border-r border-sky-800 bg-[#0f172a] text-sky-50 shadow-2xl peer-checked:flex lg:sticky lg:z-auto lg:flex lg:h-screen lg:shadow-none">
-      <div className="border-b border-sky-800/80 p-5">
+      <aside className="fixed left-0 top-0 z-40 hidden h-dvh w-[280px] flex-col border-r border-[#0b3478] bg-[#073783] text-white shadow-2xl peer-checked:flex lg:sticky lg:z-auto lg:flex lg:h-screen lg:shadow-none">
+      <div className="border-b border-white/10 p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-lg shadow-sky-950/30">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1">
             <Image src="/images/logo.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-sky-300">Mahayag</p>
-            <h1 className="text-lg font-bold tracking-wide text-white">MSWD</h1>
-            <p className="text-[10px] text-sky-200/75">Management System</p>
+            <h1 className="text-sm font-bold tracking-wide text-white">MSWD Management System</h1>
+            <p className="mt-1 text-[10px] leading-relaxed text-blue-100">Municipal Social Welfare and Development Office</p>
           </div>
         </div>
       </div>
@@ -110,15 +109,15 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <NavLinks
           sections={[{ items: adminLinks }]}
-          className="space-y-1.5"
-          activeClassName="bg-gradient-to-r from-[#176bc5] to-[#0d4f9b] text-white shadow-md shadow-blue-950/30 ring-1 ring-white/10"
+          className="space-y-1"
+          activeClassName="!bg-[#FFD21F] !text-[#073783] font-semibold hover:!bg-[#ffe05a]"
         />
 
-        <div className="mt-6 border-t border-sky-800 pt-4">
+        <div className="mt-6 border-t border-white/15 pt-4">
           <form action={logoutAction}>
             <button
               type="submit"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-sky-100 transition duration-200 hover:bg-sky-800/80"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-sky-100 transition hover:bg-white/10"
             >
               <LogOut className="h-4 w-4" />
               Logout
@@ -127,10 +126,15 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
         </div>
       </nav>
 
-      <div className="border-t border-sky-800/80 px-4 py-4">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-sky-300">MSWD</p>
-        <p className="mt-2 text-sm font-semibold text-white">Social Welfare and Development</p>
-        <p className="mt-1 text-xs text-sky-200/80">{municipality}</p>
+      <div className="border-t border-white/15 px-4 py-4">
+        <div className="mb-3 flex h-1 overflow-hidden rounded-full" aria-hidden="true">
+          <span className="w-1/3 bg-[#FFD21F]" />
+          <span className="w-1/3 bg-[#E31837]" />
+          <span className="w-1/3 bg-white" />
+        </div>
+        <p className="text-[10px] uppercase tracking-[0.16em] text-blue-100">Mahayag • MSWD</p>
+        <p className="mt-1 text-xs font-medium text-white">{municipality}</p>
+        <p className="mt-2 text-[10px] leading-relaxed text-blue-100/80">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
       </div>
       </aside>
     </div>
