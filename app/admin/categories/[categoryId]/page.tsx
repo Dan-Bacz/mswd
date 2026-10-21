@@ -63,7 +63,7 @@ export default async function AdminCategoryDashboardPage({
     db.case.count({ where: { categoryId } }),
     db.case.groupBy({ by: ["status"], where: { categoryId }, _count: { _all: true } }),
     db.user.findMany({
-      where: { role: { name: "OFFICER" } },
+      where: { role: { name: "OFFICER" }, status: { not: "PENDING_APPROVAL" } },
       include: { userCategories: { select: { categoryId: true } } },
       orderBy: { name: "asc" },
     }),
@@ -158,7 +158,7 @@ export default async function AdminCategoryDashboardPage({
                 ))
               ) : (
                 <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
-                  No officers created yet.
+                  No approved officers are available for assignment.
                 </p>
               )}
             </fieldset>

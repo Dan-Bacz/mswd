@@ -53,6 +53,8 @@ Use .env.example as the template. Required values include:
 - AUTH_SECRET
 - MSWD_SETUP_KEY
 - APP_URL
+- RESEND_API_KEY (required for officer approval emails)
+- EMAIL_FROM (a sender address verified with Resend)
 
 ## Prisma setup
 
@@ -83,6 +85,12 @@ npx prisma migrate deploy
 ## Seed process
 
 The seed routine creates the required roles and the core categories for the MSWD administration model. It does not generate fake beneficiary or case records for production use.
+
+## Officer registration and approval
+
+Officers can register from the login page. New registrations remain pending and cannot sign in until an administrator approves them from Officer management. Approval sends an email through Resend and activates the account; administrators can then assign the officer's categories.
+
+Configure `RESEND_API_KEY` with a Resend API key and `EMAIL_FROM` with a sender address verified in Resend. Set `APP_URL` to the deployed application's absolute URL so the approval message contains the correct login link. Apply the pending-approval migration with `npx prisma migrate deploy` in deployed environments.
 
 ## Vercel deployment
 

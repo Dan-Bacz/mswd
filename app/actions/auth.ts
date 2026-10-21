@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { sendOfficerApprovalEmail } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/permissions";
-import { loginSchema, setupSchema } from "@/lib/validation";
+import { loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 
 export async function loginAction(
   _previousState: { ok: boolean; error: string } | null,
@@ -34,6 +36,10 @@ export async function loginAction(
 
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     return { ok: false, error: "Invalid email or password." };
+  }
+
+  if (user.status === "PENDING_APPROVAL") {
+    return { ok: false, error: "Your account is awaiting administrator approval." };
   }
 
   if (user.status !== "ACTIVE") {
@@ -120,6 +126,55 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+export async function registerOfficerAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData
+) {
+  const parsed = officerRegistrationSchema.safeParse({
+    name: String(formData.get("name") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    password: String(formData.get("password") ?? ""),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid registration details." };
+  }
+
+  const email = parsed.data.email.toLowerCase();
+  const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
+  if (existing) {
+    return { ok: false, message: "An account with that email address already exists." };
+  }
+
+  const officerRole = await db.role.upsert({
+    where: { name: "OFFICER" },
+    update: {},
+    create: { name: "OFFICER" },
+  });
+
+  try {
+    await db.user.create({
+      data: {
+        name: parsed.data.name,
+        email,
+        passwordHash: await bcrypt.hash(parsed.data.password, 12),
+        roleId: officerRole.id,
+        status: "PENDING_APPROVAL",
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: false, message: "An account with that email address already exists." };
+    }
+    throw error;
+  }
+
+  return {
+    ok: true,
+    message: "Registration submitted. Your account will be available after an administrator approves it.",
+  };
+}
+
 export async function createCategoryAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -136,6 +191,8 @@ export async function createCategoryAction(formData: FormData) {
 }
 
 export async function createOfficerAction(formData: FormData) {
+  await requireAdmin();
+
   const raw = {
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
@@ -167,6 +224,59 @@ export async function createOfficerAction(formData: FormData) {
   });
 
   revalidatePath("/admin/officers");
+}
+
+export async function approveOfficerAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData
+) {
+  await requireAdmin();
+
+  const officerId = String(formData.get("officerId") ?? "");
+  if (!officerId) {
+    return { ok: false, message: "Officer was not found." };
+  }
+
+  const officer = await db.user.findUnique({
+    where: { id: officerId },
+    include: { role: true },
+  });
+
+  if (!officer || officer.role.name !== "OFFICER") {
+    return { ok: false, message: "Officer was not found." };
+  }
+  if (officer.status !== "PENDING_APPROVAL") {
+    return { ok: false, message: "This officer account is no longer awaiting approval." };
+  }
+
+  try {
+    await sendOfficerApprovalEmail({ name: officer.name, email: officer.email });
+  } catch (error) {
+    console.error("Unable to send officer approval email:", error);
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Unable to send the approval email. The account remains pending.",
+    };
+  }
+
+  const result = await db.user.updateMany({
+    where: { id: officer.id, roleId: officer.roleId, status: "PENDING_APPROVAL" },
+    data: { status: "ACTIVE" },
+  });
+
+  if (result.count !== 1) {
+    return {
+      ok: false,
+      message: "The approval email was sent, but the account status changed. Refresh and review the account.",
+    };
+  }
+
+  revalidatePath("/admin/officers");
+  revalidatePath(`/admin/officers/${officer.id}`);
+  revalidatePath("/admin/categories");
+  revalidatePath("/officer/dashboard");
+
+  return { ok: true, message: "Account approved and notification email sent." };
 }
 
 function readCategoryIds(formData: FormData, fieldName = "categoryIds") {
@@ -201,6 +311,9 @@ export async function assignOfficerCategoriesAction(formData: FormData) {
 
   if (!officer || officer.role.name !== "OFFICER") {
     throw new Error("Officer was not found.");
+  }
+  if (officer.status === "PENDING_APPROVAL") {
+    throw new Error("Approve this officer before assigning categories.");
   }
 
   if (categories.length !== categoryIds.length) {
@@ -271,6 +384,9 @@ export async function setCategoryOfficersAction(formData: FormData) {
 
   if (officers.some((officer) => officer.role.name !== "OFFICER")) {
     throw new Error("Only officers can be assigned to a category.");
+  }
+  if (officers.some((officer) => officer.status === "PENDING_APPROVAL")) {
+    throw new Error("Approve officers before assigning categories.");
   }
 
   if (officers.length !== officerIds.length) {

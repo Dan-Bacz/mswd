@@ -14,6 +14,7 @@ enum RoleName {
 enum UserStatus {
   ACTIVE
   INACTIVE
+  PENDING_APPROVAL
 }
 
 enum Sex {

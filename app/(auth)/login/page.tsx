@@ -154,9 +154,9 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-7 border-t border-[#e7eff8] pt-5 text-center text-sm text-[#7186a6]">
-            Need the initial admin setup?{" "}
-            <Link href="/setup" className="font-semibold text-[#0569b3] underline-offset-4 hover:text-[#0756b8] hover:underline">
-              Create Administrator
+            Need an officer account?{" "}
+            <Link href="/register" className="font-semibold text-[#0569b3] underline-offset-4 hover:text-[#0756b8] hover:underline">
+              Register here
             </Link>
           </div>
 

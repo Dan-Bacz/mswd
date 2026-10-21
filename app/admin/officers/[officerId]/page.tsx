@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Briefcase, FolderTree, UserRound, Users } from "lucide-react";
 import { db } from "@/lib/db";
 import { MetricCard } from "@/components/ui/metric-card";
+import { ApproveOfficerForm } from "@/components/admin/approve-officer-form";
 import { assignOfficerCategoriesAction } from "@/app/actions/auth";
 import { formatDate, getCaseStatusClassName } from "@/lib/utils";
 
@@ -58,10 +59,19 @@ export default async function OfficerManagePage({
           <ArrowLeft className="h-4 w-4" /> Back to officers
         </Link>
         <h1 className="text-3xl font-bold text-slate-900">{officer.name}</h1>
-        <p className="mt-2 text-slate-600">
-          Assign the categories this officer can access and manage.
-        </p>
+        <p className="mt-2 text-slate-600">{officer.email}</p>
       </div>
+
+      {officer.status === "PENDING_APPROVAL" ? (
+        <ApproveOfficerForm officerId={officer.id} />
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-700">
+          Account status:{" "}
+          <span className={`font-semibold ${officer.status === "ACTIVE" ? "text-emerald-700" : "text-slate-600"}`}>
+            {officer.status === "ACTIVE" ? "Active" : "Inactive"}
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
@@ -90,40 +100,46 @@ export default async function OfficerManagePage({
             <FolderTree className="h-5 w-5 text-sky-700" />
             <h2 className="text-xl font-semibold text-slate-900">Assigned categories</h2>
           </div>
-          <form action={assignOfficerCategoriesAction} className="space-y-4">
-            <input type="hidden" name="officerId" value={officer.id} />
-            <fieldset className="space-y-2">
-              <legend className="mb-2 block text-sm font-medium text-slate-700">
-                Select the categories this officer may access
-              </legend>
-              {categories.map((category) => (
-                <label
-                  key={category.id}
-                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition hover:border-sky-300 hover:bg-sky-50"
-                >
-                  <input
-                    type="checkbox"
-                    name="categoryIds"
-                    value={category.id}
-                    defaultChecked={assignedCategoryIds.has(category.id)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-600"
-                  />
-                  <span className="flex-1">
-                    <span className="block text-sm font-medium text-slate-800">{category.name}</span>
-                    {category.description ? (
-                      <span className="mt-0.5 block text-xs text-slate-500">{category.description}</span>
-                    ) : null}
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800"
-            >
-              Save assignments
-            </button>
-          </form>
+          {officer.status === "PENDING_APPROVAL" ? (
+            <p className="text-sm text-slate-600">
+              Approve this registration before assigning categories.
+            </p>
+          ) : (
+            <form action={assignOfficerCategoriesAction} className="space-y-4">
+              <input type="hidden" name="officerId" value={officer.id} />
+              <fieldset className="space-y-2">
+                <legend className="mb-2 block text-sm font-medium text-slate-700">
+                  Select the categories this officer may access
+                </legend>
+                {categories.map((category) => (
+                  <label
+                    key={category.id}
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition hover:border-sky-300 hover:bg-sky-50"
+                  >
+                    <input
+                      type="checkbox"
+                      name="categoryIds"
+                      value={category.id}
+                      defaultChecked={assignedCategoryIds.has(category.id)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-600"
+                    />
+                    <span className="flex-1">
+                      <span className="block text-sm font-medium text-slate-800">{category.name}</span>
+                      {category.description ? (
+                        <span className="mt-0.5 block text-xs text-slate-500">{category.description}</span>
+                      ) : null}
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-sky-700 px-4 py-3 font-semibold text-white hover:bg-sky-800"
+              >
+                Save assignments
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="space-y-6">
