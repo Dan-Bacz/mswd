@@ -141,7 +141,9 @@ export function BeneficiaryRegistry({
     <div className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#0B1A3E]">Beneficiaries</h1>
+          <h1 className="text-3xl font-bold text-[#0B1A3E]">
+            {officerMode ? "My beneficiaries" : "Beneficiaries"}
+          </h1>
           <p className="mt-1.5 text-sm text-[#6480A9]">
             {officerMode
               ? "Register beneficiaries in your assigned category."
@@ -530,7 +532,7 @@ function BeneficiaryModal({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField id="categoryId" label="Beneficiary category" required error={state.fieldErrors?.categoryId}>
-                  {officerMode ? (
+                  {officerMode && selectedCategoryId ? (
                     <>
                       <input
                         {...fieldProps("categoryId")}
