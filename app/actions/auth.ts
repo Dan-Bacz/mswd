@@ -177,6 +177,8 @@ export async function registerOfficerAction(
 }
 
 export async function createCategoryAction(formData: FormData) {
+  await requireAdmin();
+
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
 
@@ -189,6 +191,11 @@ export async function createCategoryAction(formData: FormData) {
   });
 
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/beneficiaries");
+  revalidatePath("/admin/officers");
+  revalidatePath("/admin/officers/[officerId]", "page");
+  revalidatePath("/officer/dashboard");
 }
 
 export async function deleteCategoryAction(
