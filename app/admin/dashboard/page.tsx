@@ -47,6 +47,11 @@ function categoryAppearance(name: string, index: number): { icon: LucideIcon; co
   };
 }
 
+function isHiddenDashboardCategory(name: string) {
+  const normalized = name.toLowerCase();
+  return normalized.includes("eccd") || normalized.includes("maifip") || normalized.includes("juvenile");
+}
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-PH", {
     month: "short",
@@ -83,7 +88,7 @@ export default async function AdminDashboardPage() {
     activeCases,
     pendingCases,
     activeServices,
-    categories,
+    allCategories,
     recentCases,
     recentActivity,
     systemSettings,
@@ -108,6 +113,8 @@ export default async function AdminDashboardPage() {
     }),
     db.systemSetting.findMany({ select: { key: true, value: true } }),
   ]);
+  const categories = allCategories.filter((category) => !isHiddenDashboardCategory(category.name));
+  const visibleRecentCases = recentCases.filter((item) => !isHiddenDashboardCategory(item.category.name));
 
   const municipality =
     systemSettings.find((setting) =>
@@ -266,7 +273,7 @@ export default async function AdminDashboardPage() {
               View all <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          {recentCases.length > 0 ? (
+          {visibleRecentCases.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[470px] text-left text-xs">
                 <thead>
@@ -278,7 +285,7 @@ export default async function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E7EEF8]">
-                  {recentCases.map((item) => (
+                  {visibleRecentCases.map((item) => (
                     <tr key={item.id}>
                       <td className="py-3 pr-3 font-medium text-[#173B70]">{item.category.name}</td>
                       <td className="py-3 pr-3">
