@@ -191,6 +191,84 @@ export async function createCategoryAction(formData: FormData) {
   revalidatePath("/admin/categories");
 }
 
+export async function deleteCategoryAction(
+  _previousState: { ok: boolean; message: string },
+  formData: FormData,
+) {
+  await requireAdmin();
+
+  const categoryId = String(formData.get("categoryId") ?? "").trim();
+  if (!categoryId) {
+    return { ok: false, message: "Select a category to delete." };
+  }
+
+  const category = await db.category.findUnique({
+    where: { id: categoryId },
+    select: {
+      name: true,
+      _count: {
+        select: {
+          beneficiaries: true,
+          cases: true,
+          assignments: true,
+          userCategories: true,
+        },
+      },
+    },
+  });
+
+  if (!category) {
+    return { ok: false, message: "This category no longer exists. Refresh the page." };
+  }
+
+  const linkedItems = ([
+    [category._count.beneficiaries, "beneficiaries"],
+    [category._count.cases, "cases"],
+    [category._count.userCategories, "officer assignments"],
+    [category._count.assignments, "assignment records"],
+  ] as const)
+    .filter(([count]) => count > 0)
+    .map(([count, label]) => `${count} ${label}`);
+
+  let deletedCount = 0;
+  try {
+    const result = await db.category.deleteMany({
+      where: {
+        id: categoryId,
+        beneficiaries: { none: {} },
+        cases: { none: {} },
+        assignments: { none: {} },
+        userCategories: { none: {} },
+      },
+    });
+    deletedCount = result.count;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return {
+        ok: false,
+        message: `Cannot delete "${category.name}" because it is linked to other records. Reassign or remove them first.`,
+      };
+    }
+    throw error;
+  }
+
+  if (deletedCount === 0) {
+    return {
+      ok: false,
+      message: linkedItems.length > 0
+        ? `Cannot delete "${category.name}" because it is linked to ${linkedItems.join(", ")}. Reassign or remove them first.`
+        : "This category is in use. Refresh the page and try again.",
+    };
+  }
+
+  revalidatePath("/admin/categories");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/officers");
+  revalidatePath("/officer/dashboard");
+
+  return { ok: true, message: `Category "${category.name}" deleted.` };
+}
+
 export async function createOfficerAction(formData: FormData) {
   await requireAdmin();
 

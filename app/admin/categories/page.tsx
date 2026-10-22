@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { createCategoryAction } from "@/app/actions/auth";
+import { DeleteCategoryForm } from "@/components/admin/delete-category-form";
 
 export const dynamic = "force-dynamic";
 
@@ -49,13 +50,14 @@ export default async function CategoriesPage() {
                   <tr key={category.id}>
                     <td className="px-4 py-3 font-medium text-slate-900">{category.name}</td>
                     <td className="px-4 py-3 text-slate-600">{category.description ?? "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="space-y-2 px-4 py-3">
                       <Link
                         href={`/admin/categories/${category.id}`}
                         className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100"
                       >
                         Open dashboard
                       </Link>
+                      <DeleteCategoryForm categoryId={category.id} categoryName={category.name} />
                     </td>
                   </tr>
                 ))}
