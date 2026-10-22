@@ -57,6 +57,18 @@ enum CaseStatus {
   CANCELLED
 }
 
+enum AssistanceType {
+  FINANCIAL_ASSISTANCE
+  MEDICAL_ASSISTANCE
+  FOOD_ASSISTANCE
+  BURIAL_FUNERAL_ASSISTANCE
+  TRANSPORTATION_ASSISTANCE
+  EDUCATIONAL_ASSISTANCE
+  PSYCHOSOCIAL_SUPPORT
+  REFERRAL_LINKAGE
+  OTHER
+}
+
 model Role {
   id    String   @id @default(uuid())
   name  RoleName @unique
@@ -64,26 +76,27 @@ model Role {
 }
 
 model User {
-  id                   String          @id @default(uuid())
-  name                 String
-  email                String          @unique
-  passwordHash         String
-  roleId               String
-  status               UserStatus      @default(ACTIVE)
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
-  role                 Role            @relation(fields: [roleId], references: [id])
-  userCategories       UserCategory[]
-  households           Household[]
-  assignedCases        Case[]          @relation("OfficerCases")
-  assignedBeneficiaries Beneficiary[]  @relation("OfficerBeneficiaries")
-  interventions        Intervention[]  @relation("OfficerInterventions")
-  documents            Document[]      @relation("UploaderDocuments")
-  assignments          Assignment[]    @relation("AssignedOfficer")
-  assignedBy           Assignment[]    @relation("AssignedBy")
-  notifications        Notification[]
-  auditLogs            AuditLog[]
-  caseHistory          CaseHistory[]
+  id                    String                  @id @default(uuid())
+  name                  String
+  email                 String                  @unique
+  passwordHash          String
+  roleId                String
+  status                UserStatus              @default(ACTIVE)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  role                  Role                    @relation(fields: [roleId], references: [id])
+  userCategories        UserCategory[]
+  households            Household[]
+  assignedCases         Case[]                  @relation("OfficerCases")
+  assignedBeneficiaries Beneficiary[]           @relation("OfficerBeneficiaries")
+  interventions         Intervention[]          @relation("OfficerInterventions")
+  providedAssistance    BeneficiaryAssistance[] @relation("AssistanceProvider")
+  documents             Document[]              @relation("UploaderDocuments")
+  assignments           Assignment[]            @relation("AssignedOfficer")
+  assignedBy            Assignment[]            @relation("AssignedBy")
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+  caseHistory           CaseHistory[]
 }
 
 model UserCategory {
@@ -110,27 +123,27 @@ model Category {
 }
 
 model Household {
-  id              String       @id @default(uuid())
+  id              String        @id @default(uuid())
   headName        String
-  numberOfMembers Int          @default(1)
+  numberOfMembers Int           @default(1)
   address         String
   barangay        String?
   municipality    String?
   province        String?
-  estimatedIncome Decimal?     @db.Decimal(12, 2)
+  estimatedIncome Decimal?      @db.Decimal(12, 2)
   incomeSource    String?
   housingInfo     String?
   remarks         String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   createdById     String?
-  createdBy       User?        @relation(fields: [createdById], references: [id])
+  createdBy       User?         @relation(fields: [createdById], references: [id])
   beneficiaries   Beneficiary[]
 }
 
 model Beneficiary {
-  id                String            @id @default(uuid())
-  beneficiaryNumber String            @unique
+  id                String                  @id @default(uuid())
+  beneficiaryNumber String                  @unique
   firstName         String
   middleName        String?
   lastName          String
@@ -149,43 +162,44 @@ model Beneficiary {
   subcategory       String?
   householdId       String?
   assignedOfficerId String?
-  registrationDate  DateTime          @default(now())
-  status            BeneficiaryStatus @default(ACTIVE)
+  registrationDate  DateTime                @default(now())
+  status            BeneficiaryStatus       @default(ACTIVE)
   remarks           String?
-  category          Category          @relation(fields: [categoryId], references: [id])
-  household         Household?        @relation(fields: [householdId], references: [id])
-  assignedOfficer   User?             @relation("OfficerBeneficiaries", fields: [assignedOfficerId], references: [id])
+  category          Category                @relation(fields: [categoryId], references: [id])
+  household         Household?              @relation(fields: [householdId], references: [id])
+  assignedOfficer   User?                   @relation("OfficerBeneficiaries", fields: [assignedOfficerId], references: [id])
   cases             Case[]
   documents         Document[]
   assignments       Assignment[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  assistanceRecords BeneficiaryAssistance[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 }
 
 model Case {
-  id               String          @id @default(uuid())
-  caseNumber       String          @unique
-  beneficiaryId    String
-  categoryId       String
-  caseType         String
-  description      String
-  dateOpened       DateTime        @default(now())
-  priority         CasePriority    @default(MEDIUM)
-  status           CaseStatus      @default(NEW)
+  id                String         @id @default(uuid())
+  caseNumber        String         @unique
+  beneficiaryId     String
+  categoryId        String
+  caseType          String
+  description       String
+  dateOpened        DateTime       @default(now())
+  priority          CasePriority   @default(MEDIUM)
+  status            CaseStatus     @default(NEW)
   assignedOfficerId String?
-  dateClosed       DateTime?
-  closingReason    String?
-  remarks          String?
-  beneficiary      Beneficiary     @relation(fields: [beneficiaryId], references: [id])
-  category         Category        @relation(fields: [categoryId], references: [id])
-  assignedOfficer  User?           @relation("OfficerCases", fields: [assignedOfficerId], references: [id])
-  history          CaseHistory[]
-  interventions   Intervention[]
-  documents       Document[]
-  notifications    Notification[]
-  assignments      Assignment[]
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  dateClosed        DateTime?
+  closingReason     String?
+  remarks           String?
+  beneficiary       Beneficiary    @relation(fields: [beneficiaryId], references: [id])
+  category          Category       @relation(fields: [categoryId], references: [id])
+  assignedOfficer   User?          @relation("OfficerCases", fields: [assignedOfficerId], references: [id])
+  history           CaseHistory[]
+  interventions     Intervention[]
+  documents         Document[]
+  notifications     Notification[]
+  assignments       Assignment[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 }
 
 model CaseHistory {
@@ -200,12 +214,12 @@ model CaseHistory {
 }
 
 model ServiceType {
-  id            String        @id @default(uuid())
-  name          String        @unique
+  id            String         @id @default(uuid())
+  name          String         @unique
   description   String?
-  isActive      Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   interventions Intervention[]
 }
 
@@ -222,8 +236,24 @@ model Intervention {
   officer       User        @relation("OfficerInterventions", fields: [officerId], references: [id])
 }
 
+model BeneficiaryAssistance {
+  id            String         @id @default(uuid())
+  beneficiaryId String
+  type          AssistanceType
+  otherType     String?
+  providedAt    DateTime       @db.Date
+  notes         String?
+  providedById  String
+  createdAt     DateTime       @default(now())
+  beneficiary   Beneficiary    @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  providedBy    User           @relation("AssistanceProvider", fields: [providedById], references: [id], onDelete: Restrict)
+
+  @@index([beneficiaryId, providedAt])
+  @@index([providedById, providedAt])
+}
+
 model Document {
-  id            String      @id @default(uuid())
+  id            String       @id @default(uuid())
   caseId        String?
   beneficiaryId String?
   uploaderId    String
@@ -232,25 +262,25 @@ model Document {
   mimeType      String
   size          Int
   storageUrl    String
-  uploadedAt    DateTime    @default(now())
-  case          Case?       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  uploadedAt    DateTime     @default(now())
+  case          Case?        @relation(fields: [caseId], references: [id], onDelete: Cascade)
   beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
-  uploader      User        @relation("UploaderDocuments", fields: [uploaderId], references: [id])
+  uploader      User         @relation("UploaderDocuments", fields: [uploaderId], references: [id])
 }
 
 model Assignment {
-  id             String      @id @default(uuid())
-  officerId      String
-  categoryId     String?
-  beneficiaryId  String?
-  caseId         String?
-  assignedById   String
-  createdAt      DateTime    @default(now())
-  officer        User        @relation("AssignedOfficer", fields: [officerId], references: [id])
-  assignedBy     User        @relation("AssignedBy", fields: [assignedById], references: [id])
-  category       Category?   @relation(fields: [categoryId], references: [id])
-  beneficiary    Beneficiary? @relation(fields: [beneficiaryId], references: [id])
-  case           Case?       @relation(fields: [caseId], references: [id])
+  id            String       @id @default(uuid())
+  officerId     String
+  categoryId    String?
+  beneficiaryId String?
+  caseId        String?
+  assignedById  String
+  createdAt     DateTime     @default(now())
+  officer       User         @relation("AssignedOfficer", fields: [officerId], references: [id])
+  assignedBy    User         @relation("AssignedBy", fields: [assignedById], references: [id])
+  category      Category?    @relation(fields: [categoryId], references: [id])
+  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id])
+  case          Case?        @relation(fields: [caseId], references: [id])
 }
 
 model Notification {

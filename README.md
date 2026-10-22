@@ -58,7 +58,7 @@ Use .env.example as the template. Required values include:
 
 ## Prisma setup
 
-The Prisma schema includes the main models required for the MSWD system, including User, Role, Category, UserCategory, Household, Beneficiary, Case, CaseHistory, ServiceType, Intervention, Document, Notification, AuditLog, and SystemSetting.
+The Prisma schema includes the main models required for the MSWD system, including User, Role, Category, UserCategory, Household, Beneficiary, BeneficiaryAssistance, Case, CaseHistory, ServiceType, Intervention, Document, Notification, AuditLog, and SystemSetting.
 
 Run:
 
@@ -114,7 +114,7 @@ Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` with the SM
    Add `DIRECT_URL` only if your database provider supplies a separate direct connection string for migrations. SMTP credentials and database URLs must be entered as Vercel environment-variable values—do not commit them to `.env.example` or source control.
 
 5. Click **Save**, then redeploy so the deployment receives the new variables. If you change a variable later, redeploy again.
-6. Apply the pending-officer-approval database migration with `npx prisma migrate deploy` using the production database before using officer registration.
+6. Apply all pending database migrations with `npx prisma migrate deploy` using the production database before using newly deployed features such as officer registration and assistance tracking.
 
 Vercel does not provide an SMTP mailbox. Get the SMTP host, port, username, and password from an email provider that permits SMTP connections from Vercel, and ensure `EMAIL_FROM` is an approved sender address with that provider.
 

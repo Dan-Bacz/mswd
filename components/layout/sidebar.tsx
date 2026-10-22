@@ -11,6 +11,7 @@ const adminLinks: NavLinkItem[] = [
   { href: "/admin/cases", label: "Case Management", icon: "cases" },
   { href: "/admin/reports", label: "Reports", icon: "reports" },
   { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
+  { href: "/admin/assistance", label: "Assistance", icon: "assistance" },
   { href: "/admin/officers", label: "Users", icon: "users" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
 ];
@@ -18,6 +19,7 @@ const adminLinks: NavLinkItem[] = [
 const officerLinks: NavLinkItem[] = [
   { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/officer/beneficiaries", label: "My Beneficiaries", icon: "beneficiaries" },
+  { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
   { href: "/officer/cases", label: "My Cases", icon: "tasks" },
   { href: "/officer/reports", label: "Reports", icon: "reports" },
   { href: "/admin/settings", label: "My Profile", icon: "profile" },

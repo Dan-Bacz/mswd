@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FileText,
   FolderTree,
+  HeartHandshake,
   Settings,
   ShieldCheck,
   UserCircle2,
@@ -26,6 +27,7 @@ const iconMap: Record<string, LucideIcon> = {
   users: ShieldCheck,
   profile: UserCircle2,
   beneficiaries: Users,
+  assistance: HeartHandshake,
 };
 
 export type NavLinkItem = {
