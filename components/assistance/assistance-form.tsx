@@ -44,7 +44,7 @@ function AssistanceFields({
   action: NonNullable<FormHTMLAttributes<HTMLFormElement>["action"]>;
   errors?: Record<string, string>;
 }) {
-  const [selectedType, setSelectedType] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
   return (
     <form action={action} className="space-y-4">
@@ -71,27 +71,38 @@ function AssistanceFields({
       </div>
 
       <div>
-        <label htmlFor="assistance-type" className="mb-1.5 block text-sm font-medium text-slate-700">
-          Assistance type <span className="text-red-600">*</span>
-        </label>
-        <select
-          id="assistance-type"
-          name="type"
-          required
-          value={selectedType}
-          onChange={(event) => setSelectedType(event.target.value)}
-          aria-invalid={Boolean(errors?.type)}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[#0B1A3E] focus:ring-4 focus:ring-blue-900/10"
-        >
-          <option value="" disabled>Select assistance type</option>
-          {ASSISTANCE_TYPE_OPTIONS.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-        <FieldError message={errors?.type} />
+        <fieldset aria-invalid={Boolean(errors?.types)}>
+          <legend className="mb-1.5 block text-sm font-medium text-slate-700">
+            Assistance offered <span className="text-red-600">*</span>
+          </legend>
+          <p className="mb-3 text-xs text-slate-500">Select all assistance types provided.</p>
+          <div className="space-y-2">
+            {ASSISTANCE_TYPE_OPTIONS.map(({ value, label }) => (
+              <label key={value} className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  name="types"
+                  value={value}
+                  required
+                  checked={selectedTypes.includes(value)}
+                  onChange={(event) => {
+                    setSelectedTypes((current) =>
+                      event.target.checked
+                        ? [...current, value]
+                        : current.filter((type) => type !== value),
+                    );
+                  }}
+                  className="h-4 w-4 rounded border-slate-300 text-[#0B1A3E] focus:ring-[#0B1A3E]"
+                />
+                {value === "OTHER" ? `${label}:` : label}
+              </label>
+            ))}
+          </div>
+          <FieldError message={errors?.types} />
+        </fieldset>
       </div>
 
-      {selectedType === "OTHER" && (
+      {selectedTypes.includes("OTHER") && (
         <div>
           <label htmlFor="other-assistance-type" className="mb-1.5 block text-sm font-medium text-slate-700">
             Describe the assistance <span className="text-red-600">*</span>

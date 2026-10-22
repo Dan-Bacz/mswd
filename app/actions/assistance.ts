@@ -9,7 +9,10 @@ import { z } from "zod";
 const assistanceSchema = z
   .object({
     beneficiaryId: z.string().trim().min(1, "Select a beneficiary."),
-    type: z.enum(ASSISTANCE_TYPE_VALUES),
+    types: z
+      .array(z.enum(ASSISTANCE_TYPE_VALUES))
+      .min(1, "Select at least one assistance type.")
+      .refine((types) => new Set(types).size === types.length, "Select each assistance type only once."),
     otherType: z.string().trim().max(100, "Keep the description under 100 characters."),
     providedAt: z
       .string()
@@ -22,7 +25,7 @@ const assistanceSchema = z
     notes: z.string().trim().max(1000, "Keep notes under 1,000 characters."),
   })
   .superRefine((value, context) => {
-    if (value.type === "OTHER" && !value.otherType) {
+    if (value.types.includes("OTHER") && !value.otherType) {
       context.addIssue({
         code: "custom",
         path: ["otherType"],
@@ -46,7 +49,7 @@ export async function createAssistanceAction(
   const user = await requireAuth();
   const parsed = assistanceSchema.safeParse({
     beneficiaryId: String(formData.get("beneficiaryId") ?? ""),
-    type: String(formData.get("type") ?? ""),
+    types: formData.getAll("types").map(String),
     otherType: String(formData.get("otherType") ?? ""),
     providedAt: String(formData.get("providedAt") ?? ""),
     notes: String(formData.get("notes") ?? ""),
@@ -92,15 +95,15 @@ export async function createAssistanceAction(
     };
   }
 
-  await db.beneficiaryAssistance.create({
-    data: {
+  await db.beneficiaryAssistance.createMany({
+    data: parsed.data.types.map((type) => ({
       beneficiaryId: parsed.data.beneficiaryId,
-      type: parsed.data.type,
-      otherType: parsed.data.type === "OTHER" ? parsed.data.otherType : null,
+      type,
+      otherType: type === "OTHER" ? parsed.data.otherType : null,
       providedAt: new Date(`${parsed.data.providedAt}T00:00:00.000Z`),
       notes: parsed.data.notes || null,
       providedById: user.id,
-    },
+    })),
   });
 
   revalidatePath("/admin/assistance");
@@ -110,7 +113,7 @@ export async function createAssistanceAction(
 
   return {
     ok: true,
-    message: "Assistance record saved.",
+    message: `${parsed.data.types.length} assistance record${parsed.data.types.length === 1 ? "" : "s"} saved.`,
     resetKey: previousState.resetKey + 1,
     saved: true,
   };
