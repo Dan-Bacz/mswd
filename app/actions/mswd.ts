@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireAdmin, requireAuth } from "@/lib/auth/permissions";
+import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema, caseSchema } from "@/lib/validation";
 
 const CASE_STATUSES = [
@@ -45,7 +45,7 @@ export async function createBeneficiaryAction(
   _previousState: BeneficiaryActionState,
   formData: FormData,
 ): Promise<BeneficiaryActionState> {
-  await requireAdmin();
+  const user = await requireAuth();
 
   const raw = {
     firstName: String(formData.get("firstName") ?? ""),
@@ -94,7 +94,15 @@ export async function createBeneficiaryAction(
     };
   }
 
-  if (parsed.data.assignedOfficerId) {
+  if (user.role === "OFFICER" && !user.categoryIds.includes(parsed.data.categoryId)) {
+    return {
+      ok: false,
+      message: "You can only register beneficiaries in your assigned categories.",
+      fieldErrors: { categoryId: "This category is outside your assigned categories." },
+    };
+  }
+
+  if (user.role === "ADMIN" && parsed.data.assignedOfficerId) {
     const officer = await db.user.findUnique({
       where: { id: parsed.data.assignedOfficerId },
       include: { userCategories: { select: { categoryId: true } } },
@@ -142,7 +150,9 @@ export async function createBeneficiaryAction(
         province: parsed.data.province || null,
         categoryId: parsed.data.categoryId,
         subcategory: parsed.data.subcategory || null,
-        assignedOfficerId: parsed.data.assignedOfficerId || null,
+        assignedOfficerId: user.role === "OFFICER"
+          ? user.id
+          : parsed.data.assignedOfficerId || null,
         remarks: parsed.data.remarks || null,
         status: "ACTIVE",
       },
@@ -161,6 +171,8 @@ export async function createBeneficiaryAction(
   revalidatePath("/admin/beneficiaries");
   revalidatePath("/officer/beneficiaries");
   revalidatePath("/admin/dashboard");
+  revalidatePath("/officer/dashboard");
+  revalidatePath(`/officer/categories/${parsed.data.categoryId}`);
   return { ok: true, message: "Beneficiary saved successfully.", saved: true };
 }
 

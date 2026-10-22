@@ -6,10 +6,10 @@ import {
   Briefcase,
   ClipboardList,
   UserRound,
-  Users,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { MetricCard } from "@/components/ui/metric-card";
+import { BeneficiaryRegistry } from "@/components/admin/beneficiary-registry";
 import { getCurrentUser } from "@/lib/auth/permissions";
 import { updateCaseStatusAction } from "@/app/actions/mswd";
 import { formatDate, getCaseStatusClassName } from "@/lib/utils";
@@ -73,7 +73,6 @@ export default async function OfficerCategoryDashboardPage({
     db.beneficiary.findMany({
       where: { categoryId, assignedOfficerId: user.id },
       orderBy: { createdAt: "desc" },
-      take: 10,
     }),
   ]);
 
@@ -192,53 +191,23 @@ export default async function OfficerCategoryDashboardPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            My beneficiaries in this category
-          </h2>
-          <Link href="/officer/beneficiaries" className="text-xs font-medium text-sky-700 hover:text-sky-800">
-            View all
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Beneficiary no.</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Sex</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Barangay</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Registered</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {beneficiaries.length > 0 ? (
-                beneficiaries.map((beneficiary) => (
-                  <tr key={beneficiary.id}>
-                    <td className="px-4 py-3 font-medium text-slate-900">{beneficiary.beneficiaryNumber}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      <span className="inline-flex items-center gap-2">
-                        <Users className="h-4 w-4 text-slate-400" />
-                        {beneficiary.firstName} {beneficiary.lastName}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{beneficiary.sex}</td>
-                    <td className="px-4 py-3 text-slate-600">{beneficiary.barangay ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatDate(beneficiary.registrationDate)}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-sm text-slate-500">
-                    No beneficiaries assigned to you in this category yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <BeneficiaryRegistry
+        categories={[{ id: category.id, name: category.name }]}
+        filterCategories={[]}
+        officers={[]}
+        beneficiaries={beneficiaries.map((beneficiary) => ({
+          id: beneficiary.id,
+          beneficiaryNumber: beneficiary.beneficiaryNumber,
+          fullName: `${beneficiary.firstName} ${beneficiary.lastName}`,
+          categoryId: category.id,
+          categoryName: category.name,
+          barangay: beneficiary.barangay,
+          officerName: user.name,
+          status: beneficiary.status,
+        }))}
+        selectedCategoryId={category.id}
+        officerMode
+      />
     </div>
   );
 }

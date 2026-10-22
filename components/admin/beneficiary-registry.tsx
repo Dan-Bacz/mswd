@@ -72,12 +72,14 @@ export function BeneficiaryRegistry({
   officers,
   beneficiaries,
   selectedCategoryId,
+  officerMode = false,
 }: {
   categories: RegistryCategory[];
   filterCategories: RegistryCategory[];
   officers: RegistryOfficer[];
   beneficiaries: RegistryBeneficiary[];
   selectedCategoryId?: string;
+  officerMode?: boolean;
 }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -140,7 +142,11 @@ export function BeneficiaryRegistry({
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#0B1A3E]">Beneficiaries</h1>
-          <p className="mt-1.5 text-sm text-[#6480A9]">Manage and register MSWD beneficiaries.</p>
+          <p className="mt-1.5 text-sm text-[#6480A9]">
+            {officerMode
+              ? "Register beneficiaries in your assigned category."
+              : "Manage and register MSWD beneficiaries."}
+          </p>
         </div>
         <button
           ref={modalTriggerRef}
@@ -177,7 +183,7 @@ export function BeneficiaryRegistry({
             </p>
           </div>
           <div className="mt-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
-            <div ref={categoryFilterRef} className="relative w-full shrink-0 sm:w-auto">
+            {!officerMode && <div ref={categoryFilterRef} className="relative w-full shrink-0 sm:w-auto">
               <button
                 ref={categoryFilterButtonRef}
                 type="button"
@@ -230,7 +236,7 @@ export function BeneficiaryRegistry({
                   ))}
                 </nav>
               )}
-            </div>
+            </div>}
             <label className="relative block w-full min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
               <input
@@ -309,6 +315,7 @@ export function BeneficiaryRegistry({
           categories={categories}
           officers={officers}
           selectedCategoryId={selectedCategoryId}
+          officerMode={officerMode}
           onClose={closeModal}
           onSaved={handleSaved}
           triggerRef={modalTriggerRef}
@@ -332,6 +339,7 @@ function BeneficiaryModal({
   categories,
   officers,
   selectedCategoryId,
+  officerMode,
   onClose,
   onSaved,
   triggerRef,
@@ -339,6 +347,7 @@ function BeneficiaryModal({
   categories: RegistryCategory[];
   officers: RegistryOfficer[];
   selectedCategoryId?: string;
+  officerMode: boolean;
   onClose: () => void;
   onSaved: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -521,7 +530,18 @@ function BeneficiaryModal({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField id="categoryId" label="Beneficiary category" required error={state.fieldErrors?.categoryId}>
-                  <span className="relative block">
+                  {officerMode ? (
+                    <>
+                      <input
+                        {...fieldProps("categoryId")}
+                        name="categoryName"
+                        value={categories.find((category) => category.id === selectedCategoryId)?.name ?? ""}
+                        readOnly
+                        className={`${inputClass} bg-slate-50`}
+                      />
+                      <input type="hidden" name="categoryId" value={selectedCategoryId ?? ""} />
+                    </>
+                  ) : <span className="relative block">
                     <select
                       {...fieldProps("categoryId")}
                       name="categoryId"
@@ -534,7 +554,7 @@ function BeneficiaryModal({
                       ))}
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
-                  </span>
+                  </span>}
                 </FormField>
                 <FormField id="civilStatus" label="Civil status" error={state.fieldErrors?.civilStatus}>
                   <span className="relative block">
@@ -586,7 +606,7 @@ function BeneficiaryModal({
                 <h3 id="assignment-heading" className="text-sm font-semibold text-[#0B1A3E]">Assignment &amp; Notes</h3>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <FormField id="assignedOfficerId" label="Assigned officer" error={state.fieldErrors?.assignedOfficerId}>
+                {!officerMode && <FormField id="assignedOfficerId" label="Assigned officer" error={state.fieldErrors?.assignedOfficerId}>
                   <span className="relative block">
                     <select {...fieldProps("assignedOfficerId")} name="assignedOfficerId" defaultValue="">
                       <option value="">Unassigned</option>
@@ -596,7 +616,7 @@ function BeneficiaryModal({
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
                   </span>
-                </FormField>
+                </FormField>}
                 <FormField id="subcategory" label="Subcategory" error={state.fieldErrors?.subcategory}>
                   <input {...fieldProps("subcategory")} name="subcategory" />
                 </FormField>
