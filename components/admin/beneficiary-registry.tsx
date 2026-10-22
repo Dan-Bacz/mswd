@@ -82,8 +82,12 @@ export function BeneficiaryRegistry({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const modalTriggerRef = useRef<HTMLButtonElement>(null);
+  const categoryFilterRef = useRef<HTMLDivElement>(null);
+  const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
   const activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
@@ -106,6 +110,30 @@ export function BeneficiaryRegistry({
     const timeoutId = window.setTimeout(() => setToastVisible(false), 4500);
     return () => window.clearTimeout(timeoutId);
   }, [toastVisible]);
+
+  useEffect(() => {
+    if (!categoryFilterOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (event.target instanceof Node && !categoryFilterRef.current?.contains(event.target)) {
+        setCategoryFilterOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setCategoryFilterOpen(false);
+        categoryFilterButtonRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [categoryFilterOpen]);
 
   return (
     <div className="space-y-5">
@@ -136,7 +164,7 @@ export function BeneficiaryRegistry({
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-[#DCE3EE] bg-white shadow-sm">
+      <section className="rounded-xl border border-[#DCE3EE] bg-white shadow-sm">
         <div className="border-b border-[#DCE3EE] p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-[#0B1A3E]">
@@ -148,43 +176,62 @@ export function BeneficiaryRegistry({
               {filteredBeneficiaries.length} {filteredBeneficiaries.length === 1 ? "record" : "records"}
             </p>
           </div>
-          <div className="mt-3 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
-            <nav
-              aria-label="Filter beneficiaries by category"
-              className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1"
-            >
-              <span className="sticky left-0 z-10 shrink-0 bg-white pr-1 text-xs font-semibold text-[#6480A9]">
-                Filter by
-              </span>
-              <div className="inline-flex w-max shrink-0 items-center rounded-lg border border-[#DCE3EE] bg-[#F4F7FB] p-1">
-                <Link
-                  href="/admin/beneficiaries"
-                  aria-current={!selectedCategoryId ? "page" : undefined}
-                  className={`shrink-0 rounded-md px-3 py-2 text-xs font-medium transition ${
-                    !selectedCategoryId
-                      ? "bg-[#0B1A3E] text-white shadow-sm"
-                      : "text-[#405B80] hover:bg-white hover:text-[#0B1A3E]"
-                  }`}
+          <div className="mt-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+            <div ref={categoryFilterRef} className="relative w-full shrink-0 sm:w-auto">
+              <button
+                ref={categoryFilterButtonRef}
+                type="button"
+                aria-expanded={categoryFilterOpen}
+                aria-controls="beneficiary-category-filter-options"
+                onClick={() => setCategoryFilterOpen((open) => !open)}
+                className="flex h-11 w-full items-center justify-between gap-4 rounded-lg border border-[#DCE3EE] bg-white px-3 text-left text-sm text-[#405B80] transition hover:border-[#C9A93F] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/15 sm:min-w-56"
+              >
+                <span className="min-w-0">
+                  <span className="mr-2 text-xs text-[#6480A9]">Filter by</span>
+                  <span className="font-medium text-[#0B1A3E]">{selectedCategory?.name ?? "All beneficiaries"}</span>
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-[#6480A9] transition-transform ${categoryFilterOpen ? "rotate-180" : ""}`}
+                  aria-hidden="true"
+                />
+              </button>
+              {categoryFilterOpen && (
+                <nav
+                  id="beneficiary-category-filter-options"
+                  aria-label="Filter beneficiaries by category"
+                  className="absolute left-0 top-full z-20 mt-2 max-h-[min(60vh,24rem)] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-[#DCE3EE] bg-white p-1.5 shadow-xl"
                 >
-                  All
-                </Link>
-                {filterCategories.map((category) => (
                   <Link
-                    key={category.id}
-                    href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
-                    aria-current={selectedCategoryId === category.id ? "page" : undefined}
-                    className={`shrink-0 rounded-md px-3 py-2 text-xs font-medium transition ${
-                      selectedCategoryId === category.id
-                        ? "bg-[#0B1A3E] text-white shadow-sm"
-                        : "text-[#405B80] hover:bg-white hover:text-[#0B1A3E]"
+                    href="/admin/beneficiaries"
+                    aria-current={!selectedCategoryId ? "page" : undefined}
+                    onClick={() => setCategoryFilterOpen(false)}
+                    className={`block rounded-md px-3 py-2.5 text-sm transition ${
+                      !selectedCategoryId
+                        ? "bg-[#F8F4E8] font-semibold text-[#0B1A3E]"
+                        : "text-[#405B80] hover:bg-[#F4F7FB] hover:text-[#0B1A3E]"
                     }`}
                   >
-                    {category.name}
+                    All beneficiaries
                   </Link>
-                ))}
-              </div>
-            </nav>
-            <label className="relative block w-full shrink-0 lg:w-72">
+                  {filterCategories.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
+                      aria-current={selectedCategoryId === category.id ? "page" : undefined}
+                      onClick={() => setCategoryFilterOpen(false)}
+                      className={`block whitespace-normal break-words rounded-md px-3 py-2.5 text-sm transition ${
+                        selectedCategoryId === category.id
+                          ? "bg-[#F8F4E8] font-semibold text-[#0B1A3E]"
+                          : "text-[#405B80] hover:bg-[#F4F7FB] hover:text-[#0B1A3E]"
+                      }`}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </nav>
+              )}
+            </div>
+            <label className="relative block w-full min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
               <input
                 type="search"
