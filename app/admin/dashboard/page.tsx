@@ -49,7 +49,7 @@ function categoryAppearance(name: string, index: number): { icon: LucideIcon; co
 
 function isHiddenDashboardCategory(name: string) {
   const normalized = name.toLowerCase();
-  return normalized.includes("eccd") || normalized.includes("maifip") || normalized.includes("juvenile");
+  return normalized === "women" || normalized.includes("eccd") || normalized.includes("maifip") || normalized.includes("juvenile");
 }
 
 function formatDate(value: Date) {
