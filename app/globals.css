@@ -36,3 +36,38 @@ textarea,
 button {
   font: inherit;
 }
+
+.beneficiary-modal-backdrop {
+  animation: beneficiary-backdrop-in 160ms ease-out both;
+}
+
+.beneficiary-modal-panel {
+  animation: beneficiary-panel-in 180ms ease-out both;
+}
+
+@keyframes beneficiary-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes beneficiary-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beneficiary-modal-backdrop,
+  .beneficiary-modal-panel {
+    animation: none;
+  }
+}

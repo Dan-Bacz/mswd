@@ -1,9 +1,10 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/auth/permissions";
+import { requireAdmin, requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema, caseSchema } from "@/lib/validation";
 
 const CASE_STATUSES = [
@@ -33,7 +34,19 @@ function generateSequence(prefix: string) {
   return `${prefix}-${stamp}-${suffix}`;
 }
 
-export async function createBeneficiaryAction(formData: FormData) {
+export type BeneficiaryActionState = {
+  ok: boolean;
+  message: string;
+  fieldErrors?: Record<string, string>;
+  saved?: boolean;
+};
+
+export async function createBeneficiaryAction(
+  _previousState: BeneficiaryActionState,
+  formData: FormData,
+): Promise<BeneficiaryActionState> {
+  await requireAdmin();
+
   const raw = {
     firstName: String(formData.get("firstName") ?? ""),
     middleName: String(formData.get("middleName") ?? ""),
@@ -57,13 +70,28 @@ export async function createBeneficiaryAction(formData: FormData) {
   const parsed = beneficiarySchema.safeParse(raw);
 
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid beneficiary details.");
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0];
+      if (typeof field === "string" && !fieldErrors[field]) {
+        fieldErrors[field] = issue.message;
+      }
+    }
+    return {
+      ok: false,
+      message: "Please review the highlighted fields.",
+      fieldErrors,
+    };
   }
 
   const category = await db.category.findUnique({ where: { id: parsed.data.categoryId } });
 
   if (!category) {
-    throw new Error("Selected category was not found.");
+    return {
+      ok: false,
+      message: "Selected category was not found. Refresh the page and try again.",
+      fieldErrors: { categoryId: "Select a valid beneficiary category." },
+    };
   }
 
   if (parsed.data.assignedOfficerId) {
@@ -73,47 +101,67 @@ export async function createBeneficiaryAction(formData: FormData) {
     });
 
     if (!officer) {
-      throw new Error("Selected officer was not found.");
+      return {
+        ok: false,
+        message: "Selected officer was not found. Refresh the page and try again.",
+        fieldErrors: { assignedOfficerId: "Select a valid officer or leave this unassigned." },
+      };
     }
 
     const canAssign = officer.userCategories.some((item) => item.categoryId === parsed.data.categoryId);
 
     if (!canAssign) {
-      throw new Error("This officer is not authorized for the selected category.");
+      return {
+        ok: false,
+        message: "This officer is not authorized for the selected category.",
+        fieldErrors: { assignedOfficerId: "Choose an officer assigned to this category." },
+      };
     }
   }
 
   const dob = parsed.data.dateOfBirth ? new Date(parsed.data.dateOfBirth) : null;
   const age = dob ? new Date().getFullYear() - dob.getFullYear() : null;
 
-  await db.beneficiary.create({
-    data: {
-      beneficiaryNumber: generateSequence("BEN"),
-      firstName: parsed.data.firstName,
-      middleName: parsed.data.middleName || null,
-      lastName: parsed.data.lastName,
-      suffix: parsed.data.suffix || null,
-      sex: parsed.data.sex,
-      dateOfBirth: dob,
-      age,
-      civilStatus: parsed.data.civilStatus || null,
-      contactNumber: parsed.data.contactNumber || null,
-      email: parsed.data.email || null,
-      address: parsed.data.address,
-      barangay: parsed.data.barangay || null,
-      municipality: parsed.data.municipality || null,
-      province: parsed.data.province || null,
-      categoryId: parsed.data.categoryId,
-      subcategory: parsed.data.subcategory || null,
-      assignedOfficerId: parsed.data.assignedOfficerId || null,
-      remarks: parsed.data.remarks || null,
-      status: "ACTIVE",
-    },
-  });
+  try {
+    await db.beneficiary.create({
+      data: {
+        beneficiaryNumber: generateSequence("BEN"),
+        firstName: parsed.data.firstName,
+        middleName: parsed.data.middleName || null,
+        lastName: parsed.data.lastName,
+        suffix: parsed.data.suffix || null,
+        sex: parsed.data.sex,
+        dateOfBirth: dob,
+        age,
+        civilStatus: parsed.data.civilStatus || null,
+        contactNumber: parsed.data.contactNumber || null,
+        email: parsed.data.email || null,
+        address: parsed.data.address,
+        barangay: parsed.data.barangay || null,
+        municipality: parsed.data.municipality || null,
+        province: parsed.data.province || null,
+        categoryId: parsed.data.categoryId,
+        subcategory: parsed.data.subcategory || null,
+        assignedOfficerId: parsed.data.assignedOfficerId || null,
+        remarks: parsed.data.remarks || null,
+        status: "ACTIVE",
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error("Unable to save beneficiary:", error);
+      return {
+        ok: false,
+        message: "Unable to save the beneficiary. Please try again.",
+      };
+    }
+    throw error;
+  }
 
   revalidatePath("/admin/beneficiaries");
   revalidatePath("/officer/beneficiaries");
-  redirect("/admin/beneficiaries");
+  revalidatePath("/admin/dashboard");
+  return { ok: true, message: "Beneficiary saved successfully.", saved: true };
 }
 
 export async function createCaseAction(formData: FormData) {
