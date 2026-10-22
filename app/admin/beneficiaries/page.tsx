@@ -8,10 +8,13 @@ export const dynamic = "force-dynamic";
 export default async function BeneficiariesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ category?: string }> | { category?: string };
+  searchParams?:
+    | Promise<{ category?: string; categoryId?: string }>
+    | { category?: string; categoryId?: string };
 }) {
   const params = await Promise.resolve(searchParams ?? {});
   const requestedCategory = typeof params.category === "string" ? params.category : undefined;
+  const requestedCategoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;
 
   const [categories, officers] = await Promise.all([
     db.category.findMany({ orderBy: { name: "asc" } }),
@@ -22,7 +25,9 @@ export default async function BeneficiariesPage({
     }),
   ]);
   const availableCategories = categories.filter((category) => shouldShowBeneficiaryCategory(category.name));
-  const selectedCategory = availableCategories.find((category) => category.name === requestedCategory);
+  const selectedCategory =
+    categories.find((category) => category.id === requestedCategoryId) ??
+    availableCategories.find((category) => category.name === requestedCategory);
   const beneficiaries = await db.beneficiary.findMany({
     where: selectedCategory ? { categoryId: selectedCategory.id } : undefined,
     include: { category: true, assignedOfficer: true },
@@ -62,8 +67,14 @@ export default async function BeneficiariesPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Beneficiaries</h1>
-        <p className="mt-2 text-slate-600">Active beneficiary registry and intake workflow.</p>
+        <h1 className="text-3xl font-bold text-slate-900">
+          {selectedCategory ? `${selectedCategory.name} beneficiaries` : "Beneficiaries"}
+        </h1>
+        <p className="mt-2 text-slate-600">
+          {selectedCategory
+            ? `Beneficiaries registered under the ${selectedCategory.name} program.`
+            : "Active beneficiary registry and intake workflow."}
+        </p>
       </div>
 
       <nav aria-label="Filter beneficiaries by category" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -82,7 +93,7 @@ export default async function BeneficiariesPage({
           {availableCategories.map((category) => (
             <Link
               key={category.id}
-              href={`/admin/beneficiaries?category=${encodeURIComponent(category.name)}`}
+              href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
               aria-current={selectedCategory?.id === category.id ? "page" : undefined}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${selectedCategory?.id === category.id ? "border-sky-700 bg-sky-700 text-white" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:text-sky-700"}`}
             >

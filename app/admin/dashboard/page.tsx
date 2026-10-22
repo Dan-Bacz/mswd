@@ -204,8 +204,9 @@ export default async function AdminDashboardPage() {
               return (
                 <Link
                   key={category.id}
-                  href={`/admin/categories/${category.id}`}
+                  href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
                   className="group flex min-h-[112px] items-start gap-3 rounded-md border border-[#D9E5F5] border-t-2 p-3.5 transition hover:bg-[#F8FAFE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
+                  aria-label={`View ${category.name} beneficiaries`}
                   style={{ borderTopColor: appearance.color }}
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F2F6FC]" style={{ color: appearance.color }}>
@@ -214,7 +215,7 @@ export default async function AdminDashboardPage() {
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-[#173B70]">{category.name}</span>
                     <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-[#6480A9]">
-                      {category.description || "View program beneficiaries and casework."}
+                      {category.description || "View beneficiaries enrolled in this program."}
                     </span>
                     <span className="mt-2 block text-[11px] font-medium text-[#405B80]">
                       {category._count.beneficiaries.toLocaleString()} beneficiaries
