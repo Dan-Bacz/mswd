@@ -2,9 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Activity,
-  AlertCircle,
-  ArrowRight,
-  BriefcaseBusiness,
   CalendarDays,
   ChevronRight,
   ClipboardList,
@@ -14,7 +11,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/permissions";
 import { db } from "@/lib/db";
-import { BeneficiaryDistributionChart, ProgramStatisticsChart } from "@/components/admin/dashboard-charts";
+import { BeneficiaryDistributionChart } from "@/components/admin/dashboard-charts";
 
 const chartPalette = ["#0645AD", "#E31837", "#FFD21F", "#58A5E8", "#8B9CB4", "#168653"];
 
@@ -28,33 +25,6 @@ function getCategoryColor(name: string, index: number) {
   return chartPalette[index % chartPalette.length];
 }
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-PH", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "Asia/Manila",
-  }).format(value);
-}
-
-function caseStatusClass(status: string) {
-  switch (status) {
-    case "ACTIVE":
-    case "RESOLVED":
-      return "bg-emerald-50 text-emerald-700";
-    case "PENDING":
-      return "bg-amber-50 text-amber-800";
-    case "UNDER_ASSESSMENT":
-      return "bg-blue-50 text-blue-700";
-    case "FOR_REFERRAL":
-      return "bg-violet-50 text-violet-700";
-    case "FOR_FOLLOW_UP":
-      return "bg-orange-50 text-orange-700";
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
-}
-
 export const dynamic = "force-dynamic";
 
 export default async function OfficerDashboardPage() {
@@ -66,20 +36,10 @@ export default async function OfficerDashboardPage() {
 
   const [
     myBeneficiaries,
-    activeCases,
-    pendingCases,
     notifications,
     categories,
-    recentCases,
   ] = await Promise.all([
     db.beneficiary.count({ where: { assignedOfficerId: user.id } }),
-    db.case.count({
-      where: {
-        assignedOfficerId: user.id,
-        status: { in: ["ACTIVE", "UNDER_ASSESSMENT", "FOR_FOLLOW_UP", "FOR_REFERRAL"] },
-      },
-    }),
-    db.case.count({ where: { assignedOfficerId: user.id, status: "PENDING" } }),
     db.notification.count({ where: { userId: user.id, isRead: false } }),
     db.category.findMany({
       where: { userCategories: { some: { userId: user.id } } },
@@ -87,17 +47,10 @@ export default async function OfficerDashboardPage() {
       include: {
         _count: {
           select: {
-            cases: { where: { assignedOfficerId: user.id } },
             beneficiaries: { where: { assignedOfficerId: user.id } },
           },
         },
       },
-    }),
-    db.case.findMany({
-      where: { assignedOfficerId: user.id },
-      include: { category: { select: { name: true } } },
-      orderBy: { dateOpened: "desc" },
-      take: 5,
     }),
   ]);
 
@@ -117,18 +70,14 @@ export default async function OfficerDashboardPage() {
   const categoryStats = categories.map((category, index) => ({
     name: category.name,
     beneficiaries: category._count.beneficiaries,
-    cases: category._count.cases,
     color: getCategoryColor(category.name, index),
   }));
   const metrics: Array<{ label: string; value: number; hint: string; icon: LucideIcon; color: string; tint: string }> = [
-    { label: "My beneficiaries", value: myBeneficiaries, hint: "Assigned to your caseload", icon: Users, color: "#0645AD", tint: "#EEF4FF" },
-    { label: "Active cases", value: activeCases, hint: "Ongoing casework", icon: BriefcaseBusiness, color: "#168653", tint: "#ECF8F1" },
-    { label: "Pending cases", value: pendingCases, hint: "Awaiting your attention", icon: AlertCircle, color: "#D09A00", tint: "#FFF8DE" },
+    { label: "My beneficiaries", value: myBeneficiaries, hint: "Assigned to your programs", icon: Users, color: "#0645AD", tint: "#EEF4FF" },
     { label: "Unread notifications", value: notifications, hint: "Updates for your account", icon: Activity, color: "#E31837", tint: "#FFF0F2" },
   ];
   const quickActions: Array<{ label: string; href: string; icon: LucideIcon }> = [
     { label: "View my beneficiaries", href: "/officer/beneficiaries", icon: Users },
-    { label: "Manage my cases", href: "/officer/cases", icon: BriefcaseBusiness },
     { label: "Open reports", href: "/officer/reports", icon: ClipboardList },
   ];
 
@@ -152,7 +101,7 @@ export default async function OfficerDashboardPage() {
               <h1 className="mt-1 truncate text-xl font-bold text-[#12335F] sm:text-2xl">
                 {categoryNames.join(" · ") || "Officer overview"}
               </h1>
-              <p className="mt-1 text-xs text-[#536E92] sm:text-sm">Here&apos;s your assigned caseload and program overview.</p>
+              <p className="mt-1 text-xs text-[#536E92] sm:text-sm">Here&apos;s your assigned programs and beneficiary overview.</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2 text-xs font-medium text-[#405B80] sm:self-end sm:pb-1">
@@ -162,7 +111,7 @@ export default async function OfficerDashboardPage() {
         </div>
       </section>
 
-      <section aria-label="My caseload summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Officer summary" className="grid gap-3 sm:grid-cols-2">
         {metrics.map(({ label, value, hint, icon: Icon, color, tint }) => (
           <div key={label} className="flex min-h-[112px] items-center justify-between rounded-lg border border-[#D9E5F5] border-t-2 bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)]" style={{ borderTopColor: color }}>
             <div>
@@ -204,10 +153,10 @@ export default async function OfficerDashboardPage() {
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-[#173B70]">{category.name}</span>
                     <span className="mt-1 block text-xs leading-relaxed text-[#6480A9]">
-                      Your assigned beneficiaries and casework for this program.
+                      Beneficiaries assigned to you in this program.
                     </span>
                     <span className="mt-2 block text-[11px] font-medium text-[#405B80]">
-                      {category._count.cases.toLocaleString()} cases · {category._count.beneficiaries.toLocaleString()} beneficiaries
+                      {category._count.beneficiaries.toLocaleString()} beneficiaries
                     </span>
                   </span>
                   <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#8CA2BF] transition group-hover:translate-x-0.5 group-hover:text-[#0645AD]" />
@@ -223,7 +172,7 @@ export default async function OfficerDashboardPage() {
         )}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
+      <section className="grid gap-4">
         <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
           <div className="mb-3">
             <h2 className="text-base font-bold text-[#173B70]">My Beneficiary Distribution</h2>
@@ -231,63 +180,9 @@ export default async function OfficerDashboardPage() {
           </div>
           <BeneficiaryDistributionChart categories={categoryStats} />
         </div>
-        <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <div>
-              <h2 className="text-base font-bold text-[#173B70]">My Program Statistics</h2>
-              <p className="mt-1 text-xs text-[#6480A9]">Assigned cases by program category</p>
-            </div>
-            <Link href="/officer/reports" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
-              View reports <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <ProgramStatisticsChart categories={categoryStats} />
-        </div>
       </section>
 
-      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
-        <div className="min-w-0 rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-bold text-[#173B70]">Recent Cases</h2>
-              <p className="mt-1 text-xs text-[#6480A9]">Latest cases assigned to you</p>
-            </div>
-            <Link href="/officer/cases" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
-              View all <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-          {recentCases.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[470px] text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#E7EEF8] text-[10px] uppercase tracking-wide text-[#6480A9]">
-                    <th className="pb-2 pr-3 font-semibold">Program</th>
-                    <th className="pb-2 pr-3 font-semibold">Case type</th>
-                    <th className="pb-2 pr-3 font-semibold">Status</th>
-                    <th className="pb-2 font-semibold">Date opened</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7EEF8]">
-                  {recentCases.map((item) => (
-                    <tr key={item.id}>
-                      <td className="py-3 pr-3 font-medium text-[#173B70]">{item.category.name}</td>
-                      <td className="py-3 pr-3 text-[#405B80]">{item.caseType}</td>
-                      <td className="py-3 pr-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${caseStatusClass(item.status)}`}>
-                          {item.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td className="py-3 text-[#6480A9]">{formatDate(item.dateOpened)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="rounded-md border border-dashed border-[#D9E5F5] p-5 text-center text-sm text-[#6480A9]">No cases are assigned to you yet.</p>
-          )}
-        </div>
-
+      <section className="grid min-w-0 gap-4">
         <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
           <h2 className="text-base font-bold text-[#173B70]">Quick Actions</h2>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
@@ -308,7 +203,7 @@ export default async function OfficerDashboardPage() {
           <div className="mt-4 rounded-md border border-[#D9E5F5] bg-[#F8FAFE] p-3">
             <p className="text-xs font-semibold text-[#173B70]">Your dashboard</p>
             <p className="mt-1 text-[11px] leading-relaxed text-[#6480A9]">
-              Counts and charts are limited to beneficiaries and cases assigned to your account.
+              Counts and charts are limited to beneficiaries assigned to your account.
             </p>
           </div>
         </div>

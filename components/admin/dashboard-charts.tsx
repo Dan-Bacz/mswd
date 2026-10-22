@@ -1,22 +1,16 @@
 "use client";
 
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
   Cell,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
 
 export type DashboardChartCategory = {
   name: string;
   beneficiaries: number;
-  cases: number;
   color: string;
 };
 
@@ -87,49 +81,6 @@ export function BeneficiaryDistributionChart({
         })}
         {categories.length === 0 && <p className="text-sm text-slate-500">No categories have been configured.</p>}
       </div>
-    </div>
-  );
-}
-
-export function ProgramStatisticsChart({
-  categories,
-}: {
-  categories: DashboardChartCategory[];
-}) {
-  const data = [...categories]
-    .sort((left, right) => right.cases - left.cases)
-    .slice(0, 8);
-  const height = Math.max(220, data.length * 38 + 24);
-
-  return (
-    <div
-      role="img"
-      aria-label="Case totals by program category"
-      className="w-full min-w-0"
-      style={{ height }}
-    >
-      {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 18, left: 8, bottom: 4 }}>
-            <CartesianGrid stroke="#E7EEF8" horizontal={false} />
-            <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "#6480A9", fontSize: 11 }} />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={112}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#405B80", fontSize: 11 }}
-            />
-            <Tooltip formatter={(value) => [Number(value).toLocaleString(), "Cases"]} />
-            <Bar dataKey="cases" fill="#0645AD" radius={[0, 4, 4, 0]} barSize={16} />
-          </BarChart>
-        </ResponsiveContainer>
-      ) : (
-        <div className="flex h-full items-center justify-center text-sm text-slate-500">
-          No program categories have been configured.
-        </div>
-      )}
     </div>
   );
 }

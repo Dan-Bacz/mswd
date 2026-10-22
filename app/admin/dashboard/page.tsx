@@ -18,7 +18,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/permissions";
-import { BeneficiaryDistributionChart, ProgramStatisticsChart } from "@/components/admin/dashboard-charts";
+import { BeneficiaryDistributionChart } from "@/components/admin/dashboard-charts";
 
 const chartPalette = ["#0645AD", "#E31837", "#FFD21F", "#58A5E8", "#8B9CB4", "#168653"];
 
@@ -61,50 +61,22 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
-function caseStatusClass(status: string) {
-  switch (status) {
-    case "ACTIVE":
-    case "RESOLVED":
-      return "bg-emerald-50 text-emerald-700";
-    case "PENDING":
-      return "bg-amber-50 text-amber-800";
-    case "UNDER_ASSESSMENT":
-      return "bg-blue-50 text-blue-700";
-    case "FOR_REFERRAL":
-      return "bg-violet-50 text-violet-700";
-    case "FOR_FOLLOW_UP":
-      return "bg-orange-50 text-orange-700";
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
-}
-
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const user = await requireAdmin();
   const [
     beneficiaries,
-    activeCases,
-    pendingCases,
     activeServices,
     allCategories,
-    recentCases,
     recentActivity,
     systemSettings,
   ] = await Promise.all([
     db.beneficiary.count(),
-    db.case.count({ where: { status: { in: ["ACTIVE", "UNDER_ASSESSMENT", "FOR_FOLLOW_UP", "FOR_REFERRAL"] } } }),
-    db.case.count({ where: { status: "PENDING" } }),
     db.serviceType.count({ where: { isActive: true } }),
     db.category.findMany({
       orderBy: { name: "asc" },
-      include: { _count: { select: { beneficiaries: true, cases: true } } },
-    }),
-    db.case.findMany({
-      include: { category: { select: { name: true } } },
-      orderBy: { dateOpened: "desc" },
-      take: 5,
+      include: { _count: { select: { beneficiaries: true } } },
     }),
     db.auditLog.findMany({
       include: { user: { select: { name: true } } },
@@ -114,7 +86,6 @@ export default async function AdminDashboardPage() {
     db.systemSetting.findMany({ select: { key: true, value: true } }),
   ]);
   const categories = allCategories.filter((category) => !isHiddenDashboardCategory(category.name));
-  const visibleRecentCases = recentCases.filter((item) => !isHiddenDashboardCategory(item.category.name));
 
   const municipality =
     systemSettings.find((setting) =>
@@ -135,19 +106,15 @@ export default async function AdminDashboardPage() {
   const categoryStats = categories.map((category, index) => ({
     name: category.name,
     beneficiaries: category._count.beneficiaries,
-    cases: category._count.cases,
     color: categoryAppearance(category.name, index).color,
   }));
   const quickActions = [
     { label: "Register beneficiary", href: "/admin/beneficiaries", icon: Users },
-    { label: "Manage cases", href: "/admin/cases", icon: BriefcaseBusiness },
     { label: "Open reports", href: "/admin/reports", icon: FileText },
     { label: "Manage users", href: "/admin/officers", icon: ShieldCheck },
   ];
   const metrics = [
     { label: "Total beneficiaries", value: beneficiaries, icon: Users, color: "#0645AD", tint: "#EEF4FF" },
-    { label: "Active cases", value: activeCases, icon: BriefcaseBusiness, color: "#168653", tint: "#ECF8F1" },
-    { label: "Pending cases", value: pendingCases, icon: CalendarDays, color: "#D09A00", tint: "#FFF8DE" },
     { label: "Available services", value: activeServices, icon: HandHeart, color: "#E31837", tint: "#FFF0F2" },
   ];
 
@@ -179,7 +146,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section aria-label="System summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="System summary" className="grid gap-3 sm:grid-cols-2">
         {metrics.map(({ label, value, icon: Icon, color, tint }) => (
           <div key={label} className="flex min-h-[112px] items-center justify-between rounded-lg border border-[#D9E5F5] border-t-2 bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)]" style={{ borderTopColor: color }}>
             <div>
@@ -240,7 +207,7 @@ export default async function AdminDashboardPage() {
         )}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
+      <section className="grid gap-4">
         <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
           <div className="mb-3">
             <h2 className="text-base font-bold text-[#173B70]">Beneficiary Distribution</h2>
@@ -248,67 +215,9 @@ export default async function AdminDashboardPage() {
           </div>
           <BeneficiaryDistributionChart categories={categoryStats} />
         </div>
-        <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
-          <div className="mb-3 flex items-start justify-between gap-2">
-            <div>
-              <h2 className="text-base font-bold text-[#173B70]">Program Statistics</h2>
-              <p className="mt-1 text-xs text-[#6480A9]">Cases recorded by program category</p>
-            </div>
-            <Link href="/admin/reports" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
-              View reports <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <ProgramStatisticsChart categories={categoryStats} />
-        </div>
       </section>
 
-      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
-        <div className="min-w-0 rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-bold text-[#173B70]">Recent Cases</h2>
-              <p className="mt-1 text-xs text-[#6480A9]">Latest case activity without beneficiary personal details</p>
-            </div>
-            <Link href="/admin/cases" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
-              View all <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-          {visibleRecentCases.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[470px] text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#E7EEF8] text-[10px] uppercase tracking-wide text-[#6480A9]">
-                    <th className="pb-2 pr-3 font-semibold">Program</th>
-                    <th className="pb-2 pr-3 font-semibold">Status</th>
-                    <th className="pb-2 pr-3 font-semibold">Date opened</th>
-                    <th className="pb-2 font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7EEF8]">
-                  {visibleRecentCases.map((item) => (
-                    <tr key={item.id}>
-                      <td className="py-3 pr-3 font-medium text-[#173B70]">{item.category.name}</td>
-                      <td className="py-3 pr-3">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${caseStatusClass(item.status)}`}>
-                          {item.status.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-3 text-[#6480A9]">{formatDate(item.dateOpened)}</td>
-                      <td className="py-3">
-                        <Link href="/admin/cases" aria-label={`Open case management for ${item.category.name}`} className="font-semibold text-[#0645AD] hover:underline">
-                          Open
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="rounded-md border border-dashed border-[#D9E5F5] p-5 text-center text-sm text-[#6480A9]">No cases have been recorded yet.</p>
-          )}
-        </div>
-
+      <section className="grid min-w-0 gap-4 xl:grid-cols-2">
         <div className="space-y-4">
           <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
             <h2 className="text-base font-bold text-[#173B70]">Quick Actions</h2>
