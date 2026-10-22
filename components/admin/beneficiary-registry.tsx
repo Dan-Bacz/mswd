@@ -125,40 +125,6 @@ export function BeneficiaryRegistry({
         </button>
       </header>
 
-      <nav aria-label="Filter beneficiaries by category" className="rounded-xl border border-[#DCE3EE] bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-[#172B4D]">Programs &amp; categories</h2>
-          <span className="text-xs text-[#6480A9]">{beneficiaries.length} records</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/beneficiaries"
-            aria-current={!selectedCategoryId ? "page" : undefined}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-              !selectedCategoryId
-                ? "border-[#0B1A3E] bg-[#0B1A3E] text-white"
-                : "border-[#DCE3EE] bg-white text-[#405B80] hover:border-[#C9A93F] hover:text-[#0B1A3E]"
-            }`}
-          >
-            All Beneficiaries
-          </Link>
-          {filterCategories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
-              aria-current={selectedCategoryId === category.id ? "page" : undefined}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                selectedCategoryId === category.id
-                  ? "border-[#0B1A3E] bg-[#0B1A3E] text-white"
-                  : "border-[#DCE3EE] bg-white text-[#405B80] hover:border-[#C9A93F] hover:text-[#0B1A3E]"
-              }`}
-            >
-              {category.name}
-            </Link>
-          ))}
-        </div>
-      </nav>
-
       <section aria-label="Beneficiary summary" className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-[#DCE3EE] border-t-2 border-t-[#0645AD] bg-white p-4 shadow-sm">
           <p className="text-xs font-medium text-[#6480A9]">Total beneficiaries</p>
@@ -171,28 +137,65 @@ export function BeneficiaryRegistry({
       </section>
 
       <section className="overflow-hidden rounded-xl border border-[#DCE3EE] bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-[#DCE3EE] p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <div className="border-b border-[#DCE3EE] p-4">
+          <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-[#0B1A3E]">
               {selectedCategoryId
                 ? `${categories.find((category) => category.id === selectedCategoryId)?.name ?? "Program"} Beneficiaries`
                 : "Beneficiary Registry"}
             </h2>
-            <p className="mt-1 text-xs text-[#6480A9]">
+            <p className="shrink-0 text-xs text-[#6480A9]">
               {filteredBeneficiaries.length} {filteredBeneficiaries.length === 1 ? "record" : "records"}
             </p>
           </div>
-          <label className="relative block w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search name or beneficiary ID"
-              aria-label="Search beneficiaries by name or beneficiary ID"
-              className={`${inputClass} pl-9`}
-            />
-          </label>
+          <div className="mt-3 flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
+            <nav
+              aria-label="Filter beneficiaries by category"
+              className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1"
+            >
+              <span className="sticky left-0 z-10 shrink-0 bg-white pr-1 text-xs font-semibold text-[#6480A9]">
+                Filter by
+              </span>
+              <div className="inline-flex w-max shrink-0 items-center rounded-lg border border-[#DCE3EE] bg-[#F4F7FB] p-1">
+                <Link
+                  href="/admin/beneficiaries"
+                  aria-current={!selectedCategoryId ? "page" : undefined}
+                  className={`shrink-0 rounded-md px-3 py-2 text-xs font-medium transition ${
+                    !selectedCategoryId
+                      ? "bg-[#0B1A3E] text-white shadow-sm"
+                      : "text-[#405B80] hover:bg-white hover:text-[#0B1A3E]"
+                  }`}
+                >
+                  All
+                </Link>
+                {filterCategories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
+                    aria-current={selectedCategoryId === category.id ? "page" : undefined}
+                    className={`shrink-0 rounded-md px-3 py-2 text-xs font-medium transition ${
+                      selectedCategoryId === category.id
+                        ? "bg-[#0B1A3E] text-white shadow-sm"
+                        : "text-[#405B80] hover:bg-white hover:text-[#0B1A3E]"
+                    }`}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+            <label className="relative block w-full shrink-0 lg:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search name or beneficiary ID"
+                aria-label="Search beneficiaries by name or beneficiary ID"
+                className={`${inputClass} pl-9`}
+              />
+            </label>
+          </div>
         </div>
 
         {filteredBeneficiaries.length > 0 ? (
