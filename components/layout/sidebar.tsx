@@ -8,7 +8,6 @@ import { NavLinks, type NavLinkItem } from "@/components/layout/nav-links";
 const adminLinks: NavLinkItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/admin/categories", label: "Programs & Services", icon: "categories" },
-  { href: "/admin/cases", label: "Case Management", icon: "cases" },
   { href: "/admin/reports", label: "Reports", icon: "reports" },
   { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
   { href: "/admin/assistance", label: "Assistance", icon: "assistance" },
@@ -20,7 +19,6 @@ const officerLinks: NavLinkItem[] = [
   { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/officer/beneficiaries", label: "My Beneficiaries", icon: "beneficiaries" },
   { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
-  { href: "/officer/cases", label: "My Cases", icon: "tasks" },
   { href: "/officer/reports", label: "Reports", icon: "reports" },
   { href: "/admin/settings", label: "My Profile", icon: "profile" },
 ];
