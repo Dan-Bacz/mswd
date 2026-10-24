@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAHAYAG_BARANGAYS } from "@/lib/locations";
 
 export const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -34,8 +35,7 @@ export const beneficiarySchema = z.object({
   contactNumber: z.string().trim().max(40).optional().or(z.literal("")),
   email: z.string().trim().email("Enter a valid email.").optional().or(z.literal("")),
   address: z.string().trim().min(5, "Address is required."),
-  barangay: z.string().trim().max(80).optional().or(z.literal("")),
-  municipality: z.string().trim().max(80).optional().or(z.literal("")),
+  barangay: z.enum(MAHAYAG_BARANGAYS),
   province: z.string().trim().max(80).optional().or(z.literal("")),
   categoryId: z.string().trim().min(1, "Please choose a category."),
   subcategory: z.string().trim().max(80).optional().or(z.literal("")),

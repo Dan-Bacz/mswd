@@ -17,6 +17,7 @@ import {
   createBeneficiaryAction,
   type BeneficiaryActionState,
 } from "@/app/actions/mswd";
+import { MAHAYAG_BARANGAYS, MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 
 type RegistryCategory = { id: string; name: string };
 type RegistryOfficer = { id: string; name: string; categoryIds: string[] };
@@ -591,11 +592,26 @@ function BeneficiaryModal({
                     <input {...fieldProps("address")} name="address" autoComplete="street-address" required />
                   </FormField>
                 </div>
-                <FormField id="barangay" label="Barangay" error={state.fieldErrors?.barangay}>
-                  <input {...fieldProps("barangay")} name="barangay" />
+                <FormField id="barangay" label="Barangay" required error={state.fieldErrors?.barangay}>
+                  <span className="relative block">
+                    <select {...fieldProps("barangay")} name="barangay" required defaultValue="">
+                      <option value="" disabled>Select a barangay</option>
+                      {MAHAYAG_BARANGAYS.map((barangay) => (
+                        <option key={barangay} value={barangay}>{barangay}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
+                  </span>
                 </FormField>
-                <FormField id="municipality" label="Municipality" error={state.fieldErrors?.municipality}>
-                  <input {...fieldProps("municipality")} name="municipality" autoComplete="address-level2" />
+                <FormField id="municipality" label="Municipality">
+                  <input
+                    {...fieldProps("municipality")}
+                    name="municipality"
+                    value={MAHAYAG_MUNICIPALITY}
+                    readOnly
+                    autoComplete="address-level2"
+                    className={`${inputClass} bg-slate-50`}
+                  />
                 </FormField>
                 <FormField id="province" label="Province" error={state.fieldErrors?.province}>
                   <input {...fieldProps("province")} name="province" autoComplete="address-level1" />

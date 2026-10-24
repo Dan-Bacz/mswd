@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema } from "@/lib/validation";
+import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -46,7 +47,6 @@ export async function createBeneficiaryAction(
     email: String(formData.get("email") ?? ""),
     address: String(formData.get("address") ?? ""),
     barangay: String(formData.get("barangay") ?? ""),
-    municipality: String(formData.get("municipality") ?? ""),
     province: String(formData.get("province") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
     subcategory: String(formData.get("subcategory") ?? ""),
@@ -133,7 +133,7 @@ export async function createBeneficiaryAction(
         email: parsed.data.email || null,
         address: parsed.data.address,
         barangay: parsed.data.barangay || null,
-        municipality: parsed.data.municipality || null,
+        municipality: MAHAYAG_MUNICIPALITY,
         province: parsed.data.province || null,
         categoryId: parsed.data.categoryId,
         subcategory: parsed.data.subcategory || null,
