@@ -1,6 +1,8 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
+import type { BeneficiaryFileType } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/permissions";
@@ -29,6 +31,90 @@ export type BeneficiaryActionState = {
   fieldErrors?: Record<string, string>;
   saved?: boolean;
 };
+
+const MAX_IMAGE_SIZE = 1024 * 1024;
+const MAX_TOTAL_IMAGE_SIZE = 3 * MAX_IMAGE_SIZE;
+
+type BeneficiaryImage = {
+  type: BeneficiaryFileType;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  content: Uint8Array;
+};
+
+class ImageUploadError extends Error {
+  constructor(
+    readonly field: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function isFile(value: FormDataEntryValue | null): value is File {
+  return typeof File !== "undefined" && value instanceof File;
+}
+
+async function parseImageUpload(
+  value: FormDataEntryValue | null,
+  type: BeneficiaryFileType,
+  field: string,
+  required: boolean,
+): Promise<BeneficiaryImage | null> {
+  if (!isFile(value) || value.size === 0) {
+    if (required) {
+      throw new ImageUploadError(field, "Upload a clear image of this side of the valid ID.");
+    }
+    return null;
+  }
+
+  if (value.size > MAX_IMAGE_SIZE) {
+    throw new ImageUploadError(field, "Each image must be 1 MB or smaller.");
+  }
+
+  const content = new Uint8Array(await value.arrayBuffer());
+  let mimeType: string | null = null;
+  let extension = "";
+
+  if (content[0] === 0xff && content[1] === 0xd8 && content[2] === 0xff) {
+    mimeType = "image/jpeg";
+    extension = "jpg";
+  } else if (
+    content[0] === 0x89 &&
+    content[1] === 0x50 &&
+    content[2] === 0x4e &&
+    content[3] === 0x47 &&
+    content[4] === 0x0d &&
+    content[5] === 0x0a &&
+    content[6] === 0x1a &&
+    content[7] === 0x0a
+  ) {
+    mimeType = "image/png";
+    extension = "png";
+  } else if (
+    String.fromCharCode(...content.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...content.slice(8, 12)) === "WEBP"
+  ) {
+    mimeType = "image/webp";
+    extension = "webp";
+  }
+
+  if (!mimeType) {
+    throw new ImageUploadError(field, "Use a valid JPEG, PNG, or WebP image.");
+  }
+
+  const originalName = value.name.replace(/[\\/\u0000-\u001f]/g, "_").slice(0, 255) || "image";
+  return {
+    type,
+    fileName: `${type.toLowerCase()}-${randomUUID()}.${extension}`,
+    originalName,
+    mimeType,
+    size: content.byteLength,
+    content,
+  };
+}
 
 export async function createBeneficiaryAction(
   _previousState: BeneficiaryActionState,
@@ -68,6 +154,50 @@ export async function createBeneficiaryAction(
       ok: false,
       message: "Please review the highlighted fields.",
       fieldErrors,
+    };
+  }
+
+  let images: BeneficiaryImage[];
+  try {
+    const idFront = await parseImageUpload(formData.get("idFront"), "VALID_ID_FRONT", "idFront", true);
+    const idBack = await parseImageUpload(formData.get("idBack"), "VALID_ID_BACK", "idBack", true);
+    const profileCapture = await parseImageUpload(
+      formData.get("profileImageCapture"),
+      "PROFILE_IMAGE",
+      "profileImage",
+      false,
+    );
+    const profileUpload = await parseImageUpload(
+      formData.get("profileImageUpload"),
+      "PROFILE_IMAGE",
+      "profileImage",
+      false,
+    );
+
+    if (profileCapture && profileUpload) {
+      return {
+        ok: false,
+        message: "Choose either a camera photo or a profile image from your device, not both.",
+        fieldErrors: { profileImage: "Choose only one profile image." },
+      };
+    }
+
+    images = [idFront, idBack, profileCapture ?? profileUpload].filter(
+      (image): image is BeneficiaryImage => image !== null,
+    );
+    if (images.reduce((total, image) => total + image.size, 0) > MAX_TOTAL_IMAGE_SIZE) {
+      return {
+        ok: false,
+        message: "The combined image size must not exceed 3 MB.",
+        fieldErrors: { profileImage: "Reduce the image sizes and try again." },
+      };
+    }
+  } catch (error) {
+    if (!(error instanceof ImageUploadError)) throw error;
+    return {
+      ok: false,
+      message: "Please check the ID and profile images.",
+      fieldErrors: { [error.field]: error.message },
     };
   }
 
@@ -142,30 +272,46 @@ export async function createBeneficiaryAction(
   const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
 
   try {
-    await db.beneficiary.create({
-      data: {
-        beneficiaryNumber: generateSequence("BEN"),
-        firstName: parsed.data.firstName,
-        middleName: parsed.data.middleName || null,
-        lastName: parsed.data.lastName,
-        suffix: parsed.data.suffix || null,
-        sex: parsed.data.sex,
-        dateOfBirth: dob,
-        age,
-        civilStatus: parsed.data.civilStatus || null,
-        contactNumber: parsed.data.contactNumber || null,
-        email: parsed.data.email || null,
-        address: parsed.data.address,
-        barangay: parsed.data.barangay || null,
-        municipality: MAHAYAG_MUNICIPALITY,
-        province: parsed.data.province || null,
-        categoryId: parsed.data.categoryId,
-        assignedOfficerId: user.role === "OFFICER"
-          ? user.id
-          : parsed.data.assignedOfficerId || null,
-        remarks: parsed.data.remarks || null,
-        status: "ACTIVE",
-      },
+    await db.$transaction(async (transaction) => {
+      const beneficiary = await transaction.beneficiary.create({
+        data: {
+          beneficiaryNumber: generateSequence("BEN"),
+          firstName: parsed.data.firstName,
+          middleName: parsed.data.middleName || null,
+          lastName: parsed.data.lastName,
+          suffix: parsed.data.suffix || null,
+          sex: parsed.data.sex,
+          dateOfBirth: dob,
+          age,
+          civilStatus: parsed.data.civilStatus || null,
+          contactNumber: parsed.data.contactNumber || null,
+          email: parsed.data.email || null,
+          address: parsed.data.address,
+          barangay: parsed.data.barangay || null,
+          municipality: MAHAYAG_MUNICIPALITY,
+          province: parsed.data.province || null,
+          categoryId: parsed.data.categoryId,
+          assignedOfficerId: user.role === "OFFICER"
+            ? user.id
+            : parsed.data.assignedOfficerId || null,
+          remarks: parsed.data.remarks || null,
+          status: "ACTIVE",
+        },
+      });
+
+      await transaction.document.createMany({
+        data: images.map((image) => ({
+          beneficiaryId: beneficiary.id,
+          uploaderId: user.id,
+          fileType: image.type,
+          fileName: image.fileName,
+          originalName: image.originalName,
+          mimeType: image.mimeType,
+          size: image.size,
+          content: Buffer.from(image.content),
+          storageUrl: "database",
+        })),
+      });
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

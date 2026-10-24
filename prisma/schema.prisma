@@ -50,6 +50,12 @@ enum AssistanceType {
   OTHER
 }
 
+enum BeneficiaryFileType {
+  VALID_ID_FRONT
+  VALID_ID_BACK
+  PROFILE_IMAGE
+}
+
 model Role {
   id    String   @id @default(uuid())
   name  RoleName @unique
@@ -169,17 +175,19 @@ model BeneficiaryAssistance {
 }
 
 model Document {
-  id            String       @id @default(uuid())
+  id            String               @id @default(uuid())
   beneficiaryId String?
   uploaderId    String
+  fileType      BeneficiaryFileType?
   fileName      String
   originalName  String
   mimeType      String
   size          Int
+  content       Bytes?               @db.ByteA
   storageUrl    String
-  uploadedAt    DateTime     @default(now())
-  beneficiary   Beneficiary? @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
-  uploader      User         @relation("UploaderDocuments", fields: [uploaderId], references: [id])
+  uploadedAt    DateTime             @default(now())
+  beneficiary   Beneficiary?         @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  uploader      User                 @relation("UploaderDocuments", fields: [uploaderId], references: [id])
 }
 
 model Assignment {

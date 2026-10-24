@@ -359,6 +359,9 @@ function BeneficiaryModal({
   const [state, formAction, pending] = useActionState(createBeneficiaryAction, initialActionState);
   const [dirty, setDirty] = useState(false);
   const [age, setAge] = useState<number | null>(null);
+  const [step, setStep] = useState(1);
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const submittedValuesRef = useRef<Record<string, string>>({});
@@ -425,13 +428,94 @@ function BeneficiaryModal({
         }
       }
       setAge(calculateAge(submittedValuesRef.current.dateOfBirth ?? ""));
+      const fieldErrors = Object.keys(state.fieldErrors ?? {});
+      setStep(
+        fieldErrors.some((field) => field === "idFront" || field === "idBack")
+          ? 2
+          : fieldErrors.includes("profileImage")
+            ? 3
+            : 1,
+      );
     }
   }, [state, onSaved]);
 
   function captureFormValues(form: HTMLFormElement) {
     submittedValuesRef.current = Object.fromEntries(
-      Array.from(new FormData(form).entries()).map(([name, value]) => [name, String(value)]),
+      Array.from(new FormData(form).entries())
+        .filter(([, value]) => typeof value === "string")
+        .map(([name, value]) => [name, String(value)]),
     );
+  }
+
+  function handleImageSelection(
+    event: React.ChangeEvent<HTMLInputElement>,
+    field: string,
+    alternativeField?: string,
+  ) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    const nextErrors = { ...uploadErrors };
+    delete nextErrors[field];
+    if (alternativeField) {
+      delete nextErrors.profileImage;
+      const alternative = formRef.current?.elements.namedItem(alternativeField);
+      if (alternative instanceof HTMLInputElement) {
+        alternative.value = "";
+      }
+    }
+
+    if (file && file.size > 1024 * 1024) {
+      nextErrors[field] = "Each image must be 1 MB or smaller.";
+      input.value = "";
+      setSelectedFiles((current) => ({ ...current, [field]: "" }));
+    } else if (file && file.type && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      nextErrors[field] = "Use a JPEG, PNG, or WebP image.";
+      input.value = "";
+      setSelectedFiles((current) => ({ ...current, [field]: "" }));
+    } else {
+      setSelectedFiles((current) => ({
+        ...current,
+        [field]: file?.name ?? "",
+        ...(alternativeField ? { [alternativeField]: "" } : {}),
+      }));
+    }
+
+    setUploadErrors(nextErrors);
+    setDirty(true);
+  }
+
+  function goToNextStep() {
+    if (step === 1) {
+      const controls = formRef.current?.querySelectorAll<HTMLElement>(
+        '[data-wizard-step="1"] input, [data-wizard-step="1"] select, [data-wizard-step="1"] textarea',
+      );
+      const invalidControl = Array.from(controls ?? []).find(
+        (control): control is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement =>
+          (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) &&
+          !control.checkValidity(),
+      );
+      if (invalidControl) {
+        invalidControl.reportValidity();
+        invalidControl.focus();
+        return;
+      }
+    }
+
+    if (step === 2) {
+      const front = formRef.current?.elements.namedItem("idFront");
+      const back = formRef.current?.elements.namedItem("idBack");
+      const nextErrors: Record<string, string> = {};
+      if (!(front instanceof HTMLInputElement) || !front.files?.length) {
+        nextErrors.idFront = "Front image of the valid ID is required.";
+      }
+      if (!(back instanceof HTMLInputElement) || !back.files?.length) {
+        nextErrors.idBack = "Back image of the valid ID is required.";
+      }
+      setUploadErrors(nextErrors);
+      if (Object.keys(nextErrors).length) return;
+    }
+
+    setStep((current) => Math.min(current + 1, 3));
   }
 
   function handleDateOfBirthChange(value: string) {
@@ -474,6 +558,7 @@ function BeneficiaryModal({
               <p id="add-beneficiary-description" className="mt-1 text-xs text-[#6480A9]">
                 Register an individual in the MSWD beneficiary registry.
               </p>
+              <p className="mt-2 text-xs font-semibold text-[#405B80]">Step {step} of 3</p>
             </div>
           </div>
           <button
@@ -502,6 +587,7 @@ function BeneficiaryModal({
               </div>
             )}
 
+            <div data-wizard-step="1" hidden={step !== 1} className="space-y-6">
             <section aria-labelledby="personal-info-heading">
               <div className="mb-3 border-b border-[#E8EDF4] pb-2">
                 <h3 id="personal-info-heading" className="text-sm font-semibold text-[#0B1A3E]">Personal Information</h3>
@@ -672,9 +758,99 @@ function BeneficiaryModal({
                 </div>
               </div>
             </section>
+            </div>
+
+            <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="valid-id-heading">
+              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
+                <h3 id="valid-id-heading" className="text-sm font-semibold text-[#0B1A3E]">Valid ID images</h3>
+                <p className="mt-1 text-xs text-[#6480A9]">Both sides are required. Images must be JPEG, PNG, or WebP and no larger than 1 MB each.</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField id="idFront" label="Front of valid ID" required error={uploadErrors.idFront ?? state.fieldErrors?.idFront}>
+                  <input
+                    id="idFront"
+                    name="idFront"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="environment"
+                    required={step === 2}
+                    aria-invalid={Boolean(uploadErrors.idFront ?? state.fieldErrors?.idFront)}
+                    aria-describedby={uploadErrors.idFront || state.fieldErrors?.idFront ? "idFront-error" : undefined}
+                    onChange={(event) => handleImageSelection(event, "idFront")}
+                    className={inputClass}
+                  />
+                  {selectedFiles.idFront && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.idFront}</p>}
+                </FormField>
+                <FormField id="idBack" label="Back of valid ID" required error={uploadErrors.idBack ?? state.fieldErrors?.idBack}>
+                  <input
+                    id="idBack"
+                    name="idBack"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="environment"
+                    required={step === 2}
+                    aria-invalid={Boolean(uploadErrors.idBack ?? state.fieldErrors?.idBack)}
+                    aria-describedby={uploadErrors.idBack || state.fieldErrors?.idBack ? "idBack-error" : undefined}
+                    onChange={(event) => handleImageSelection(event, "idBack")}
+                    className={inputClass}
+                  />
+                  {selectedFiles.idBack && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.idBack}</p>}
+                </FormField>
+              </div>
+            </section>
+
+            <section data-wizard-step="3" hidden={step !== 3} aria-labelledby="profile-image-heading">
+              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
+                <h3 id="profile-image-heading" className="text-sm font-semibold text-[#0B1A3E]">Profile image (optional)</h3>
+                <p className="mt-1 text-xs text-[#6480A9]">Take a profile photo with your camera or select one from your device. This step may be skipped.</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField id="profileImageCapture" label="Take a profile photo" error={uploadErrors.profileImage ?? state.fieldErrors?.profileImage}>
+                  <input
+                    id="profileImageCapture"
+                    name="profileImageCapture"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="user"
+                    aria-invalid={Boolean(uploadErrors.profileImage ?? state.fieldErrors?.profileImage)}
+                    onChange={(event) => handleImageSelection(event, "profileImageCapture", "profileImageUpload")}
+                    className={inputClass}
+                  />
+                  {selectedFiles.profileImageCapture && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.profileImageCapture}</p>}
+                </FormField>
+                <FormField id="profileImageUpload" label="Upload from device">
+                  <input
+                    id="profileImageUpload"
+                    name="profileImageUpload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-invalid={Boolean(uploadErrors.profileImage ?? state.fieldErrors?.profileImage)}
+                    onChange={(event) => handleImageSelection(event, "profileImageUpload", "profileImageCapture")}
+                    className={inputClass}
+                  />
+                  {selectedFiles.profileImageUpload && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.profileImageUpload}</p>}
+                </FormField>
+                {uploadErrors.profileImage ?? state.fieldErrors?.profileImage ? (
+                  <p id="profileImage-error" className="text-xs text-rose-700 sm:col-span-2">
+                    {uploadErrors.profileImage ?? state.fieldErrors?.profileImage}
+                  </p>
+                ) : null}
+              </div>
+            </section>
           </div>
 
-          <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#DCE3EE] bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-[#DCE3EE] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex gap-2">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStep((current) => current - 1)}
+                  disabled={pending}
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-[#DCE3EE] px-5 text-sm font-semibold text-[#405B80] transition hover:bg-[#F4F7FB] disabled:opacity-50"
+                >
+                  Back
+                </button>
+              )}
             <button
               type="button"
               onClick={requestClose}
@@ -683,14 +859,26 @@ function BeneficiaryModal({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={pending || categories.length === 0}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0B1A3E] px-5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-              {pending ? "Saving..." : "Save Beneficiary"}
-            </button>
+            </div>
+            {step < 3 ? (
+              <button
+                type="button"
+                onClick={goToNextStep}
+                disabled={pending}
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-[#0B1A3E] px-5 text-sm font-semibold text-white transition hover:bg-[#172B4D] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={pending || categories.length === 0}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0B1A3E] px-5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+                {pending ? "Saving..." : "Save Beneficiary"}
+              </button>
+            )}
           </footer>
         </form>
       </section>
