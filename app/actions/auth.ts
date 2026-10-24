@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { sendOfficerApprovalEmail } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/permissions";
-import { loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
+import { categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 
 export async function loginAction(
   _previousState: { ok: boolean; error: string } | null,
@@ -176,19 +176,37 @@ export async function registerOfficerAction(
   };
 }
 
-export async function createCategoryAction(formData: FormData) {
+export async function createCategoryAction(
+  _previousState: { ok: boolean; message: string; saved?: boolean },
+  formData: FormData,
+) {
   await requireAdmin();
 
-  const name = String(formData.get("name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const parsed = categorySchema.safeParse({
+    name: String(formData.get("name") ?? ""),
+    description: String(formData.get("description") ?? ""),
+  });
 
-  if (!name) {
-    throw new Error("Category name is required.");
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Please enter a valid category.",
+    };
   }
 
-  await db.category.create({
-    data: { name, description: description || null },
-  });
+  try {
+    await db.category.create({
+      data: {
+        name: parsed.data.name,
+        description: parsed.data.description || null,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: false, message: "A category with this name already exists." };
+    }
+    throw error;
+  }
 
   revalidatePath("/admin/categories");
   revalidatePath("/admin/dashboard");
@@ -196,6 +214,7 @@ export async function createCategoryAction(formData: FormData) {
   revalidatePath("/admin/officers");
   revalidatePath("/admin/officers/[officerId]", "page");
   revalidatePath("/officer/dashboard");
+  return { ok: true, message: "Category added successfully.", saved: true };
 }
 
 export async function deleteCategoryAction(
