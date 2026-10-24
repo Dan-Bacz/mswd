@@ -658,9 +658,6 @@ function BeneficiaryModal({
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
                   </span>
                 </FormField>}
-                <FormField id="subcategory" label="Subcategory" error={state.fieldErrors?.subcategory}>
-                  <input {...fieldProps("subcategory")} name="subcategory" />
-                </FormField>
                 <div className="sm:col-span-2">
                   <FormField id="remarks" label="Remarks" error={state.fieldErrors?.remarks}>
                     <textarea

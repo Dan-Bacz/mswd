@@ -50,7 +50,6 @@ export async function createBeneficiaryAction(
     barangay: String(formData.get("barangay") ?? ""),
     province: String(formData.get("province") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
-    subcategory: String(formData.get("subcategory") ?? ""),
     assignedOfficerId: String(formData.get("assignedOfficerId") ?? ""),
     remarks: String(formData.get("remarks") ?? ""),
   };
@@ -161,7 +160,6 @@ export async function createBeneficiaryAction(
         municipality: MAHAYAG_MUNICIPALITY,
         province: parsed.data.province || null,
         categoryId: parsed.data.categoryId,
-        subcategory: parsed.data.subcategory || null,
         assignedOfficerId: user.role === "OFFICER"
           ? user.id
           : parsed.data.assignedOfficerId || null,

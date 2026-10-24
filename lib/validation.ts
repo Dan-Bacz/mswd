@@ -38,7 +38,6 @@ export const beneficiarySchema = z.object({
   barangay: z.enum(MAHAYAG_BARANGAYS),
   province: z.string().trim().max(80).optional().or(z.literal("")),
   categoryId: z.string().trim().min(1, "Please choose a category."),
-  subcategory: z.string().trim().max(80).optional().or(z.literal("")),
   assignedOfficerId: z.string().trim().optional().or(z.literal("")),
   remarks: z.string().trim().max(500).optional().or(z.literal("")),
 });
