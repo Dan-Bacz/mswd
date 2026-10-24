@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema } from "@/lib/validation";
 import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
+import { calculateAge } from "@/lib/age";
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -81,6 +82,31 @@ export async function createBeneficiaryAction(
     };
   }
 
+  const age = parsed.data.dateOfBirth ? calculateAge(parsed.data.dateOfBirth) : null;
+  if (parsed.data.dateOfBirth && age === null) {
+    return {
+      ok: false,
+      message: "Please enter a valid date of birth that is not in the future.",
+      fieldErrors: { dateOfBirth: "Enter a valid date of birth." },
+    };
+  }
+
+  if (category.name.toLowerCase().includes("senior") && age === null) {
+    return {
+      ok: false,
+      message: "A date of birth is required to register a senior citizen beneficiary.",
+      fieldErrors: { dateOfBirth: "Date of birth is required for the Senior Citizens category." },
+    };
+  }
+
+  if (category.name.toLowerCase().includes("senior") && age !== null && age < 60) {
+    return {
+      ok: false,
+      message: "Beneficiaries must be at least 60 years old to be registered under Senior Citizens.",
+      fieldErrors: { age: "Must be at least 60 years old for the Senior Citizens category." },
+    };
+  }
+
   if (user.role === "OFFICER" && !user.categoryIds.includes(parsed.data.categoryId)) {
     return {
       ok: false,
@@ -114,8 +140,7 @@ export async function createBeneficiaryAction(
     }
   }
 
-  const dob = parsed.data.dateOfBirth ? new Date(parsed.data.dateOfBirth) : null;
-  const age = dob ? new Date().getFullYear() - dob.getFullYear() : null;
+  const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
 
   try {
     await db.beneficiary.create({

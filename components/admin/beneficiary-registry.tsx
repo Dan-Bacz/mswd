@@ -18,6 +18,7 @@ import {
   type BeneficiaryActionState,
 } from "@/app/actions/mswd";
 import { MAHAYAG_BARANGAYS, MAHAYAG_MUNICIPALITY } from "@/lib/locations";
+import { calculateAge } from "@/lib/age";
 
 type RegistryCategory = { id: string; name: string };
 type RegistryOfficer = { id: string; name: string; categoryIds: string[] };
@@ -357,6 +358,7 @@ function BeneficiaryModal({
 }) {
   const [state, formAction, pending] = useActionState(createBeneficiaryAction, initialActionState);
   const [dirty, setDirty] = useState(false);
+  const [age, setAge] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const submittedValuesRef = useRef<Record<string, string>>({});
@@ -422,6 +424,7 @@ function BeneficiaryModal({
           control.value = value;
         }
       }
+      setAge(calculateAge(submittedValuesRef.current.dateOfBirth ?? ""));
     }
   }, [state, onSaved]);
 
@@ -429,6 +432,11 @@ function BeneficiaryModal({
     submittedValuesRef.current = Object.fromEntries(
       Array.from(new FormData(form).entries()).map(([name, value]) => [name, String(value)]),
     );
+  }
+
+  function handleDateOfBirthChange(value: string) {
+    setAge(value ? calculateAge(value) : null);
+    setDirty(true);
   }
 
   function fieldProps(id: string) {
@@ -522,7 +530,22 @@ function BeneficiaryModal({
                   </span>
                 </FormField>
                 <FormField id="dateOfBirth" label="Date of birth" error={state.fieldErrors?.dateOfBirth}>
-                  <input {...fieldProps("dateOfBirth")} name="dateOfBirth" type="date" autoComplete="bday" />
+                  <input
+                    {...fieldProps("dateOfBirth")}
+                    name="dateOfBirth"
+                    type="date"
+                    autoComplete="bday"
+                    onChange={(event) => handleDateOfBirthChange(event.currentTarget.value)}
+                  />
+                </FormField>
+                <FormField id="age" label="Age" error={state.fieldErrors?.age}>
+                  <input
+                    {...fieldProps("age")}
+                    value={age ?? ""}
+                    readOnly
+                    placeholder="Enter date of birth"
+                    className={`${inputClass} bg-slate-50`}
+                  />
                 </FormField>
               </div>
             </section>
