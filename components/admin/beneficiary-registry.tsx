@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -372,11 +373,13 @@ function BeneficiaryModal({
   const [cameraField, setCameraField] = useState<"idFront" | "idBack" | null>(null);
   const [cameraError, setCameraError] = useState("");
   const [cameraReady, setCameraReady] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const cameraPreviewRef = useRef<HTMLDivElement>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const imagePreviewsRef = useRef<Record<string, string>>({});
   const submittedValuesRef = useRef<Record<string, string>>({});
 
   const requestClose = useCallback(() => {
@@ -396,6 +399,13 @@ function BeneficiaryModal({
       triggerElement?.focus();
     };
   }, [triggerRef]);
+
+  useEffect(
+    () => () => {
+      Object.values(imagePreviewsRef.current).forEach((preview) => URL.revokeObjectURL(preview));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!cameraField) return;
@@ -527,17 +537,22 @@ function BeneficiaryModal({
       if (alternative instanceof HTMLInputElement) {
         alternative.value = "";
       }
+      clearImagePreview(alternativeField);
     }
 
     if (file && file.size > 1024 * 1024) {
       nextErrors[field] = "Each image must be 1 MB or smaller.";
       input.value = "";
       setSelectedFiles((current) => ({ ...current, [field]: "" }));
+      clearImagePreview(field);
     } else if (file && file.type && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       nextErrors[field] = "Use a JPEG, PNG, or WebP image.";
       input.value = "";
       setSelectedFiles((current) => ({ ...current, [field]: "" }));
+      clearImagePreview(field);
     } else {
+      if (file) setImagePreview(field, file);
+      else clearImagePreview(field);
       setSelectedFiles((current) => ({
         ...current,
         [field]: file?.name ?? "",
@@ -547,6 +562,25 @@ function BeneficiaryModal({
 
     setUploadErrors(nextErrors);
     setDirty(true);
+  }
+
+  function setImagePreview(field: string, file: File) {
+    const currentPreview = imagePreviewsRef.current[field];
+    if (currentPreview) URL.revokeObjectURL(currentPreview);
+    const preview = URL.createObjectURL(file);
+    imagePreviewsRef.current[field] = preview;
+    setImagePreviews((current) => ({ ...current, [field]: preview }));
+  }
+
+  function clearImagePreview(field: string) {
+    const currentPreview = imagePreviewsRef.current[field];
+    if (currentPreview) URL.revokeObjectURL(currentPreview);
+    delete imagePreviewsRef.current[field];
+    setImagePreviews((current) => {
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
   }
 
   function openCamera(field: "idFront" | "idBack") {
@@ -619,6 +653,7 @@ function BeneficiaryModal({
 
       const file = new File([blob], `${field}-capture.jpg`, { type: "image/jpeg" });
       assignCapturedFile(input, file);
+      setImagePreview(field, file);
       setSelectedFiles((current) => ({ ...current, [field]: file.name }));
       setUploadErrors((current) => {
         const nextErrors = { ...current };
@@ -697,19 +732,19 @@ function BeneficiaryModal({
         aria-modal="true"
         aria-labelledby="add-beneficiary-title"
         aria-describedby="add-beneficiary-description"
-        className="beneficiary-modal-panel flex max-h-[100dvh] w-full max-w-[750px] flex-col overflow-hidden bg-white shadow-2xl sm:max-h-[88vh] sm:rounded-xl sm:border sm:border-[#DCE3EE]"
+        className="beneficiary-modal-panel flex max-h-[calc(100dvh-1rem)] w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-white/80 bg-[#F7F9FC] shadow-[0_28px_90px_rgba(7,19,41,0.28)] sm:max-h-[calc(100dvh-2.5rem)]"
       >
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#DCE3EE] px-5 py-4 sm:px-6">
-          <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F8F4E8] text-[#A88724]">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[#E4EAF3] bg-white px-4 py-4 sm:px-7 sm:py-5">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EEF4FF] text-[#0645AD] sm:h-12 sm:w-12">
               <UserPlus className="h-5 w-5" aria-hidden="true" />
             </span>
-            <div>
-              <h2 id="add-beneficiary-title" className="text-lg font-bold text-[#0B1A3E]">Add New Beneficiary</h2>
-              <p id="add-beneficiary-description" className="mt-1 text-xs text-[#6480A9]">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A88724]">Beneficiary registry</p>
+              <h2 id="add-beneficiary-title" className="mt-0.5 text-lg font-bold text-[#0B1A3E] sm:text-xl">Add New Beneficiary</h2>
+              <p id="add-beneficiary-description" className="mt-1 text-xs text-[#6480A9] sm:text-sm">
                 Register an individual in the MSWD beneficiary registry.
               </p>
-              <p className="mt-2 text-xs font-semibold text-[#405B80]">Step {step} of 3</p>
             </div>
           </div>
           <button
@@ -718,11 +753,28 @@ function BeneficiaryModal({
             onClick={requestClose}
             disabled={pending}
             aria-label="Close add beneficiary dialog"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-[#0B1A3E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A93F] disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#0B1A3E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A93F] disabled:opacity-50"
           >
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </header>
+
+        <div className="shrink-0 border-b border-[#E4EAF3] bg-white px-4 pb-4 sm:px-7">
+          <div className="grid grid-cols-3 gap-2" aria-label={`Step ${step} of 3`}>
+            {[
+              { number: 1, label: "Details" },
+              { number: 2, label: "Valid ID" },
+              { number: 3, label: "Profile photo" },
+            ].map(({ number, label }) => (
+              <div key={number} aria-current={step === number ? "step" : undefined}>
+                <div className={`mb-2 h-1 rounded-full ${step >= number ? "bg-[#0645AD]" : "bg-[#E8EDF4]"}`} />
+                <p className={`text-[10px] font-semibold sm:text-xs ${step === number ? "text-[#0645AD]" : step > number ? "text-[#405B80]" : "text-[#91A0B5]"}`}>
+                  <span className="mr-1">{String(number).padStart(2, "0")}</span>{label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <form
           ref={formRef}
@@ -731,17 +783,18 @@ function BeneficiaryModal({
           onSubmit={(event) => captureFormValues(event.currentTarget)}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:space-y-5 sm:px-7 sm:py-6">
             {!state.ok && (
-              <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800">
+              <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
                 {state.message}
               </div>
             )}
 
             <div data-wizard-step="1" hidden={step !== 1} className="space-y-6">
-            <section aria-labelledby="personal-info-heading">
-              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
-                <h3 id="personal-info-heading" className="text-sm font-semibold text-[#0B1A3E]">Personal Information</h3>
+            <section aria-labelledby="personal-info-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4 border-b border-[#E8EDF4] pb-3">
+                <h3 id="personal-info-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Personal information</h3>
+                <p className="mt-1 text-xs text-[#7184A0]">Enter the beneficiary&apos;s identity and classification.</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField id="firstName" label="First name" required error={state.fieldErrors?.firstName}>
@@ -787,9 +840,9 @@ function BeneficiaryModal({
               </div>
             </section>
 
-            <section aria-labelledby="classification-heading">
-              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
-                <h3 id="classification-heading" className="text-sm font-semibold text-[#0B1A3E]">Classification</h3>
+            <section aria-labelledby="classification-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4 border-b border-[#E8EDF4] pb-3">
+                <h3 id="classification-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Classification</h3>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField id="categoryId" label="Beneficiary category" required error={state.fieldErrors?.categoryId}>
@@ -836,9 +889,9 @@ function BeneficiaryModal({
               </div>
             </section>
 
-            <section aria-labelledby="contact-heading">
-              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
-                <h3 id="contact-heading" className="text-sm font-semibold text-[#0B1A3E]">Contact &amp; Address</h3>
+            <section aria-labelledby="contact-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4 border-b border-[#E8EDF4] pb-3">
+                <h3 id="contact-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Contact &amp; address</h3>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField id="contactNumber" label="Contact number" error={state.fieldErrors?.contactNumber}>
@@ -879,9 +932,9 @@ function BeneficiaryModal({
               </div>
             </section>
 
-            <section aria-labelledby="assignment-heading">
-              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
-                <h3 id="assignment-heading" className="text-sm font-semibold text-[#0B1A3E]">Assignment &amp; Notes</h3>
+            <section aria-labelledby="assignment-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+              <div className="mb-4 border-b border-[#E8EDF4] pb-3">
+                <h3 id="assignment-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Assignment &amp; notes</h3>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {!officerMode && <FormField id="assignedOfficerId" label="Assigned officer" error={state.fieldErrors?.assignedOfficerId}>
@@ -911,12 +964,13 @@ function BeneficiaryModal({
             </section>
             </div>
 
-            <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="valid-id-heading">
-              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
-                <h3 id="valid-id-heading" className="text-sm font-semibold text-[#0B1A3E]">Valid ID images</h3>
-                <p className="mt-1 text-xs text-[#6480A9]">Both sides are required. Images must be JPEG, PNG, or WebP and no larger than 1 MB each.</p>
+            <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="valid-id-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-5 border-b border-[#E8EDF4] pb-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A88724]">Required documents</p>
+                <h3 id="valid-id-heading" className="mt-1 text-base font-bold text-[#0B1A3E] sm:text-lg">Valid ID images</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#7184A0] sm:text-sm">Capture with your webcam or upload a clear image. Include all four ID edges; both sides are required.</p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <FormField id="idFront" label="Front of valid ID" required error={uploadErrors.idFront ?? state.fieldErrors?.idFront}>
                   <input
                     id="idFront"
@@ -929,7 +983,30 @@ function BeneficiaryModal({
                     onChange={(event) => handleImageSelection(event, "idFront")}
                     className={inputClass}
                   />
-                  {selectedFiles.idFront && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.idFront}</p>}
+                  {imagePreviews.idFront ? (
+                    <div className="mt-3 overflow-hidden rounded-xl border border-[#E4EAF3] bg-[#F3F6FA]">
+                      <div className="relative aspect-[1.586/1]">
+                        <Image
+                          src={imagePreviews.idFront}
+                          alt="Preview of the front of the valid ID"
+                          width={800}
+                          height={505}
+                          unoptimized
+                          className="h-full w-full object-contain"
+                        />
+                        <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-[#173B70] shadow-sm">
+                          Front preview
+                        </span>
+                      </div>
+                      <p className="truncate border-t border-[#E4EAF3] px-3 py-2 text-xs text-[#6480A9]">
+                        {selectedFiles.idFront}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex aspect-[1.586/1] items-center justify-center rounded-xl border border-dashed border-[#D6DFEC] bg-[#F8FAFD] px-4 text-center text-xs text-[#91A0B5]">
+                      Front of ID preview will appear here
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => openCamera("idFront")}
@@ -950,7 +1027,30 @@ function BeneficiaryModal({
                     onChange={(event) => handleImageSelection(event, "idBack")}
                     className={inputClass}
                   />
-                  {selectedFiles.idBack && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.idBack}</p>}
+                  {imagePreviews.idBack ? (
+                    <div className="mt-3 overflow-hidden rounded-xl border border-[#E4EAF3] bg-[#F3F6FA]">
+                      <div className="relative aspect-[1.586/1]">
+                        <Image
+                          src={imagePreviews.idBack}
+                          alt="Preview of the back of the valid ID"
+                          width={800}
+                          height={505}
+                          unoptimized
+                          className="h-full w-full object-contain"
+                        />
+                        <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-[#173B70] shadow-sm">
+                          Back preview
+                        </span>
+                      </div>
+                      <p className="truncate border-t border-[#E4EAF3] px-3 py-2 text-xs text-[#6480A9]">
+                        {selectedFiles.idBack}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex aspect-[1.586/1] items-center justify-center rounded-xl border border-dashed border-[#D6DFEC] bg-[#F8FAFD] px-4 text-center text-xs text-[#91A0B5]">
+                      Back of ID preview will appear here
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => openCamera("idBack")}
@@ -965,7 +1065,7 @@ function BeneficiaryModal({
                   <p className="text-sm font-medium text-[#172B4D]">
                     Align all four edges of the ID inside the guide.
                   </p>
-                  <div ref={cameraPreviewRef} className="relative mx-auto aspect-video w-full max-w-2xl overflow-hidden rounded-lg bg-black">
+                  <div ref={cameraPreviewRef} className="relative mx-auto aspect-video w-full max-w-2xl overflow-hidden rounded-xl bg-black shadow-inner">
                     <video
                       ref={cameraVideoRef}
                       autoPlay
@@ -998,12 +1098,14 @@ function BeneficiaryModal({
               {!cameraField && cameraError && <p role="alert" className="mt-3 text-sm text-rose-700">{cameraError}</p>}
             </section>
 
-            <section data-wizard-step="3" hidden={step !== 3} aria-labelledby="profile-image-heading">
-              <div className="mb-3 border-b border-[#E8EDF4] pb-2">
-                <h3 id="profile-image-heading" className="text-sm font-semibold text-[#0B1A3E]">Profile image (optional)</h3>
-                <p className="mt-1 text-xs text-[#6480A9]">Take a profile photo with your camera or select one from your device. This step may be skipped.</p>
+            <section data-wizard-step="3" hidden={step !== 3} aria-labelledby="profile-image-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-5 border-b border-[#E8EDF4] pb-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A88724]">Optional</p>
+                <h3 id="profile-image-heading" className="mt-1 text-base font-bold text-[#0B1A3E] sm:text-lg">Profile photo</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#7184A0] sm:text-sm">Take a photo with your device camera or upload one. You can skip this step.</p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-5 sm:grid-cols-[minmax(0,1fr)_220px]">
+                <div className="grid gap-4">
                 <FormField id="profileImageCapture" label="Take a profile photo" error={uploadErrors.profileImage ?? state.fieldErrors?.profileImage}>
                   <input
                     id="profileImageCapture"
@@ -1015,7 +1117,6 @@ function BeneficiaryModal({
                     onChange={(event) => handleImageSelection(event, "profileImageCapture", "profileImageUpload")}
                     className={inputClass}
                   />
-                  {selectedFiles.profileImageCapture && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.profileImageCapture}</p>}
                 </FormField>
                 <FormField id="profileImageUpload" label="Upload from device">
                   <input
@@ -1027,13 +1128,38 @@ function BeneficiaryModal({
                     onChange={(event) => handleImageSelection(event, "profileImageUpload", "profileImageCapture")}
                     className={inputClass}
                   />
-                  {selectedFiles.profileImageUpload && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.profileImageUpload}</p>}
                 </FormField>
                 {uploadErrors.profileImage ?? state.fieldErrors?.profileImage ? (
-                  <p id="profileImage-error" className="text-xs text-rose-700 sm:col-span-2">
+                  <p id="profileImage-error" className="text-xs text-rose-700">
                     {uploadErrors.profileImage ?? state.fieldErrors?.profileImage}
                   </p>
                 ) : null}
+                </div>
+                <div className="sm:sticky sm:top-2">
+                  <p className="mb-2 text-xs font-semibold text-[#405B80]">Photo preview</p>
+                  <div className="relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden rounded-2xl border border-[#E4EAF3] bg-[#F3F6FA]">
+                    {imagePreviews.profileImageCapture || imagePreviews.profileImageUpload ? (
+                      <Image
+                        src={imagePreviews.profileImageCapture || imagePreviews.profileImageUpload}
+                        alt="Preview of beneficiary profile photo"
+                        width={440}
+                        height={440}
+                        unoptimized
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-xs text-[#91A0B5]">
+                        <UserPlus className="h-8 w-8 text-[#B7C4D7]" aria-hidden="true" />
+                        Profile photo preview
+                      </div>
+                    )}
+                  </div>
+                  {(selectedFiles.profileImageCapture || selectedFiles.profileImageUpload) && (
+                    <p className="mt-2 truncate text-center text-xs text-[#6480A9]">
+                      {selectedFiles.profileImageCapture || selectedFiles.profileImageUpload}
+                    </p>
+                  )}
+                </div>
               </div>
             </section>
           </div>
