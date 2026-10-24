@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Camera,
   Check,
   ChevronDown,
   LoaderCircle,
@@ -66,6 +67,12 @@ function FormField({
       )}
     </div>
   );
+}
+
+function assignCapturedFile(input: HTMLInputElement, file: File) {
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  input.files = transfer.files;
 }
 
 export function BeneficiaryRegistry({
@@ -362,8 +369,14 @@ function BeneficiaryModal({
   const [step, setStep] = useState(1);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<Record<string, string>>({});
+  const [cameraField, setCameraField] = useState<"idFront" | "idBack" | null>(null);
+  const [cameraError, setCameraError] = useState("");
+  const [cameraReady, setCameraReady] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const cameraPreviewRef = useRef<HTMLDivElement>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const submittedValuesRef = useRef<Record<string, string>>({});
 
   const requestClose = useCallback(() => {
@@ -383,6 +396,55 @@ function BeneficiaryModal({
       triggerElement?.focus();
     };
   }, [triggerRef]);
+
+  useEffect(() => {
+    if (!cameraField) return;
+
+    let cancelled = false;
+    let stream: MediaStream | null = null;
+    const videoElement = cameraVideoRef.current;
+
+    async function startCamera() {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Webcam access is unavailable. Use a secure connection or upload an image.");
+        }
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        cameraStreamRef.current = stream;
+        if (videoElement) videoElement.srcObject = stream;
+        setCameraReady(true);
+        setCameraError("");
+      } catch (error) {
+        setCameraError(
+          error instanceof Error
+            ? `${error.message} You can still upload an image from your device.`
+            : "Could not access the webcam. You can still upload an image from your device.",
+        );
+      }
+    }
+
+    void startCamera();
+    return () => {
+      cancelled = true;
+      stream?.getTracks().forEach((track) => track.stop());
+      if (cameraStreamRef.current === stream) {
+        cameraStreamRef.current = null;
+      }
+      if (videoElement?.srcObject === stream) videoElement.srcObject = null;
+    };
+  }, [cameraField]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -456,6 +518,9 @@ function BeneficiaryModal({
     const file = input.files?.[0];
     const nextErrors = { ...uploadErrors };
     delete nextErrors[field];
+    if (field === "idFront" || field === "idBack") {
+      closeCamera();
+    }
     if (alternativeField) {
       delete nextErrors.profileImage;
       const alternative = formRef.current?.elements.namedItem(alternativeField);
@@ -482,6 +547,91 @@ function BeneficiaryModal({
 
     setUploadErrors(nextErrors);
     setDirty(true);
+  }
+
+  function openCamera(field: "idFront" | "idBack") {
+    setCameraReady(false);
+    setCameraError("");
+    setCameraField(field);
+  }
+
+  function closeCamera() {
+    setCameraReady(false);
+    setCameraError("");
+    setCameraField(null);
+  }
+
+  async function captureIdImage() {
+    const field = cameraField;
+    const video = cameraVideoRef.current;
+    const preview = cameraPreviewRef.current;
+    const input = field && formRef.current?.elements.namedItem(field);
+    if (!field || !video || !preview || !(input instanceof HTMLInputElement) || !video.videoWidth) {
+      setCameraError("The webcam is not ready. Wait for the preview or upload an image from your device.");
+      return;
+    }
+
+    const bounds = preview.getBoundingClientRect();
+    const guideWidth = bounds.width * 0.7;
+    const guideHeight = guideWidth / 1.586;
+    const scale = Math.min(bounds.width / video.videoWidth, bounds.height / video.videoHeight);
+    const renderedWidth = video.videoWidth * scale;
+    const renderedHeight = video.videoHeight * scale;
+    const offsetX = (bounds.width - renderedWidth) / 2;
+    const offsetY = (bounds.height - renderedHeight) / 2;
+    const sourceX = ((bounds.width - guideWidth) / 2 - offsetX) / scale;
+    const sourceY = ((bounds.height - guideHeight) / 2 - offsetY) / scale;
+    const sourceWidth = guideWidth / scale;
+    const sourceHeight = guideHeight / scale;
+    const outputScale = Math.min(1, 1400 / sourceWidth);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(sourceWidth * outputScale);
+    canvas.height = Math.round(sourceHeight * outputScale);
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      setCameraError("Could not prepare the webcam image. Please try again or upload a file.");
+      return;
+    }
+
+    context.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+
+    try {
+      let blob: Blob | null = null;
+      for (const quality of [0.88, 0.76, 0.64, 0.52]) {
+        blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+        if (blob && blob.size <= 1024 * 1024) break;
+      }
+      if (!blob || blob.size > 1024 * 1024) {
+        setCameraError("The captured image is too large. Move closer to the ID or upload a smaller image.");
+        return;
+      }
+
+      const file = new File([blob], `${field}-capture.jpg`, { type: "image/jpeg" });
+      assignCapturedFile(input, file);
+      setSelectedFiles((current) => ({ ...current, [field]: file.name }));
+      setUploadErrors((current) => {
+        const nextErrors = { ...current };
+        delete nextErrors[field];
+        return nextErrors;
+      });
+      setCameraError("");
+      setDirty(true);
+      setCameraReady(false);
+      setCameraField(null);
+    } catch {
+      setCameraError("Could not save the webcam image. Please try again or upload a file.");
+    }
   }
 
   function goToNextStep() {
@@ -515,6 +665,7 @@ function BeneficiaryModal({
       if (Object.keys(nextErrors).length) return;
     }
 
+    closeCamera();
     setStep((current) => Math.min(current + 1, 3));
   }
 
@@ -772,7 +923,6 @@ function BeneficiaryModal({
                     name="idFront"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    capture="environment"
                     required={step === 2}
                     aria-invalid={Boolean(uploadErrors.idFront ?? state.fieldErrors?.idFront)}
                     aria-describedby={uploadErrors.idFront || state.fieldErrors?.idFront ? "idFront-error" : undefined}
@@ -780,6 +930,13 @@ function BeneficiaryModal({
                     className={inputClass}
                   />
                   {selectedFiles.idFront && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.idFront}</p>}
+                  <button
+                    type="button"
+                    onClick={() => openCamera("idFront")}
+                    className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-[#DCE3EE] px-3 text-sm font-semibold text-[#405B80] hover:bg-[#F4F7FB]"
+                  >
+                    <Camera className="h-4 w-4" aria-hidden="true" /> Capture with webcam
+                  </button>
                 </FormField>
                 <FormField id="idBack" label="Back of valid ID" required error={uploadErrors.idBack ?? state.fieldErrors?.idBack}>
                   <input
@@ -787,7 +944,6 @@ function BeneficiaryModal({
                     name="idBack"
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    capture="environment"
                     required={step === 2}
                     aria-invalid={Boolean(uploadErrors.idBack ?? state.fieldErrors?.idBack)}
                     aria-describedby={uploadErrors.idBack || state.fieldErrors?.idBack ? "idBack-error" : undefined}
@@ -795,8 +951,51 @@ function BeneficiaryModal({
                     className={inputClass}
                   />
                   {selectedFiles.idBack && <p className="mt-1 text-xs text-[#6480A9]">{selectedFiles.idBack}</p>}
+                  <button
+                    type="button"
+                    onClick={() => openCamera("idBack")}
+                    className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-[#DCE3EE] px-3 text-sm font-semibold text-[#405B80] hover:bg-[#F4F7FB]"
+                  >
+                    <Camera className="h-4 w-4" aria-hidden="true" /> Capture with webcam
+                  </button>
                 </FormField>
               </div>
+              {cameraField && (
+                <div className="mt-5 space-y-3">
+                  <p className="text-sm font-medium text-[#172B4D]">
+                    Align all four edges of the ID inside the guide.
+                  </p>
+                  <div ref={cameraPreviewRef} className="relative mx-auto aspect-video w-full max-w-2xl overflow-hidden rounded-lg bg-black">
+                    <video
+                      ref={cameraVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="h-full w-full object-contain"
+                    />
+                    <div className="pointer-events-none absolute left-1/2 top-1/2 aspect-[1.586/1] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-yellow-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+                  </div>
+                  {cameraError && <p role="alert" className="text-sm text-rose-700">{cameraError}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void captureIdImage()}
+                      disabled={!cameraReady}
+                      className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Camera className="h-4 w-4" aria-hidden="true" /> Capture {cameraField === "idFront" ? "front" : "back"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeCamera}
+                      className="inline-flex h-10 items-center rounded-lg border border-[#DCE3EE] px-4 text-sm font-semibold text-[#405B80]"
+                    >
+                      Close webcam
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!cameraField && cameraError && <p role="alert" className="mt-3 text-sm text-rose-700">{cameraError}</p>}
             </section>
 
             <section data-wizard-step="3" hidden={step !== 3} aria-labelledby="profile-image-heading">
@@ -844,7 +1043,10 @@ function BeneficiaryModal({
               {step > 1 && (
                 <button
                   type="button"
-                  onClick={() => setStep((current) => current - 1)}
+                  onClick={() => {
+                    closeCamera();
+                    setStep((current) => current - 1);
+                  }}
                   disabled={pending}
                   className="inline-flex h-11 items-center justify-center rounded-lg border border-[#DCE3EE] px-5 text-sm font-semibold text-[#405B80] transition hover:bg-[#F4F7FB] disabled:opacity-50"
                 >
