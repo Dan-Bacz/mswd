@@ -235,7 +235,6 @@ export async function deleteCategoryAction(
       _count: {
         select: {
           beneficiaries: true,
-          cases: true,
           assignments: true,
           userCategories: true,
         },
@@ -249,7 +248,6 @@ export async function deleteCategoryAction(
 
   const linkedItems = ([
     [category._count.beneficiaries, "beneficiaries"],
-    [category._count.cases, "cases"],
     [category._count.userCategories, "officer assignments"],
     [category._count.assignments, "assignment records"],
   ] as const)
@@ -262,7 +260,6 @@ export async function deleteCategoryAction(
       where: {
         id: categoryId,
         beneficiaries: { none: {} },
-        cases: { none: {} },
         assignments: { none: {} },
         userCategories: { none: {} },
       },

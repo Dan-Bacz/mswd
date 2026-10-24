@@ -67,13 +67,13 @@ export default async function AdminDashboardPage() {
   const user = await requireAdmin();
   const [
     beneficiaries,
-    activeServices,
+    assistanceRecords,
     allCategories,
     recentActivity,
     systemSettings,
   ] = await Promise.all([
     db.beneficiary.count(),
-    db.serviceType.count({ where: { isActive: true } }),
+    db.beneficiaryAssistance.count(),
     db.category.findMany({
       orderBy: { name: "asc" },
       include: { _count: { select: { beneficiaries: true } } },
@@ -115,7 +115,7 @@ export default async function AdminDashboardPage() {
   ];
   const metrics = [
     { label: "Total beneficiaries", value: beneficiaries, icon: Users, color: "#0645AD", tint: "#EEF4FF" },
-    { label: "Available services", value: activeServices, icon: HandHeart, color: "#E31837", tint: "#FFF0F2" },
+    { label: "Assistance records", value: assistanceRecords, icon: HandHeart, color: "#E31837", tint: "#FFF0F2" },
   ];
 
   return (

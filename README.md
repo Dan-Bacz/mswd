@@ -9,8 +9,7 @@ This project includes the foundation for:
 - Admin dashboards and configuration
 - Officer permission boundaries by category
 - Beneficiary and household management
-- Case tracking and history
-- Service and intervention records
+- Assistance records for beneficiaries
 - Notification, audit, and reporting modules
 - Deployment for Vercel and Neon PostgreSQL
 
@@ -58,7 +57,7 @@ Use .env.example as the template. Required values include:
 
 ## Prisma setup
 
-The Prisma schema includes the main models required for the MSWD system, including User, Role, Category, UserCategory, Household, Beneficiary, BeneficiaryAssistance, Case, CaseHistory, ServiceType, Intervention, Document, Notification, AuditLog, and SystemSetting.
+The Prisma schema includes the main models required for the MSWD system, including User, Role, Category, UserCategory, Household, Beneficiary, BeneficiaryAssistance, Document, Assignment, Notification, AuditLog, and SystemSetting.
 
 Run:
 
@@ -84,7 +83,7 @@ npx prisma migrate deploy
 
 ## Seed process
 
-The seed routine creates the required roles and the core categories for the MSWD administration model. It does not generate fake beneficiary or case records for production use.
+The seed routine creates the required roles and the core categories for the MSWD administration model. It does not generate fake beneficiary or assistance records for production use.
 
 ## Officer registration and approval
 

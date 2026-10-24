@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Briefcase,
-  ClipboardList,
   FileText,
   FolderTree,
   HeartHandshake,
@@ -19,8 +17,6 @@ import { cn } from "@/lib/utils";
 
 const iconMap: Record<string, LucideIcon> = {
   dashboard: BarChart3,
-  cases: Briefcase,
-  tasks: ClipboardList,
   reports: FileText,
   categories: FolderTree,
   settings: Settings,

@@ -10,9 +10,9 @@ export default async function OfficerReportsPage() {
     return null;
   }
 
-  const [beneficiaries, cases, notifications] = await Promise.all([
+  const [beneficiaries, assistance, notifications] = await Promise.all([
     db.beneficiary.count({ where: { assignedOfficerId: user.id } }),
-    db.case.count({ where: { assignedOfficerId: user.id } }),
+    db.beneficiaryAssistance.count({ where: { providedById: user.id } }),
     db.notification.count({ where: { userId: user.id } }),
   ]);
 
@@ -29,8 +29,8 @@ export default async function OfficerReportsPage() {
           <p className="mt-2 text-3xl font-bold text-slate-900">{beneficiaries}</p>
         </div>
         <div className="rounded-2xl bg-amber-50 p-5">
-          <p className="text-sm text-amber-700">My cases</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{cases}</p>
+          <p className="text-sm text-amber-700">Assistance recorded</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">{assistance}</p>
         </div>
         <div className="rounded-2xl bg-emerald-50 p-5">
           <p className="text-sm text-emerald-700">Notifications</p>

@@ -42,13 +42,3 @@ export const beneficiarySchema = z.object({
   assignedOfficerId: z.string().trim().optional().or(z.literal("")),
   remarks: z.string().trim().max(500).optional().or(z.literal("")),
 });
-
-export const caseSchema = z.object({
-  beneficiaryId: z.string().trim().min(1, "Please select a beneficiary."),
-  categoryId: z.string().trim().min(1, "Please select a category."),
-  caseType: z.string().trim().min(2, "Case type is required."),
-  description: z.string().trim().min(10, "Description must be at least 10 characters."),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).default("MEDIUM"),
-  assignedOfficerId: z.string().trim().optional().or(z.literal("")),
-  remarks: z.string().trim().max(500).optional().or(z.literal("")),
-});

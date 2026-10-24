@@ -35,30 +35,6 @@ async function main() {
     });
   }
 
-  const serviceTypes = [
-    "Financial Assistance",
-    "Medical Assistance",
-    "Food Assistance",
-    "Educational Assistance",
-    "Psychosocial Support",
-    "Counseling",
-    "Referral",
-    "Livelihood Assistance",
-    "Emergency Assistance",
-    "Home Visit",
-    "Assessment",
-    "Follow-up",
-    "Other",
-  ];
-
-  for (const name of serviceTypes) {
-    await db.serviceType.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-  }
-
   console.log("Seed completed successfully.");
 }
 

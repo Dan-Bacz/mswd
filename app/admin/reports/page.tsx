@@ -3,9 +3,9 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  const [beneficiaries, cases, officers, categories] = await Promise.all([
+  const [beneficiaries, assistance, officers, categories] = await Promise.all([
     db.beneficiary.count(),
-    db.case.count(),
+    db.beneficiaryAssistance.count(),
     db.user.count({ where: { role: { name: "OFFICER" } } }),
     db.category.count(),
   ]);
@@ -23,8 +23,8 @@ export default async function ReportsPage() {
           <p className="mt-2 text-3xl font-bold text-slate-900">{beneficiaries}</p>
         </div>
         <div className="rounded-2xl bg-amber-50 p-5">
-          <p className="text-sm text-amber-700">Cases</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{cases}</p>
+          <p className="text-sm text-amber-700">Assistance records</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">{assistance}</p>
         </div>
         <div className="rounded-2xl bg-emerald-50 p-5">
           <p className="text-sm text-emerald-700">Officers</p>
