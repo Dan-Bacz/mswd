@@ -11,7 +11,7 @@ const adminLinks: NavLinkItem[] = [
   { href: "/admin/reports", label: "Reports", icon: "reports" },
   { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
   { href: "/admin/assistance", label: "Assistance", icon: "assistance" },
-  { href: "/admin/officers", label: "Users", icon: "users" },
+  { href: "/admin/officers", label: "Officers", icon: "users" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
 ];
 
