@@ -83,7 +83,7 @@ export default async function OfficerLayout({ children }: { children: ReactNode 
             </div>
           </div>
         </header>
-        <main className="p-4 sm:p-6 lg:p-7">{children}</main>
+        <main className="min-w-0 w-full p-3 sm:p-5 lg:p-7">{children}</main>
       </div>
     </div>
   );

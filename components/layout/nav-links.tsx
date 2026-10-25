@@ -45,10 +45,14 @@ export function NavLinks({
   sections,
   className,
   activeClassName,
+  collapsed = false,
+  onNavigate,
 }: {
   sections: NavSection[];
   className?: string;
   activeClassName?: string;
+  collapsed?: boolean;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
 
@@ -57,7 +61,7 @@ export function NavLinks({
       {sections.map((section, sectionIndex) => (
         <div key={section.title ?? sectionIndex}>
           {section.title ? (
-            <p className="mb-2 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-400">
+            <p className={`mb-2 mt-5 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-400 ${collapsed ? "sr-only" : ""}`}>
               {section.title}
             </p>
           ) : null}
@@ -71,13 +75,16 @@ export function NavLinks({
                   <Link
                     href={href}
                     aria-current={active ? "page" : undefined}
+                    title={collapsed ? label : undefined}
+                    onClick={onNavigate}
                     className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 ease-out hover:translate-x-0.5 hover:bg-white/10 hover:text-white",
+                    collapsed && "justify-center px-2 hover:translate-x-0",
                       active && activeClassName,
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    <span className="truncate">{label}</span>
+                    <span className={collapsed ? "sr-only" : "truncate"}>{label}</span>
                   </Link>
                 </li>
               );
