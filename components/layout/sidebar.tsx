@@ -17,7 +17,7 @@ const adminLinks: NavLinkItem[] = [
 
 const officerLinks: NavLinkItem[] = [
   { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/officer/beneficiaries", label: "My Beneficiaries", icon: "beneficiaries" },
+  { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
   { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
   { href: "/officer/reports", label: "Reports", icon: "reports" },
   { href: "/admin/settings", label: "My Profile", icon: "profile" },
