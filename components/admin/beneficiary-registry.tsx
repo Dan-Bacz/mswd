@@ -152,7 +152,7 @@ export function BeneficiaryRegistry({
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#0B1A3E]">
-            {officerMode ? "My beneficiaries" : "Beneficiaries"}
+            Beneficiaries
           </h1>
           <p className="mt-1.5 text-sm text-[#6480A9]">
             {officerMode
