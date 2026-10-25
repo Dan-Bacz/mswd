@@ -87,9 +87,9 @@ The seed routine creates the required roles and the core categories for the MSWD
 
 ## Officer registration and approval
 
-Officers can register from the login page. New registrations remain pending and cannot sign in until an administrator approves them from Officer management. Approval sends an email through the configured SMTP server and activates the account; administrators can then assign the officer's categories.
+Officers can register from the login page. New registrations remain pending and cannot sign in until an administrator approves them from Officer management. Active administrators receive an email when an officer registers. Approval activates the account and sends the officer an approval email; rejection marks it inactive and sends a rejection email.
 
-Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` with the SMTP details from your email provider. Use an `EMAIL_FROM` sender address authorized by that provider. Set `APP_URL` to the deployed application's absolute URL so the approval message contains the correct login link. Apply the pending-approval migration with `npx prisma migrate deploy` in deployed environments.
+For Gmail, set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER` to the sending Gmail address, and `SMTP_PASSWORD` to a Google App Password (not the Gmail account password). `EMAIL_FROM` accepts either a bare address or a display-name format such as `"Mahayag MSWD Office <office@gmail.com>"`; use the same sender address authorized by Gmail. Set `APP_URL` to the deployed application's absolute URL so notification links point to the correct site. Registration notifications go to all active administrator accounts in the database. Configure these values in the deployment environment; never commit real mail credentials.
 
 ## Vercel deployment
 

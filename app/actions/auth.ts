@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { sendOfficerApprovalEmail } from "@/lib/email";
+import {
+  sendNewOfficerRegistrationEmail,
+  sendOfficerApprovalEmail,
+  sendOfficerRejectionEmail,
+} from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/permissions";
 import { categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
@@ -153,8 +157,9 @@ export async function registerOfficerAction(
     create: { name: "OFFICER" },
   });
 
+  let officer: { id: string; name: string; email: string };
   try {
-    await db.user.create({
+    officer = await db.user.create({
       data: {
         name: parsed.data.name,
         email,
@@ -162,12 +167,28 @@ export async function registerOfficerAction(
         roleId: officerRole.id,
         status: "PENDING_APPROVAL",
       },
+      select: { id: true, name: true, email: true },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return { ok: false, message: "An account with that email address already exists." };
     }
     throw error;
+  }
+
+  const admins = await db.user.findMany({
+    where: { role: { name: "ADMIN" }, status: "ACTIVE" },
+    select: { name: true, email: true },
+  });
+
+  try {
+    await sendNewOfficerRegistrationEmail(admins, officer);
+  } catch (error) {
+    console.error("Officer registration was saved, but administrator notification email could not be sent:", error);
+    return {
+      ok: true,
+      message: "Registration submitted and is awaiting approval, but the administrator notification email could not be sent. Please contact the MSWD Office.",
+    };
   }
 
   return {
@@ -379,6 +400,58 @@ export async function approveOfficerAction(
   revalidatePath("/officer/dashboard");
 
   return { ok: true, message: "Account approved and notification email sent." };
+}
+
+export async function rejectOfficerAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData
+) {
+  await requireAdmin();
+
+  const officerId = String(formData.get("officerId") ?? "");
+  if (!officerId) {
+    return { ok: false, message: "Officer was not found." };
+  }
+
+  const officer = await db.user.findUnique({
+    where: { id: officerId },
+    include: { role: true },
+  });
+
+  if (!officer || officer.role.name !== "OFFICER") {
+    return { ok: false, message: "Officer was not found." };
+  }
+  if (officer.status !== "PENDING_APPROVAL") {
+    return { ok: false, message: "This officer account is no longer awaiting approval." };
+  }
+
+  try {
+    await sendOfficerRejectionEmail({ name: officer.name, email: officer.email });
+  } catch (error) {
+    console.error("Unable to send officer rejection email:", error);
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Unable to send the rejection email. The account remains pending.",
+    };
+  }
+
+  const result = await db.user.updateMany({
+    where: { id: officer.id, roleId: officer.roleId, status: "PENDING_APPROVAL" },
+    data: { status: "INACTIVE" },
+  });
+
+  if (result.count !== 1) {
+    return {
+      ok: false,
+      message: "The rejection email was sent, but the account status changed. Refresh and review the account.",
+    };
+  }
+
+  revalidatePath("/admin/officers");
+  revalidatePath(`/admin/officers/${officer.id}`);
+  revalidatePath("/admin/categories");
+
+  return { ok: true, message: "Account rejected and notification email sent." };
 }
 
 function readCategoryIds(formData: FormData, fieldName = "categoryIds") {
