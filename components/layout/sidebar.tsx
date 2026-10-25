@@ -94,15 +94,15 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
             </form>
           </div>
         </nav>
-        <div className="border-t border-white/15 px-4 py-4">
+        <div className="border-t border-white/15 px-4 py-4 text-center">
           <div className="mb-3 flex h-1 overflow-hidden rounded-full" aria-hidden="true">
             <span className="w-1/3 bg-[#FFD21F]" />
             <span className="w-1/3 bg-[#E31837]" />
             <span className="w-1/3 bg-white" />
           </div>
-          <p className="text-[10px] uppercase tracking-[0.16em] text-blue-100">Mahayag • MSWD</p>
-          <p className="mt-1 text-xs font-medium text-white">{municipality}</p>
-          <p className="mt-2 text-[10px] leading-relaxed text-blue-100/80">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
+          <p className="text-[9px] uppercase tracking-[0.14em] text-blue-100">Mahayag • MSWD</p>
+          <p className="mt-1 text-[11px] font-medium text-white">{municipality}</p>
+          <p className="mt-2 text-[9px] leading-relaxed text-blue-100/80">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
         </div>
       </aside>
       </div>
@@ -149,15 +149,15 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
         </div>
       </nav>
 
-      <div className="border-t border-white/15 px-4 py-4">
+      <div className="border-t border-white/15 px-4 py-4 text-center">
         <div className="mb-3 flex h-1 overflow-hidden rounded-full" aria-hidden="true">
           <span className="w-1/3 bg-[#FFD21F]" />
           <span className="w-1/3 bg-[#E31837]" />
           <span className="w-1/3 bg-white" />
         </div>
-        <p className="text-[10px] uppercase tracking-[0.16em] text-blue-100">Mahayag • MSWD</p>
-        <p className="mt-1 text-xs font-medium text-white">{municipality}</p>
-        <p className="mt-2 text-[10px] leading-relaxed text-blue-100/80">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
+        <p className="text-[9px] uppercase tracking-[0.14em] text-blue-100">Mahayag • MSWD</p>
+        <p className="mt-1 text-[11px] font-medium text-white">{municipality}</p>
+        <p className="mt-2 text-[9px] leading-relaxed text-blue-100/80">Sa Tamang Serbisyo, Mas Matatag na Komunidad.</p>
       </div>
       </aside>
     </div>

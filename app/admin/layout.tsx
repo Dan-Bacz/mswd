@@ -12,34 +12,22 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const notificationCount = await db.notification.count({
     where: { userId: user.id, isRead: false },
   });
-  const currentDate = new Intl.DateTimeFormat("en-PH", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "Asia/Manila",
-  }).format(new Date());
-
   return (
     <div className="flex min-h-screen bg-[#F4F7FC]">
       <Sidebar role="ADMIN" />
       <div className="min-w-0 flex-1">
         <header className="relative overflow-visible border-b border-[#0B3478] bg-gradient-to-r from-[#0B4599] via-[#0D4A9F] to-[#1556AA] px-4 py-4 text-white shadow-[0_6px_22px_rgba(7,55,131,0.18)] sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#FFD21F]" />
-          <div className="flex min-h-12 items-center justify-between gap-4 pl-12 lg:pl-2">
-            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-              <span className="hidden h-10 w-1 shrink-0 rounded-full bg-white/35 sm:block" aria-hidden="true" />
-              <div className="min-w-0">
-                <h1 className="text-xs font-extrabold leading-snug tracking-[0.06em] text-white sm:truncate sm:text-base sm:tracking-[0.1em] lg:text-lg">DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT</h1>
-                <p className="mt-1 flex items-center gap-2 text-[11px] font-medium tracking-[0.08em] text-blue-100 sm:text-xs">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#FFD21F]" aria-hidden="true" />
-                  Mahayag, Zamboanga del Sur
-                </p>
-              </div>
+          <div className="grid min-h-12 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[1fr_minmax(0,3fr)_1fr] sm:gap-4">
+            <span aria-hidden="true" className="sm:block" />
+            <div className="min-w-0 text-center">
+              <h1 className="text-[9px] font-extrabold leading-tight tracking-[0.04em] text-white sm:text-xs sm:tracking-[0.08em] lg:text-sm">DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT</h1>
+              <p className="mt-1 text-[9px] font-medium tracking-[0.06em] text-blue-100 sm:text-[11px]">
+                Mahayag, Zamboanga del Sur
+              </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-              <time className="hidden rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-blue-50 md:block">{currentDate}</time>
+            <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
               <div
                 role="img"
                 aria-label={`${notificationCount} unread notifications`}
