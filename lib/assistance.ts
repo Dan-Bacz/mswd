@@ -12,6 +12,22 @@ export const ASSISTANCE_TYPE_VALUES = [
 
 export type AssistanceType = (typeof ASSISTANCE_TYPE_VALUES)[number];
 
+export const ASSISTANCE_OUTCOME_VALUES = [
+  "PROVIDED",
+  "REFERRED",
+  "FOLLOW_UP",
+  "NOT_PROVIDED",
+] as const;
+
+export type AssistanceOutcome = (typeof ASSISTANCE_OUTCOME_VALUES)[number];
+
+export const ASSISTANCE_OUTCOME_LABELS: Record<AssistanceOutcome, string> = {
+  PROVIDED: "Assistance Provided",
+  REFERRED: "Referred to Another Office/Agency",
+  FOLLOW_UP: "For Follow-up",
+  NOT_PROVIDED: "Not Provided",
+};
+
 export const ASSISTANCE_TYPE_LABELS: Record<AssistanceType, string> = {
   FINANCIAL_ASSISTANCE: "Financial Assistance",
   MEDICAL_ASSISTANCE: "Medical Assistance",

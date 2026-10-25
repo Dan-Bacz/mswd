@@ -50,6 +50,13 @@ enum AssistanceType {
   OTHER
 }
 
+enum AssistanceOutcome {
+  PROVIDED
+  REFERRED
+  FOLLOW_UP
+  NOT_PROVIDED
+}
+
 enum BeneficiaryFileType {
   VALID_ID_FRONT
   VALID_ID_BACK
@@ -159,19 +166,31 @@ model Beneficiary {
 }
 
 model BeneficiaryAssistance {
-  id            String         @id @default(uuid())
-  beneficiaryId String
-  type          AssistanceType
-  otherType     String?
-  providedAt    DateTime       @db.Date
-  notes         String?
-  providedById  String
-  createdAt     DateTime       @default(now())
-  beneficiary   Beneficiary    @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
-  providedBy    User           @relation("AssistanceProvider", fields: [providedById], references: [id], onDelete: Restrict)
+  id                   String            @id @default(uuid())
+  referenceNumber      String            @unique
+  beneficiaryId        String
+  type                 AssistanceType
+  otherType            String?
+  visitDate            DateTime          @db.Date
+  purpose              String
+  requestedDescription String
+  outcome              AssistanceOutcome @default(PROVIDED)
+  providedDescription  String?
+  providedAt           DateTime?         @db.Date
+  notProvidedReason    String?
+  referralDetails      String?
+  followUpReason       String?
+  followUpNotes        String?
+  internalRemarks      String?
+  providedById         String
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  beneficiary          Beneficiary       @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  providedBy           User              @relation("AssistanceProvider", fields: [providedById], references: [id], onDelete: Restrict)
 
-  @@index([beneficiaryId, providedAt])
-  @@index([providedById, providedAt])
+  @@index([beneficiaryId, visitDate])
+  @@index([providedById, visitDate])
+  @@index([outcome, visitDate])
 }
 
 model Document {

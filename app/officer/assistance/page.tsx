@@ -19,7 +19,7 @@ export default async function OfficerAssistancePage() {
         beneficiary: { include: { category: true } },
         providedBy: { select: { name: true } },
       },
-      orderBy: [{ providedAt: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ visitDate: "desc" }, { createdAt: "desc" }],
     }),
   ]);
 
@@ -27,7 +27,9 @@ export default async function OfficerAssistancePage() {
     <AssistanceManagement
       beneficiaries={beneficiaries}
       records={records}
-      subtitle="Record and review provided assistance for beneficiaries in your assigned categories."
+      officers={[]}
+      isAdmin={false}
+      subtitle="Record and manage in-person assistance requested by beneficiaries in your assigned categories."
     />
   );
 }

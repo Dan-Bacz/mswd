@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminAssistancePage() {
   await requireAdmin();
 
-  const [beneficiaries, records] = await Promise.all([
+  const [beneficiaries, records, officers] = await Promise.all([
     db.beneficiary.findMany({
       include: { category: true },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
@@ -17,7 +17,12 @@ export default async function AdminAssistancePage() {
         beneficiary: { include: { category: true } },
         providedBy: { select: { name: true } },
       },
-      orderBy: [{ providedAt: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ visitDate: "desc" }, { createdAt: "desc" }],
+    }),
+    db.user.findMany({
+      where: { role: { name: "OFFICER" } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 
@@ -25,7 +30,9 @@ export default async function AdminAssistancePage() {
     <AssistanceManagement
       beneficiaries={beneficiaries}
       records={records}
-      subtitle="Review assistance provided across all beneficiary categories."
+      officers={officers}
+      isAdmin
+      subtitle="Monitor and manage in-person assistance transactions across authorized beneficiary categories."
     />
   );
 }
