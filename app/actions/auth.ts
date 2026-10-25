@@ -313,18 +313,45 @@ export async function deleteCategoryAction(
   return { ok: true, message: `Category "${category.name}" deleted.` };
 }
 
-export async function createOfficerAction(formData: FormData) {
+export async function createOfficerAction(
+  _previousState: { ok: boolean; message: string; saved?: boolean; resetKey: number },
+  formData: FormData,
+) {
   await requireAdmin();
 
-  const raw = {
+  const parsed = officerRegistrationSchema.safeParse({
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
-    categoryIds: formData.getAll("categoryIds").flatMap((item) => String(item).split(",")).filter(Boolean),
-  };
+  });
 
-  if (!raw.name || !raw.email || !raw.password || raw.categoryIds.length === 0) {
-    throw new Error("Please complete all fields and pick at least one authorized category.");
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Enter valid officer details.",
+      resetKey: _previousState.resetKey,
+    };
+  }
+
+  const categoryIds = Array.from(
+    new Set(formData.getAll("categoryIds").flatMap((item) => String(item).split(",")).map((item) => item.trim()).filter(Boolean)),
+  );
+  if (categoryIds.length === 0) {
+    return { ok: false, message: "Select at least one authorized category.", resetKey: _previousState.resetKey };
+  }
+
+  const categories = await db.category.findMany({
+    where: { id: { in: categoryIds } },
+    select: { id: true },
+  });
+  if (categories.length !== categoryIds.length) {
+    return { ok: false, message: "One or more selected categories are no longer available. Refresh and try again.", resetKey: _previousState.resetKey };
+  }
+
+  const email = parsed.data.email.toLowerCase();
+  const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
+  if (existing) {
+    return { ok: false, message: "An account with that email address already exists.", resetKey: _previousState.resetKey };
   }
 
   const officerRole = await db.role.upsert({
@@ -333,20 +360,30 @@ export async function createOfficerAction(formData: FormData) {
     create: { name: "OFFICER" },
   });
 
-  await db.user.create({
-    data: {
-      name: raw.name,
-      email: raw.email,
-      passwordHash: await bcrypt.hash(raw.password, 12),
-      roleId: officerRole.id,
-      status: "ACTIVE",
-      userCategories: {
-        create: raw.categoryIds.map((categoryId) => ({ categoryId })),
+  try {
+    await db.user.create({
+      data: {
+        name: parsed.data.name,
+        email,
+        passwordHash: await bcrypt.hash(parsed.data.password, 12),
+        roleId: officerRole.id,
+        status: "ACTIVE",
+        userCategories: {
+          create: categoryIds.map((categoryId) => ({ categoryId })),
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: false, message: "An account with that email address already exists.", resetKey: _previousState.resetKey };
+    }
+    throw error;
+  }
 
   revalidatePath("/admin/officers");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/officer/dashboard");
+  return { ok: true, message: "Officer account created successfully.", saved: true, resetKey: _previousState.resetKey + 1 };
 }
 
 export async function approveOfficerAction(
