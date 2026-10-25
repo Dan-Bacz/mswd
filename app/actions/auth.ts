@@ -186,8 +186,8 @@ export async function registerOfficerAction(
   } catch (error) {
     console.error("Officer registration was saved, but administrator notification email could not be sent:", error);
     return {
-      ok: true,
-      message: "Registration submitted and is awaiting approval, but the administrator notification email could not be sent. Please contact the MSWD Office.",
+      ok: false,
+      message: `Registration was saved and is awaiting approval, but the administrator notification email failed: ${error instanceof Error ? error.message : "Unknown email delivery error."} Do not submit the registration again.`,
     };
   }
 
