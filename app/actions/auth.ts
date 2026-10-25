@@ -135,10 +135,17 @@ export async function registerOfficerAction(
   _previousState: { ok: boolean; message: string } | null,
   formData: FormData
 ) {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (password !== confirmPassword) {
+    return { ok: false, message: "Passwords do not match." };
+  }
+
   const parsed = officerRegistrationSchema.safeParse({
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
-    password: String(formData.get("password") ?? ""),
+    password,
   });
 
   if (!parsed.success) {
