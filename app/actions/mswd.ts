@@ -61,12 +61,8 @@ async function parseImageUpload(
   value: FormDataEntryValue | null,
   type: BeneficiaryFileType,
   field: string,
-  required: boolean,
 ): Promise<BeneficiaryImage | null> {
   if (!isFile(value) || value.size === 0) {
-    if (required) {
-      throw new ImageUploadError(field, "Upload a clear image of this side of the valid ID.");
-    }
     return null;
   }
 
@@ -159,19 +155,17 @@ export async function createBeneficiaryAction(
 
   let images: BeneficiaryImage[];
   try {
-    const idFront = await parseImageUpload(formData.get("idFront"), "VALID_ID_FRONT", "idFront", true);
-    const idBack = await parseImageUpload(formData.get("idBack"), "VALID_ID_BACK", "idBack", true);
+    const idFront = await parseImageUpload(formData.get("idFront"), "VALID_ID_FRONT", "idFront");
+    const idBack = await parseImageUpload(formData.get("idBack"), "VALID_ID_BACK", "idBack");
     const profileCapture = await parseImageUpload(
       formData.get("profileImageCapture"),
       "PROFILE_IMAGE",
       "profileImage",
-      false,
     );
     const profileUpload = await parseImageUpload(
       formData.get("profileImageUpload"),
       "PROFILE_IMAGE",
       "profileImage",
-      false,
     );
 
     if (profileCapture && profileUpload) {
@@ -196,7 +190,7 @@ export async function createBeneficiaryAction(
     if (!(error instanceof ImageUploadError)) throw error;
     return {
       ok: false,
-      message: "Please check the ID and profile images.",
+      message: "Please check the uploaded images.",
       fieldErrors: { [error.field]: error.message },
     };
   }
