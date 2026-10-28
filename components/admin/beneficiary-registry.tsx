@@ -761,7 +761,7 @@ function BeneficiaryModal({
 
             <section aria-labelledby="assignment-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 border-b border-[#E8EDF4] pb-3">
-                <h3 id="assignment-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Assignment &amp; notes</h3>
+                <h3 id="assignment-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Assignment</h3>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {!officerMode && <FormField id="assignedOfficerId" label="Assigned officer" error={state.fieldErrors?.assignedOfficerId}>
@@ -775,18 +775,6 @@ function BeneficiaryModal({
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
                   </span>
                 </FormField>}
-                <div className="sm:col-span-2">
-                  <FormField id="remarks" label="Remarks" error={state.fieldErrors?.remarks}>
-                    <textarea
-                      id="remarks"
-                      name="remarks"
-                      rows={3}
-                      aria-invalid={Boolean(state.fieldErrors?.remarks)}
-                      aria-describedby={state.fieldErrors?.remarks ? "remarks-error" : undefined}
-                      className={`w-full rounded-lg border border-[#DCE3EE] bg-white px-3 py-2.5 text-sm text-[#172B4D] outline-none transition placeholder:text-slate-400 focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15 ${state.fieldErrors?.remarks ? "border-rose-400" : ""}`}
-                    />
-                  </FormField>
-                </div>
               </div>
             </section>
             </div>
