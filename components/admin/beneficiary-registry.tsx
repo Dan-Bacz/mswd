@@ -76,6 +76,7 @@ export function BeneficiaryRegistry({
   beneficiaries,
   selectedCategoryId,
   officerMode = false,
+  initialSearch = "",
 }: {
   categories: RegistryCategory[];
   filterCategories: RegistryCategory[];
@@ -83,9 +84,10 @@ export function BeneficiaryRegistry({
   beneficiaries: RegistryBeneficiary[];
   selectedCategoryId?: string;
   officerMode?: boolean;
+  initialSearch?: string;
 }) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [modalOpen, setModalOpen] = useState(false);
   const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -613,7 +615,21 @@ function BeneficiaryModal({
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:space-y-5 sm:px-7 sm:py-6">
             {!state.ok && (
               <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
-                {state.message}
+                <p>{state.message}</p>
+                {state.duplicateClient && (
+                  <div className="mt-3 rounded-lg border border-rose-200 bg-white px-3 py-2.5">
+                    <p className="font-semibold text-slate-900">{state.duplicateClient.name}</p>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      Client ID: {state.duplicateClient.beneficiaryNumber} · {state.duplicateClient.categoryName}
+                    </p>
+                    <Link
+                      href={`${officerMode ? "/officer/beneficiaries" : "/admin/beneficiaries"}?q=${encodeURIComponent(state.duplicateClient.beneficiaryNumber)}`}
+                      className="mt-2 inline-flex text-xs font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                    >
+                      View existing client record
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 

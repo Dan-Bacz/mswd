@@ -17,14 +17,28 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     return null;
   }
 
-  const assignments = await db.userCategory.findMany({
-    where: { userId: session.id },
-    select: { categoryId: true },
+  const account = await db.user.findUnique({
+    where: { id: session.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      status: true,
+      role: { select: { name: true } },
+      userCategories: { select: { categoryId: true } },
+    },
   });
 
+  if (!account || account.status !== "ACTIVE") {
+    return null;
+  }
+
   return {
-    ...session,
-    categoryIds: assignments.map((item) => item.categoryId),
+    id: account.id,
+    name: account.name,
+    email: account.email,
+    role: account.role.name as "ADMIN" | "OFFICER",
+    categoryIds: account.userCategories.map((item) => item.categoryId),
   };
 }
 

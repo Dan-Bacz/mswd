@@ -88,16 +88,49 @@ export function CreateOfficerDialog({ categories }: { categories: CategoryOption
             </p>
           )}
 
-          <div>
-            <label htmlFor="officer-name" className="mb-1.5 block text-sm font-medium text-slate-700">Full name</label>
-            <input
-              id="officer-name"
-              name="name"
-              autoComplete="name"
-              minLength={2}
-              required
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="officer-first-name" className="mb-1.5 block text-sm font-medium text-slate-700">First name</label>
+              <input
+                id="officer-first-name"
+                name="firstName"
+                autoComplete="given-name"
+                required
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15"
+              />
+            </div>
+            <div>
+              <label htmlFor="officer-middle-name" className="mb-1.5 block text-sm font-medium text-slate-700">Middle name <span className="font-normal text-slate-400">(optional)</span></label>
+              <input
+                id="officer-middle-name"
+                name="middleName"
+                autoComplete="additional-name"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15"
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="officer-last-name" className="mb-1.5 block text-sm font-medium text-slate-700">Last name</label>
+              <input
+                id="officer-last-name"
+                name="lastName"
+                autoComplete="family-name"
+                required
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15"
+              />
+            </div>
+            <div>
+              <label htmlFor="officer-position" className="mb-1.5 block text-sm font-medium text-slate-700">Position</label>
+              <input
+                id="officer-position"
+                name="position"
+                autoComplete="organization-title"
+                required
+                placeholder="e.g., Social Welfare Officer"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15"
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="officer-email" className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>

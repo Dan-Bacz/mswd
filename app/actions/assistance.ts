@@ -5,7 +5,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/permissions";
-import { ASSISTANCE_OUTCOME_VALUES, ASSISTANCE_TYPE_VALUES } from "@/lib/assistance";
+import {
+  ASSISTANCE_OUTCOME_VALUES,
+  ASSISTANCE_TYPE_VALUES,
+  supportsFinancialAmount,
+} from "@/lib/assistance";
 
 const dateSchema = z
   .string()
@@ -16,10 +20,21 @@ const dateSchema = z
     return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
   }, "Choose a valid date.");
 
+const amountSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || /^\d{1,10}(\.\d{1,2})?$/.test(value), "Enter a valid amount with up to 2 decimal places.");
+
+const quantitySchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || /^\d{1,7}$/.test(value), "Enter a whole number.");
+
 const assistanceSchema = z
   .object({
     recordId: z.string().trim(),
-    beneficiaryId: z.string().trim().min(1, "Select an existing beneficiary."),
+    clientId: z.string().trim().min(1, "Enter the client ID."),
+    beneficiaryId: z.string().trim(),
     type: z.enum(ASSISTANCE_TYPE_VALUES),
     otherType: z.string().trim().max(100, "Keep the description under 100 characters."),
     visitDate: dateSchema,
@@ -33,9 +48,36 @@ const assistanceSchema = z
     followUpReason: z.string().trim().max(1000),
     followUpNotes: z.string().trim().max(1000),
     internalRemarks: z.string().trim().max(2000),
+    financialAmount: amountSchema,
+    medicineQuantity: quantitySchema,
+    doctorName: z.string().trim().max(150),
     printProof: z.string().trim(),
   })
   .superRefine((value, context) => {
+    if (value.financialAmount && !supportsFinancialAmount(value.type)) {
+      context.addIssue({
+        code: "custom",
+        path: ["financialAmount"],
+        message: "A financial amount is not applicable to this assistance type.",
+      });
+    }
+
+    if (value.medicineQuantity && value.type !== "MEDICAL_ASSISTANCE") {
+      context.addIssue({
+        code: "custom",
+        path: ["medicineQuantity"],
+        message: "Medicine quantity is only applicable to medical assistance.",
+      });
+    }
+
+    if (value.doctorName && value.type !== "MEDICAL_ASSISTANCE") {
+      context.addIssue({
+        code: "custom",
+        path: ["doctorName"],
+        message: "Provider name is only applicable to medical assistance.",
+      });
+    }
+
     if (value.type === "OTHER" && !value.otherType) {
       context.addIssue({
         code: "custom",
@@ -116,6 +158,7 @@ export async function saveAssistanceAction(
   const user = await requireAuth();
   const parsed = assistanceSchema.safeParse({
     recordId: String(formData.get("recordId") ?? ""),
+    clientId: String(formData.get("clientId") ?? ""),
     beneficiaryId: String(formData.get("beneficiaryId") ?? ""),
     type: String(formData.get("type") ?? ""),
     otherType: String(formData.get("otherType") ?? ""),
@@ -130,6 +173,9 @@ export async function saveAssistanceAction(
     followUpReason: String(formData.get("followUpReason") ?? ""),
     followUpNotes: String(formData.get("followUpNotes") ?? ""),
     internalRemarks: String(formData.get("internalRemarks") ?? ""),
+    financialAmount: String(formData.get("financialAmount") ?? ""),
+    medicineQuantity: String(formData.get("medicineQuantity") ?? ""),
+    doctorName: String(formData.get("doctorName") ?? ""),
     printProof: String(formData.get("printProof") ?? ""),
   });
 
@@ -149,16 +195,16 @@ export async function saveAssistanceAction(
     };
   }
 
-  const beneficiary = await db.beneficiary.findUnique({
-    where: { id: parsed.data.beneficiaryId },
-    select: { id: true, categoryId: true },
+  const beneficiary = await db.beneficiary.findFirst({
+    where: { beneficiaryNumber: { equals: parsed.data.clientId, mode: "insensitive" } },
+    select: { id: true, categoryId: true, beneficiaryNumber: true },
   });
   if (!beneficiary) {
     return {
       ok: false,
-      message: "The selected beneficiary could not be found. Register the beneficiary before recording assistance.",
+      message: "No client was found with that Client ID. Verify the ID or register the client before recording assistance.",
       resetKey: previousState.resetKey,
-      fieldErrors: { beneficiaryId: "Select an existing beneficiary." },
+      fieldErrors: { clientId: "Enter an existing client ID." },
     };
   }
   if (user.role === "OFFICER" && !user.categoryIds.includes(beneficiary.categoryId)) {
@@ -166,20 +212,28 @@ export async function saveAssistanceAction(
       ok: false,
       message: "You can only record assistance for beneficiaries in your assigned categories.",
       resetKey: previousState.resetKey,
-      fieldErrors: { beneficiaryId: "This beneficiary is outside your assigned categories." },
+      fieldErrors: { clientId: "This client is outside your assigned categories." },
     };
   }
 
   if (parsed.data.recordId) {
     const existing = await db.beneficiaryAssistance.findUnique({
       where: { id: parsed.data.recordId },
-      select: { beneficiary: { select: { categoryId: true } } },
+      select: { beneficiaryId: true, beneficiary: { select: { categoryId: true } } },
     });
     if (!existing || (user.role === "OFFICER" && !user.categoryIds.includes(existing.beneficiary.categoryId))) {
       return {
         ok: false,
         message: "You are not authorized to edit this assistance record.",
         resetKey: previousState.resetKey,
+      };
+    }
+    if (existing.beneficiaryId !== beneficiary.id) {
+      return {
+        ok: false,
+        message: "The Client ID cannot be changed on an existing assistance record.",
+        resetKey: previousState.resetKey,
+        fieldErrors: { clientId: "This record belongs to a different client." },
       };
     }
   }
@@ -206,6 +260,18 @@ export async function saveAssistanceAction(
     followUpReason: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpReason : null,
     followUpNotes: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpNotes : null,
     internalRemarks: parsed.data.internalRemarks || null,
+    financialAmount:
+      supportsFinancialAmount(parsed.data.type) && parsed.data.financialAmount
+        ? Number(parsed.data.financialAmount)
+        : null,
+    medicineQuantity:
+      parsed.data.type === "MEDICAL_ASSISTANCE" && parsed.data.medicineQuantity
+        ? Number(parsed.data.medicineQuantity)
+        : null,
+    doctorName:
+      parsed.data.type === "MEDICAL_ASSISTANCE" && parsed.data.doctorName
+        ? parsed.data.doctorName
+        : null,
   };
 
   const savedRecord = await db.$transaction(async (transaction) => {

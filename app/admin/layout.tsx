@@ -35,18 +35,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </div>
 
             <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
-              <div
-                role="img"
+              <Link
+                href="/admin/notifications"
                 aria-label={`${notificationCount} unread notifications`}
-                className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white shadow-inner"
+                className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white shadow-inner transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FFD21F]/35"
               >
                 <Bell className="h-4 w-4" />
                 {notificationCount > 0 && (
                   <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E31837] px-1 text-[10px] font-semibold text-white">
-                    {notificationCount}
+                    {notificationCount > 99 ? "99+" : notificationCount}
                   </span>
                 )}
-              </div>
+              </Link>
 
               <details className="group relative">
                 <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2 py-1.5 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FFD21F]/35 sm:gap-3">

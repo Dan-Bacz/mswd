@@ -44,3 +44,24 @@ export const ASSISTANCE_TYPE_OPTIONS = ASSISTANCE_TYPE_VALUES.map((value) => ({
   value,
   label: ASSISTANCE_TYPE_LABELS[value],
 }));
+
+export const FINANCIAL_ASSISTANCE_TYPES: AssistanceType[] = [
+  "FINANCIAL_ASSISTANCE",
+  "MEDICAL_ASSISTANCE",
+  "BURIAL_FUNERAL_ASSISTANCE",
+  "TRANSPORTATION_ASSISTANCE",
+  "EDUCATIONAL_ASSISTANCE",
+  "OTHER",
+];
+
+export function supportsFinancialAmount(type: AssistanceType) {
+  return FINANCIAL_ASSISTANCE_TYPES.includes(type);
+}
+
+export function formatPeso(value: number) {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+  }).format(value);
+}

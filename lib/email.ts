@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 type OfficerEmail = {
   name: string;
   email: string;
+  position?: string | null;
 };
 
 function parseSenderAddress(value: string) {
@@ -80,6 +81,7 @@ export async function sendNewOfficerRegistrationEmail(
       "A new officer account registration is waiting for administrator review.",
       "",
       `Name: ${officer.name}`,
+      `Position: ${officer.position || "Not specified"}`,
       `Email: ${officer.email}`,
       "",
       `Review registrations: ${managementUrl}`,
