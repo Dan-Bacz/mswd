@@ -140,13 +140,13 @@ export async function sendOfficerDeactivationEmail({ name, email }: OfficerEmail
   });
 }
 
-export async function sendOfficerDeletionEmail({ name, email }: OfficerEmail) {
+export async function sendOfficerDeletionEmail({ name, email, assistanceCount = 0 }: OfficerEmail & { assistanceCount?: number }) {
   const { transporter, from } = createTransport();
 
   await transporter.sendMail({
     from,
     to: email,
     subject: "Your MSWD officer account has been deleted",
-    text: `Hello ${name},\n\nYour MSWD officer account has been permanently deleted by an administrator. You can no longer sign in to or access the MSWD Management System. If you believe this was done in error, please contact the MSWD Office.\n\nMSWD Management System`,
+    text: `Hello ${name},\n\nYour MSWD officer account has been permanently deleted by an administrator. You can no longer sign in to or access the MSWD Management System. ${assistanceCount > 0 ? `${assistanceCount} assistance record(s) you handled were retained in the system under the administrator's account.` : "Your existing records were retained in the system."}\n\nIf you believe this was done in error, please contact the MSWD Office.\n\nMSWD Management System`,
   });
 }

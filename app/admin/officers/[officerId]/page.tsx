@@ -112,7 +112,11 @@ export default async function OfficerManagePage({
         <ResendApprovalEmailButton officerId={officer.id} />
       )}
 
-      <DeleteOfficerForm officerId={officer.id} officerName={officer.name} />
+      <DeleteOfficerForm
+        officerId={officer.id}
+        officerName={officer.name}
+        isActive={officer.status === "ACTIVE"}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
         <MetricCard

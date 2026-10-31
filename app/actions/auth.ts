@@ -779,53 +779,64 @@ export async function permanentlyDeleteOfficerAction(
 
   const officer = await db.user.findUnique({
     where: { id: officerId },
-    include: {
-      role: true,
-      _count: {
-        select: {
-          userCategories: true,
-          providedAssistance: true,
-          documents: true,
-          assignments: true,
-          assignedBy: true,
-          assignedBeneficiaries: true,
-          households: true,
-          notifications: true,
-          auditLogs: true,
-        },
-      },
-    },
+    include: { role: true },
   });
 
   if (!officer || officer.role.name !== "OFFICER") {
     return { ok: false, message: "Officer was not found." };
   }
-  if (officer.status !== "INACTIVE") {
-    return { ok: false, message: "Deactivate the officer account before permanently deleting it." };
-  }
-
-  const linkedRecords = ([
-    [officer._count.providedAssistance, "assistance records"],
-    [officer._count.documents, "uploaded documents"],
-    [officer._count.assignments, "assignment records"],
-    [officer._count.assignedBy, "assignments created by this officer"],
-    [officer._count.assignedBeneficiaries, "assigned beneficiaries"],
-    [officer._count.households, "households"],
-    [officer._count.auditLogs, "audit log records"],
-  ] as const).filter(([count]) => count > 0).map(([, label]) => label);
-
-  if (linkedRecords.length > 0) {
-    return {
-      ok: false,
-      message: `This account cannot be permanently deleted because it has ${linkedRecords.join(", ")}. It remains safely inactive; remove linked records only through an approved data-retention process.`,
-    };
-  }
-
+  let transferredAssistanceCount = 0;
   try {
-    await db.user.delete({ where: { id: officer.id } });
+    transferredAssistanceCount = await db.$transaction(async (tx) => {
+      const assistance = await tx.beneficiaryAssistance.count({ where: { providedById: officer.id } });
+
+      // Preserve operational history by making the administrator the surviving owner
+      // of records that require a User relation before the officer is deleted.
+      await tx.beneficiaryAssistance.updateMany({
+        where: { providedById: officer.id },
+        data: { providedById: admin.id },
+      });
+      await tx.document.updateMany({
+        where: { uploaderId: officer.id },
+        data: { uploaderId: admin.id },
+      });
+      await tx.assignment.updateMany({
+        where: { officerId: officer.id },
+        data: { officerId: admin.id },
+      });
+      await tx.assignment.updateMany({
+        where: { assignedById: officer.id },
+        data: { assignedById: admin.id },
+      });
+      await tx.beneficiary.updateMany({
+        where: { assignedOfficerId: officer.id },
+        data: { assignedOfficerId: null },
+      });
+      await tx.household.updateMany({
+        where: { createdById: officer.id },
+        data: { createdById: null },
+      });
+      await tx.auditLog.updateMany({
+        where: { userId: officer.id },
+        data: { userId: admin.id },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: admin.id,
+          action: "DELETE",
+          module: "OFFICERS",
+          recordId: officer.id,
+          description: `Deleted officer account ${officer.name}; transferred ${assistance} assistance record(s) to the administrator.`,
+        },
+      });
+
+      await tx.user.delete({ where: { id: officer.id } });
+      return assistance;
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-      return { ok: false, message: "The account still has linked records and cannot be permanently deleted. Keep it inactive instead." };
+      return { ok: false, message: "The account could not be deleted because a linked record could not be transferred to the administrator." };
     }
     throw error;
   }
@@ -833,9 +844,11 @@ export async function permanentlyDeleteOfficerAction(
   revalidatePath("/admin/officers");
   revalidatePath("/admin/dashboard");
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/assistance");
+  revalidatePath("/officer/dashboard");
 
   try {
-    await sendOfficerDeletionEmail({ name: officer.name, email: officer.email });
+    await sendOfficerDeletionEmail({ name: officer.name, email: officer.email, assistanceCount: transferredAssistanceCount });
   } catch (error) {
     console.error("Officer account was deleted, but the deletion email could not be sent:", error);
     return { ok: true, message: "Officer account permanently deleted, but the email could not be sent." };
