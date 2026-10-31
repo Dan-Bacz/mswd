@@ -72,6 +72,11 @@ model Role {
 model User {
   id                    String                  @id @default(uuid())
   name                  String
+  firstName             String?
+  middleName            String?
+  lastName              String?
+  position              String?
+  employeeId            String?                 @unique
   email                 String                  @unique
   passwordHash          String
   roleId                String
@@ -176,6 +181,11 @@ model BeneficiaryAssistance {
   requestedDescription String
   outcome              AssistanceOutcome @default(PROVIDED)
   providedDescription  String?
+  medicineCount        Int?
+  providerName         String?
+  financialAmount      Decimal?          @db.Decimal(12, 2)
+  financialType        String?
+  transactionDetails   String?
   providedAt           DateTime?         @db.Date
   notProvidedReason    String?
   referralDetails      String?

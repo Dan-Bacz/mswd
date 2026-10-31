@@ -601,6 +601,21 @@ export function AssistanceManagement({
                         <textarea name="providedDescription" rows={2} maxLength={2000} required defaultValue={editingRecord?.providedDescription ?? ""} aria-invalid={Boolean(state.fieldErrors?.providedDescription)} className={`${inputClass} mt-1.5 resize-y`} />
                         <FieldError message={state.fieldErrors?.providedDescription} />
                       </label>
+                      <label className="block text-xs font-semibold text-[#405B80]">Number of medicines provided
+                        <input name="medicineCount" type="number" min="0" step="1" defaultValue={editingRecord?.medicineCount ?? ""} className={`${inputClass} mt-1.5`} />
+                      </label>
+                      <label className="block text-xs font-semibold text-[#405B80]">Doctor / pharmacist
+                        <input name="providerName" defaultValue={editingRecord?.providerName ?? ""} className={`${inputClass} mt-1.5`} />
+                      </label>
+                      <label className="block text-xs font-semibold text-[#405B80]">Financial amount
+                        <input name="financialAmount" type="number" min="0" step="0.01" defaultValue={editingRecord?.financialAmount?.toString() ?? ""} className={`${inputClass} mt-1.5`} />
+                      </label>
+                      <label className="block text-xs font-semibold text-[#405B80]">Financial assistance type
+                        <select name="financialType" defaultValue={editingRecord?.financialType ?? ""} className={`${inputClass} mt-1.5`}><option value="">Not applicable</option><option value="Cash grant">Cash grant</option><option value="Medical expense">Medical expense</option><option value="Burial expense">Burial expense</option><option value="Transportation">Transportation</option><option value="Other">Other</option></select>
+                      </label>
+                      <label className="block text-xs font-semibold text-[#405B80] sm:col-span-2">Transaction details
+                        <input name="transactionDetails" defaultValue={editingRecord?.transactionDetails ?? ""} placeholder="Reference, receipt, or release details" className={`${inputClass} mt-1.5`} />
+                      </label>
                     </div>
                   )}
 

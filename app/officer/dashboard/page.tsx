@@ -137,14 +137,14 @@ export default async function OfficerDashboardPage() {
           </span>
         </div>
         {categories.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-3">
             {categories.map((category, index) => {
               const color = getCategoryColor(category.name, index);
               return (
                 <Link
                   key={category.id}
                   href={`/officer/categories/${category.id}`}
-                  className="group flex min-h-[112px] items-start gap-3 rounded-md border border-[#D9E5F5] border-t-2 p-3.5 transition hover:bg-[#F8FAFE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
+                  className="group flex min-h-[112px] items-start gap-3 rounded-md border border-[#D9E5F5] border-l-4 p-4 transition hover:bg-[#F8FAFE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
                   style={{ borderTopColor: color }}
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F2F6FC]" style={{ color }}>

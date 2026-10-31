@@ -33,6 +33,11 @@ const assistanceSchema = z
     followUpReason: z.string().trim().max(1000),
     followUpNotes: z.string().trim().max(1000),
     internalRemarks: z.string().trim().max(2000),
+    medicineCount: z.coerce.number().int().min(0).max(100000).optional(),
+    providerName: z.string().trim().max(200).optional(),
+    financialAmount: z.coerce.number().min(0).max(100000000).optional(),
+    financialType: z.string().trim().max(100).optional(),
+    transactionDetails: z.string().trim().max(1000).optional(),
     printProof: z.string().trim(),
   })
   .superRefine((value, context) => {
@@ -130,6 +135,11 @@ export async function saveAssistanceAction(
     followUpReason: String(formData.get("followUpReason") ?? ""),
     followUpNotes: String(formData.get("followUpNotes") ?? ""),
     internalRemarks: String(formData.get("internalRemarks") ?? ""),
+    medicineCount: formData.get("medicineCount") ? Number(formData.get("medicineCount")) : undefined,
+    providerName: String(formData.get("providerName") ?? ""),
+    financialAmount: formData.get("financialAmount") ? Number(formData.get("financialAmount")) : undefined,
+    financialType: String(formData.get("financialType") ?? ""),
+    transactionDetails: String(formData.get("transactionDetails") ?? ""),
     printProof: String(formData.get("printProof") ?? ""),
   });
 
@@ -206,6 +216,11 @@ export async function saveAssistanceAction(
     followUpReason: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpReason : null,
     followUpNotes: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpNotes : null,
     internalRemarks: parsed.data.internalRemarks || null,
+    medicineCount: parsed.data.medicineCount ?? null,
+    providerName: parsed.data.providerName || null,
+    financialAmount: parsed.data.financialAmount ?? null,
+    financialType: parsed.data.financialType || null,
+    transactionDetails: parsed.data.transactionDetails || null,
   };
 
   const savedRecord = await db.$transaction(async (transaction) => {

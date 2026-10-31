@@ -30,6 +30,7 @@ export default async function OfficersPage() {
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Name</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Email</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Employee ID / position</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Authorized categories</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
@@ -40,6 +41,7 @@ export default async function OfficersPage() {
                 <tr key={officer.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{officer.name}</td>
                   <td className="px-4 py-3 text-slate-600">{officer.email}</td>
+                  <td className="px-4 py-3 text-slate-600">{officer.employeeId ?? "—"}<br /><span className="text-xs">{officer.position ?? "—"}</span></td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${

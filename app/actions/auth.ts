@@ -12,7 +12,7 @@ import {
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/permissions";
-import { categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
+import { adminOfficerSchema, categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 
 export async function loginAction(
   _previousState: { ok: boolean; error: string } | null,
@@ -143,7 +143,11 @@ export async function registerOfficerAction(
   }
 
   const parsed = officerRegistrationSchema.safeParse({
-    name: String(formData.get("name") ?? ""),
+    firstName: String(formData.get("firstName") ?? ""),
+    middleName: String(formData.get("middleName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
+    position: String(formData.get("position") ?? ""),
+    employeeId: String(formData.get("employeeId") ?? ""),
     email: String(formData.get("email") ?? ""),
     password,
   });
@@ -153,7 +157,7 @@ export async function registerOfficerAction(
   }
 
   const email = parsed.data.email.toLowerCase();
-  const existing = await db.user.findUnique({ where: { email }, select: { id: true } });
+  const existing = await db.user.findFirst({ where: { OR: [{ email }, { employeeId: parsed.data.employeeId }] }, select: { id: true } });
   if (existing) {
     return { ok: false, message: "An account with that email address already exists." };
   }
@@ -164,17 +168,23 @@ export async function registerOfficerAction(
     create: { name: "OFFICER" },
   });
 
-  let officer: { id: string; name: string; email: string };
+  let officer: { id: string; name: string; email: string; position: string | null; employeeId: string | null };
+  const name = [parsed.data.firstName, parsed.data.middleName, parsed.data.lastName].filter(Boolean).join(" ");
   try {
     officer = await db.user.create({
       data: {
-        name: parsed.data.name,
+        name,
+        firstName: parsed.data.firstName,
+        middleName: parsed.data.middleName || null,
+        lastName: parsed.data.lastName,
+        position: parsed.data.position,
+        employeeId: parsed.data.employeeId,
         email,
         passwordHash: await bcrypt.hash(parsed.data.password, 12),
         roleId: officerRole.id,
         status: "PENDING_APPROVAL",
       },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, position: true, employeeId: true },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -185,7 +195,16 @@ export async function registerOfficerAction(
 
   const admins = await db.user.findMany({
     where: { role: { name: "ADMIN" }, status: "ACTIVE" },
-    select: { name: true, email: true },
+    select: { id: true, name: true, email: true },
+  });
+
+  await db.notification.createMany({
+    data: admins.map((admin) => ({
+      userId: admin.id,
+      title: "New staff registration awaiting review",
+      message: `${name} (${parsed.data.position}, Employee ID ${parsed.data.employeeId}) submitted a registration on ${new Date().toLocaleDateString("en-PH")}.`,
+      type: "STAFF_REGISTRATION",
+    })),
   });
 
   try {
@@ -326,7 +345,7 @@ export async function createOfficerAction(
 ) {
   await requireAdmin();
 
-  const parsed = officerRegistrationSchema.safeParse({
+  const parsed = adminOfficerSchema.safeParse({
     name: String(formData.get("name") ?? ""),
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),

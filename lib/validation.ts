@@ -14,6 +14,16 @@ export const setupSchema = z.object({
 });
 
 export const officerRegistrationSchema = z.object({
+  firstName: z.string().trim().min(2, "First name is required."),
+  middleName: z.string().trim().max(80).optional().or(z.literal("")),
+  lastName: z.string().trim().min(2, "Last name is required."),
+  position: z.string().trim().min(2, "Position or designation is required."),
+  employeeId: z.string().trim().min(2, "Employee ID is required.").max(50),
+  email: z.string().trim().email("Enter a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
+});
+
+export const adminOfficerSchema = z.object({
   name: z.string().trim().min(2, "Full name is required."),
   email: z.string().trim().email("Enter a valid email address."),
   password: z.string().min(8, "Password must be at least 8 characters."),

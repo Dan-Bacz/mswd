@@ -271,6 +271,24 @@ export async function createBeneficiaryAction(
 
   const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
 
+  const possibleDuplicate = await db.beneficiary.findFirst({
+    where: {
+      categoryId: parsed.data.categoryId,
+      firstName: { equals: parsed.data.firstName, mode: "insensitive" },
+      lastName: { equals: parsed.data.lastName, mode: "insensitive" },
+      ...(dob ? { dateOfBirth: dob } : {}),
+      status: { not: "ARCHIVED" },
+    },
+    select: { beneficiaryNumber: true },
+  });
+  if (possibleDuplicate) {
+    return {
+      ok: false,
+      message: "This client or beneficiary is already registered in the system.",
+      fieldErrors: { firstName: `Existing Client ID: ${possibleDuplicate.beneficiaryNumber}. Review the existing record instead of creating a duplicate.` },
+    };
+  }
+
   try {
     await db.$transaction(async (transaction) => {
       const beneficiary = await transaction.beneficiary.create({

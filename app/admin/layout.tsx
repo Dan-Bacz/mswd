@@ -9,9 +9,9 @@ import { logoutAction } from "@/app/actions/auth";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin();
-  const notificationCount = await db.notification.count({
+  const [notificationCount, recentNotifications] = await Promise.all([db.notification.count({
     where: { userId: user.id, isRead: false },
-  });
+  }), db.notification.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 })]);
   return (
     <div className="flex min-h-screen bg-[#F4F7FC]">
       <Sidebar role="ADMIN" />
@@ -35,18 +35,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </div>
 
             <div className="flex shrink-0 items-center justify-end gap-2 sm:gap-3">
-              <div
-                role="img"
-                aria-label={`${notificationCount} unread notifications`}
-                className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white shadow-inner"
-              >
-                <Bell className="h-4 w-4" />
-                {notificationCount > 0 && (
-                  <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E31837] px-1 text-[10px] font-semibold text-white">
-                    {notificationCount}
-                  </span>
-                )}
-              </div>
+              <details className="group relative"><summary className="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white shadow-inner"><Bell className="h-4 w-4" />{notificationCount > 0 && <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E31837] px-1 text-[10px] font-semibold text-white">{notificationCount}</span>}</summary><div className="absolute right-0 z-30 mt-2 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-slate-800 shadow-xl"><p className="px-2 pb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Notifications</p>{recentNotifications.length ? recentNotifications.map((notification) => <Link key={notification.id} href="/admin/officers" className="block rounded-xl px-2 py-2 hover:bg-slate-50"><p className="text-sm font-semibold">{notification.title}</p><p className="mt-1 text-xs text-slate-500">{notification.message}</p></Link>) : <p className="px-2 py-3 text-sm text-slate-500">No notifications.</p>}</div></details>
 
               <details className="group relative">
                 <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2 py-1.5 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FFD21F]/35 sm:gap-3">
