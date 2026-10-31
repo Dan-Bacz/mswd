@@ -407,3 +407,124 @@ export async function createBeneficiaryAction(
   revalidatePath(`/officer/categories/${parsed.data.categoryId}`);
   return { ok: true, message: "Beneficiary saved successfully.", saved: true };
 }
+
+export async function updateBeneficiaryAction(
+  _previousState: BeneficiaryActionState,
+  formData: FormData,
+): Promise<BeneficiaryActionState> {
+  const user = await requireAuth();
+  const beneficiaryId = String(formData.get("beneficiaryId") ?? "").trim();
+  if (!beneficiaryId) return { ok: false, message: "Beneficiary record was not found." };
+
+  const existing = await db.beneficiary.findUnique({
+    where: { id: beneficiaryId },
+    select: { id: true, assignedOfficerId: true },
+  });
+  if (!existing) return { ok: false, message: "Beneficiary record was not found." };
+  if (user.role !== "ADMIN" && existing.assignedOfficerId !== user.id) {
+    return { ok: false, message: "You can only edit beneficiaries assigned to you." };
+  }
+
+  const parsed = beneficiarySchema.safeParse({
+    firstName: String(formData.get("firstName") ?? ""),
+    middleName: String(formData.get("middleName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
+    suffix: String(formData.get("suffix") ?? ""),
+    sex: String(formData.get("sex") ?? ""),
+    dateOfBirth: String(formData.get("dateOfBirth") ?? ""),
+    civilStatus: String(formData.get("civilStatus") ?? ""),
+    contactNumber: String(formData.get("contactNumber") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    address: String(formData.get("address") ?? ""),
+    barangay: String(formData.get("barangay") ?? ""),
+    province: String(formData.get("province") ?? ""),
+    categoryId: String(formData.get("categoryId") ?? ""),
+    assignedOfficerId: "",
+    remarks: String(formData.get("remarks") ?? ""),
+  });
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0];
+      if (typeof field === "string" && !fieldErrors[field]) fieldErrors[field] = issue.message;
+    }
+    return { ok: false, message: "Please review the highlighted fields.", fieldErrors };
+  }
+
+  const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
+  const age = parsed.data.dateOfBirth ? calculateAge(parsed.data.dateOfBirth) : null;
+  if (parsed.data.dateOfBirth && age === null) {
+    return { ok: false, message: "Please enter a valid date of birth that is not in the future.", fieldErrors: { dateOfBirth: "Enter a valid date of birth." } };
+  }
+  const identityKey = buildBeneficiaryIdentityKey({
+    firstName: parsed.data.firstName,
+    middleName: parsed.data.middleName,
+    lastName: parsed.data.lastName,
+    dateOfBirth: dob,
+    barangay: parsed.data.barangay,
+  });
+  if (identityKey) {
+    const duplicate = await db.beneficiary.findFirst({ where: { identityKey, id: { not: beneficiaryId } }, select: { beneficiaryNumber: true } });
+    if (duplicate) return { ok: false, message: "This client or beneficiary is already registered in the system.", fieldErrors: { firstName: `Existing Client ID: ${duplicate.beneficiaryNumber}.` } };
+  }
+
+  let photo: BeneficiaryImage | null = null;
+  try {
+    photo = await parseImageUpload(formData.get("profileImage"), "PROFILE_IMAGE", "profileImage");
+  } catch (error) {
+    if (error instanceof ImageUploadError) return { ok: false, message: error.message, fieldErrors: { profileImage: error.message } };
+    throw error;
+  }
+
+  try {
+    await db.$transaction(async (transaction) => {
+      await transaction.beneficiary.update({
+        where: { id: beneficiaryId },
+        data: {
+          identityKey,
+          firstName: parsed.data.firstName,
+          middleName: parsed.data.middleName || null,
+          lastName: parsed.data.lastName,
+          suffix: parsed.data.suffix || null,
+          sex: parsed.data.sex,
+          dateOfBirth: dob,
+          age,
+          civilStatus: parsed.data.civilStatus || null,
+          contactNumber: parsed.data.contactNumber || null,
+          email: parsed.data.email || null,
+          address: parsed.data.address,
+          barangay: parsed.data.barangay || null,
+          province: parsed.data.province || null,
+          remarks: parsed.data.remarks || null,
+        },
+      });
+      if (photo) {
+        await transaction.document.deleteMany({ where: { beneficiaryId, fileType: "PROFILE_IMAGE" } });
+        await transaction.document.create({
+          data: {
+            beneficiaryId,
+            uploaderId: user.id,
+            fileType: photo.type,
+            fileName: photo.fileName,
+            originalName: photo.originalName,
+            mimeType: photo.mimeType,
+            size: photo.size,
+            content: Buffer.from(photo.content),
+            storageUrl: "database",
+          },
+        });
+      }
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: false, message: "This client or beneficiary is already registered in the system." };
+    }
+    throw error;
+  }
+
+  revalidatePath("/admin/beneficiaries");
+  revalidatePath("/officer/beneficiaries");
+  revalidatePath(`/admin/beneficiaries/${beneficiaryId}`);
+  revalidatePath(`/officer/beneficiaries/${beneficiaryId}`);
+  return { ok: true, message: "Beneficiary profile updated successfully.", saved: true };
+}

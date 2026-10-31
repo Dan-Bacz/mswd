@@ -70,7 +70,7 @@ export default async function OfficerLayout({ children }: { children: ReactNode 
                 </summary>
                 <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-[#D9E5F5] bg-white p-2 shadow-lg">
                   <p className="truncate px-3 py-2 text-xs text-[#6480A9]">{user.email}</p>
-                  <Link href="/admin/settings" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-[#F4F7FC]">
+                  <Link href="/officer/profile" className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-[#F4F7FC]">
                     Account settings
                   </Link>
                   <form action={logoutAction}>

@@ -14,10 +14,10 @@ import {
   sendOfficerRejectionEmail,
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
-import { requireAdmin } from "@/lib/auth/permissions";
-import { categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
+import { requireAdmin, requireAuth } from "@/lib/auth/permissions";
+import { categorySchema, loginSchema, officerProfileSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 import { buildFullName } from "@/lib/identity";
-import { validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
+import { validateProfilePhotoUpload, validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
 import {
   markAllNotificationsRead,
   markNotificationRead,
@@ -140,6 +140,84 @@ export async function setupAction(
 export async function logoutAction() {
   await clearSession();
   redirect("/login");
+}
+
+export async function updateOfficerProfileAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData,
+) {
+  const user = await requireAuth();
+  const parsed = officerProfileSchema.safeParse({
+    firstName: String(formData.get("firstName") ?? ""),
+    middleName: String(formData.get("middleName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
+    position: String(formData.get("position") ?? ""),
+    contactNumber: String(formData.get("contactNumber") ?? ""),
+    address: String(formData.get("address") ?? ""),
+    barangay: String(formData.get("barangay") ?? ""),
+    municipality: String(formData.get("municipality") ?? ""),
+    province: String(formData.get("province") ?? ""),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Please review your profile details." };
+  }
+
+  let photo: Awaited<ReturnType<typeof validateProfilePhotoUpload>>;
+  try {
+    photo = await validateProfilePhotoUpload(formData.get("profilePhoto"));
+  } catch (error) {
+    if (error instanceof UploadValidationError) return { ok: false, message: error.message };
+    throw error;
+  }
+
+  const name = buildFullName(parsed.data);
+  await db.$transaction(async (transaction) => {
+    await transaction.user.update({
+      where: { id: user.id },
+      data: {
+        name,
+        firstName: parsed.data.firstName,
+        middleName: parsed.data.middleName || null,
+        lastName: parsed.data.lastName,
+        position: parsed.data.position,
+      },
+    });
+    await transaction.userProfile.upsert({
+      where: { userId: user.id },
+      update: {
+        contactNumber: parsed.data.contactNumber || null,
+        address: parsed.data.address || null,
+        barangay: parsed.data.barangay || null,
+        municipality: parsed.data.municipality || null,
+        province: parsed.data.province || null,
+        ...(photo ? {
+          photoFileName: photo.fileName,
+          photoMimeType: photo.mimeType,
+          photoSize: photo.size,
+          photoContent: Buffer.from(photo.content),
+        } : {}),
+      },
+      create: {
+        userId: user.id,
+        contactNumber: parsed.data.contactNumber || null,
+        address: parsed.data.address || null,
+        barangay: parsed.data.barangay || null,
+        municipality: parsed.data.municipality || null,
+        province: parsed.data.province || null,
+        ...(photo ? {
+          photoFileName: photo.fileName,
+          photoMimeType: photo.mimeType,
+          photoSize: photo.size,
+          photoContent: Buffer.from(photo.content),
+        } : {}),
+      },
+    });
+  });
+
+  revalidatePath("/officer/profile");
+  revalidatePath("/officer/dashboard");
+  return { ok: true, message: "Profile updated successfully." };
 }
 
 export async function registerOfficerAction(

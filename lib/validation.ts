@@ -29,6 +29,18 @@ export const adminOfficerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
+export const officerProfileSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required.").max(80),
+  middleName: z.string().trim().max(80).optional().or(z.literal("")),
+  lastName: z.string().trim().min(1, "Last name is required.").max(80),
+  position: z.string().trim().min(2, "Position is required.").max(120),
+  contactNumber: z.string().trim().max(40).optional().or(z.literal("")),
+  address: z.string().trim().max(255).optional().or(z.literal("")),
+  barangay: z.string().trim().max(120).optional().or(z.literal("")),
+  municipality: z.string().trim().max(120).optional().or(z.literal("")),
+  province: z.string().trim().max(120).optional().or(z.literal("")),
+});
+
 export const categorySchema = z.object({
   name: z.string().trim().min(2, "Category name is required."),
   description: z.string().trim().max(255).optional().or(z.literal("")),

@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 export const STAFF_ID_MAX_SIZE = 5 * 1024 * 1024;
 export const STAFF_ID_ACCEPT = "image/jpeg,image/png,image/webp,application/pdf";
+export const PROFILE_PHOTO_MAX_SIZE = 2 * 1024 * 1024;
+export const PROFILE_PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
 
 export type ValidatedUpload = {
   fileName: string;
@@ -57,6 +59,31 @@ export async function validateStaffIdUpload(value: FormDataEntryValue | null): P
 
   return {
     fileName: `staff-id-${randomUUID()}.${detected.extension}`,
+    originalName,
+    mimeType: detected.mimeType,
+    size: content.byteLength,
+    content,
+  };
+}
+
+export async function validateProfilePhotoUpload(value: FormDataEntryValue | null): Promise<ValidatedUpload | null> {
+  if (!(typeof File !== "undefined" && value instanceof File) || value.size === 0) {
+    return null;
+  }
+
+  if (value.size > PROFILE_PHOTO_MAX_SIZE) {
+    throw new UploadValidationError("The profile photo must be 2 MB or smaller.");
+  }
+
+  const content = new Uint8Array(await value.arrayBuffer());
+  const detected = detectFileType(content);
+  if (!detected || !detected.mimeType.startsWith("image/")) {
+    throw new UploadValidationError("Upload a valid JPEG, PNG, or WebP profile photo.");
+  }
+
+  const originalName = value.name.replace(/[\\/\u0000-\u001f]/g, "_").slice(0, 255) || `profile-photo.${detected.extension}`;
+  return {
+    fileName: `profile-photo-${randomUUID()}.${detected.extension}`,
     originalName,
     mimeType: detected.mimeType,
     size: content.byteLength,

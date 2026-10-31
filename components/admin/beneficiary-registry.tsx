@@ -260,7 +260,7 @@ export function BeneficiaryRegistry({
 
         {filteredBeneficiaries.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+              <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="bg-[#F4F7FB]">
                 <tr className="text-[10px] uppercase tracking-wide text-[#6480A9]">
                   <th className="px-4 py-3 font-semibold">Beneficiary ID</th>
@@ -269,6 +269,7 @@ export function BeneficiaryRegistry({
                   <th className="px-4 py-3 font-semibold">Barangay</th>
                   <th className="px-4 py-3 font-semibold">Assigned officer</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8EDF4]">
@@ -283,6 +284,9 @@ export function BeneficiaryRegistry({
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${beneficiary.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                         {beneficiary.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`${officerMode ? "/officer" : "/admin"}/beneficiaries/${beneficiary.id}`} className="inline-flex rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-100">View profile</Link>
                     </td>
                   </tr>
                 ))}
