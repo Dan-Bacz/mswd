@@ -27,6 +27,9 @@ import {
   ASSISTANCE_OUTCOME_VALUES,
   ASSISTANCE_TYPE_LABELS,
   ASSISTANCE_TYPE_OPTIONS,
+  formatPeso,
+  supportsFinancialAmount,
+  type AssistanceType,
 } from "@/lib/assistance";
 
 type BeneficiaryOption = Prisma.BeneficiaryGetPayload<{
@@ -123,6 +126,7 @@ export function AssistanceManagement({
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState("");
+  const [clientId, setClientId] = useState("");
   const [beneficiarySearch, setBeneficiarySearch] = useState("");
   const [assistanceType, setAssistanceType] = useState("");
   const [outcome, setOutcome] = useState<Outcome>("PROVIDED");
@@ -182,6 +186,7 @@ export function AssistanceManagement({
   function openCreateForm() {
     setEditId(null);
     setSelectedBeneficiaryId("");
+    setClientId("");
     setBeneficiarySearch("");
     setAssistanceType("");
     setOutcome("PROVIDED");
@@ -191,6 +196,7 @@ export function AssistanceManagement({
   function openEditForm(record: AssistanceRecord) {
     setEditId(record.id);
     setSelectedBeneficiaryId(record.beneficiaryId);
+    setClientId(record.beneficiary.beneficiaryNumber);
     setBeneficiarySearch(fullName(record.beneficiary));
     setAssistanceType(record.type);
     setOutcome(record.outcome);
@@ -246,6 +252,8 @@ export function AssistanceManagement({
 
   const editingRecord = editId ? records.find((record) => record.id === editId) : undefined;
   const selectedBeneficiary = beneficiaries.find((beneficiary) => beneficiary.id === selectedBeneficiaryId);
+  const showFinancialAmount = assistanceType ? supportsFinancialAmount(assistanceType as AssistanceType) : false;
+  const showMedicalFields = assistanceType === "MEDICAL_ASSISTANCE";
   const beneficiaryMatches = beneficiaries
     .filter((beneficiary) => {
       const query = beneficiarySearch.trim().toLocaleLowerCase();
@@ -460,11 +468,36 @@ export function AssistanceManagement({
 
                 <section className="rounded-xl border border-[#E4EAF3] bg-white p-4 sm:p-5">
                   <div className="mb-4">
-                    <h3 className="text-sm font-bold text-[#0B1A3E]">1. Beneficiary information</h3>
-                    <p className="mt-1 text-xs text-[#7184A0]">Search by beneficiary name or ID. Only registered beneficiaries can be selected.</p>
+                    <h3 className="text-sm font-bold text-[#0B1A3E]">1. Client identification</h3>
+                    <p className="mt-1 text-xs text-[#7184A0]">Enter the Client ID before reviewing the client&apos;s personal information. Only existing clients can be selected.</p>
                   </div>
                   <input type="hidden" name="beneficiaryId" value={selectedBeneficiaryId} />
-                  <label htmlFor="assistance-beneficiary-search" className="mb-1.5 block text-xs font-semibold text-[#405B80]">Search beneficiaries <span className="text-rose-600">*</span></label>
+                  <label htmlFor="assistance-client-id" className="mb-1.5 block text-xs font-semibold text-[#405B80]">Client ID <span className="text-rose-600">*</span></label>
+                  <input
+                    id="assistance-client-id"
+                    name="clientId"
+                    required
+                    value={clientId}
+                    onChange={(event) => {
+                      const value = event.currentTarget.value;
+                      setClientId(value);
+                      const match = beneficiaries.find(
+                        (beneficiary) => beneficiary.beneficiaryNumber.toLocaleLowerCase() === value.trim().toLocaleLowerCase(),
+                      );
+                      if (match) {
+                        setSelectedBeneficiaryId(match.id);
+                        setBeneficiarySearch(fullName(match));
+                      } else {
+                        setSelectedBeneficiaryId("");
+                      }
+                    }}
+                    autoComplete="off"
+                    placeholder="e.g., BEN-20261029-123456-ABCDE"
+                    aria-invalid={Boolean(state.fieldErrors?.clientId)}
+                    className={`${inputClass} font-mono`}
+                  />
+                  <FieldError message={state.fieldErrors?.clientId} />
+                  <label htmlFor="assistance-beneficiary-search" className="mb-1.5 mt-4 block text-xs font-semibold text-[#405B80]">Search beneficiaries</label>
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8293AA]" aria-hidden="true" />
                     <input
@@ -473,6 +506,7 @@ export function AssistanceManagement({
                       onChange={(event) => {
                         setBeneficiarySearch(event.currentTarget.value);
                         setSelectedBeneficiaryId("");
+                        setClientId("");
                       }}
                       autoComplete="off"
                       placeholder="Type a beneficiary name, ID, or category"
@@ -490,6 +524,7 @@ export function AssistanceManagement({
                             key={beneficiary.id}
                             onClick={() => {
                               setSelectedBeneficiaryId(beneficiary.id);
+                              setClientId(beneficiary.beneficiaryNumber);
                               setBeneficiarySearch(fullName(beneficiary));
                             }}
                             className="block w-full border-b border-[#EEF1F5] px-3 py-2.5 text-left last:border-0 hover:bg-[#F4F7FB]"

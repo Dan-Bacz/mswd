@@ -1,42 +1,30 @@
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth/permissions";
+import { ReportBuilder } from "@/components/reports/report-builder";
+import { requireRole } from "@/lib/auth/permissions";
+import { getReportData, getReportDateRange } from "@/lib/reporting";
 
 export const dynamic = "force-dynamic";
 
-export default async function OfficerReportsPage() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const [beneficiaries, assistance, notifications] = await Promise.all([
-    db.beneficiary.count({ where: { assignedOfficerId: user.id } }),
-    db.beneficiaryAssistance.count({ where: { providedById: user.id } }),
-    db.notification.count({ where: { userId: user.id } }),
-  ]);
+export default async function OfficerReportsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ startDate?: string; endDate?: string }>;
+}) {
+  const user = await requireRole("OFFICER");
+  const params = await searchParams;
+  const dateRange = getReportDateRange(params?.startDate, params?.endDate);
+  const data = await getReportData(dateRange, user.id);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Officer reports</h1>
-        <p className="mt-2 text-slate-600">Authorized activity snapshot only.</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl bg-sky-50 p-5">
-          <p className="text-sm text-sky-700">My beneficiaries</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{beneficiaries}</p>
-        </div>
-        <div className="rounded-2xl bg-amber-50 p-5">
-          <p className="text-sm text-amber-700">Assistance recorded</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{assistance}</p>
-        </div>
-        <div className="rounded-2xl bg-emerald-50 p-5">
-          <p className="text-sm text-emerald-700">Notifications</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{notifications}</p>
-        </div>
-      </div>
-    </div>
+    <ReportBuilder
+      dateRange={dateRange}
+      beneficiaries={data.beneficiaries}
+      assistance={data.assistance}
+      officerName={user.name}
+      generatedAt={new Intl.DateTimeFormat("en-PH", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Manila",
+      }).format(new Date())}
+    />
   );
 }

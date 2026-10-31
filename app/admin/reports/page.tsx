@@ -1,40 +1,29 @@
-import { db } from "@/lib/db";
+import { ReportBuilder } from "@/components/reports/report-builder";
+import { requireAdmin } from "@/lib/auth/permissions";
+import { getReportData, getReportDateRange } from "@/lib/reporting";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReportsPage() {
-  const [beneficiaries, assistance, officers, categories] = await Promise.all([
-    db.beneficiary.count(),
-    db.beneficiaryAssistance.count(),
-    db.user.count({ where: { role: { name: "OFFICER" } } }),
-    db.category.count(),
-  ]);
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ startDate?: string; endDate?: string }>;
+}) {
+  await requireAdmin();
+  const params = await searchParams;
+  const dateRange = getReportDateRange(params?.startDate, params?.endDate);
+  const data = await getReportData(dateRange);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
-        <p className="mt-2 text-slate-600">System-wide reporting snapshot.</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl bg-sky-50 p-5">
-          <p className="text-sm text-sky-700">Beneficiaries</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{beneficiaries}</p>
-        </div>
-        <div className="rounded-2xl bg-amber-50 p-5">
-          <p className="text-sm text-amber-700">Assistance records</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{assistance}</p>
-        </div>
-        <div className="rounded-2xl bg-emerald-50 p-5">
-          <p className="text-sm text-emerald-700">Officers</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{officers}</p>
-        </div>
-        <div className="rounded-2xl bg-violet-50 p-5">
-          <p className="text-sm text-violet-700">Categories</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{categories}</p>
-        </div>
-      </div>
-    </div>
+    <ReportBuilder
+      dateRange={dateRange}
+      beneficiaries={data.beneficiaries}
+      assistance={data.assistance}
+      generatedAt={new Intl.DateTimeFormat("en-PH", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Manila",
+      }).format(new Date())}
+    />
   );
 }

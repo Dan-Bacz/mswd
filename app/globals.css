@@ -105,4 +105,39 @@ button {
     color: #111 !important;
     font-family: Arial, Helvetica, sans-serif;
   }
+
+  .report-print-document,
+  .report-print-document * {
+    visibility: visible !important;
+  }
+
+  .report-print-document {
+    position: absolute;
+    inset: 0;
+    display: block !important;
+    width: 100%;
+    background: #fff !important;
+    color: #111 !important;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .report-print-document section {
+    break-inside: avoid-page;
+  }
+
+  .report-print-document table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .report-print-document th,
+  .report-print-document td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 8px;
+    font-size: 9pt;
+  }
+
+  .report-print-document thead {
+    display: table-header-group;
+  }
 }

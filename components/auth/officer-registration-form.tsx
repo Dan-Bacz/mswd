@@ -21,6 +21,7 @@ export function OfficerRegistrationForm() {
       }}
       className="space-y-4"
     >
+<<<<<<< HEAD
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
         <label htmlFor="firstName" className="mb-2 block text-sm font-semibold text-slate-700">First name</label>
@@ -35,6 +36,56 @@ export function OfficerRegistrationForm() {
         </div>
         <div><label htmlFor="middleName" className="mb-2 block text-sm font-semibold text-slate-700">Middle name</label><input id="middleName" name="middleName" autoComplete="additional-name" placeholder="Optional" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div>
         <div><label htmlFor="lastName" className="mb-2 block text-sm font-semibold text-slate-700">Last name</label><input id="lastName" name="lastName" autoComplete="family-name" required placeholder="Last name" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div>
+=======
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="firstName" className="mb-2 block text-sm font-semibold text-slate-700">First name</label>
+          <input
+            id="firstName"
+            name="firstName"
+            autoComplete="given-name"
+            required
+            placeholder="First name"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
+          />
+        </div>
+        <div>
+          <label htmlFor="middleName" className="mb-2 block text-sm font-semibold text-slate-700">
+            Middle name <span className="font-normal text-slate-400">(optional)</span>
+          </label>
+          <input
+            id="middleName"
+            name="middleName"
+            autoComplete="additional-name"
+            placeholder="Middle name"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
+          />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="lastName" className="mb-2 block text-sm font-semibold text-slate-700">Last name</label>
+          <input
+            id="lastName"
+            name="lastName"
+            autoComplete="family-name"
+            required
+            placeholder="Last name"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
+          />
+        </div>
+        <div>
+          <label htmlFor="position" className="mb-2 block text-sm font-semibold text-slate-700">Position / designation</label>
+          <input
+            id="position"
+            name="position"
+            autoComplete="organization-title"
+            required
+            placeholder="e.g., Social Welfare Officer"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
+          />
+        </div>
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
       </div>
       <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="position" className="mb-2 block text-sm font-semibold text-slate-700">Position / designation</label><input id="position" name="position" required placeholder="e.g. Social Welfare Officer" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div><div><label htmlFor="employeeId" className="mb-2 block text-sm font-semibold text-slate-700">Employee ID</label><input id="employeeId" name="employeeId" required placeholder="MSWD employee ID" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div></div>
       <div>
@@ -48,6 +99,20 @@ export function OfficerRegistrationForm() {
           placeholder="you@example.com"
           className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
         />
+      </div>
+      <div>
+        <label htmlFor="staffId" className="mb-2 block text-sm font-semibold text-slate-700">
+          Government-issued ID / employment document
+        </label>
+        <input
+          id="staffId"
+          name="staffId"
+          type="file"
+          required
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-[#073783] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#0B4599] focus:border-[#0B4599] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#0B4599]/10"
+        />
+        <p className="mt-1.5 text-xs text-slate-500">JPEG, PNG, WebP, or PDF — up to 5 MB. Visible only to administrators reviewing your account.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

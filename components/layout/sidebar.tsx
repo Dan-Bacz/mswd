@@ -12,6 +12,7 @@ const adminSections: NavSection[] = [
       { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
       { href: "/admin/assistance", label: "Assistance", icon: "assistance" },
       { href: "/admin/officers", label: "Officers", icon: "users" },
+      { href: "/admin/notifications", label: "Notifications", icon: "notifications" },
       { href: "/admin/settings", label: "Settings", icon: "settings" },
     ],
   },

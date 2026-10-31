@@ -76,14 +76,20 @@ model User {
   middleName            String?
   lastName              String?
   position              String?
+<<<<<<< HEAD
   employeeId            String?                 @unique
+=======
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
   email                 String                  @unique
   passwordHash          String
   roleId                String
   status                UserStatus              @default(ACTIVE)
+  approvedAt            DateTime?
+  approvalEmailSentAt   DateTime?
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   role                  Role                    @relation(fields: [roleId], references: [id])
+  staffIdDocument       StaffIdDocument?
   userCategories        UserCategory[]
   households            Household[]
   assignedBeneficiaries Beneficiary[]           @relation("OfficerBeneficiaries")
@@ -139,6 +145,7 @@ model Household {
 model Beneficiary {
   id                String                  @id @default(uuid())
   beneficiaryNumber String                  @unique
+  identityKey       String?                 @unique
   firstName         String
   middleName        String?
   lastName          String
@@ -192,6 +199,9 @@ model BeneficiaryAssistance {
   followUpReason       String?
   followUpNotes        String?
   internalRemarks      String?
+  financialAmount      Decimal?          @db.Decimal(12, 2)
+  medicineQuantity     Int?
+  doctorName           String?
   providedById         String
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
@@ -238,9 +248,25 @@ model Notification {
   title     String
   message   String
   type      String
+  link      String?
+  dedupeKey String?  @unique
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model StaffIdDocument {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  fileName     String
+  originalName String
+  mimeType     String
+  size         Int
+  content      Bytes    @db.ByteA
+  uploadedAt   DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {

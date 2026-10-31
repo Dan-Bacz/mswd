@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Camera,
   Check,
   ChevronDown,
   LoaderCircle,
@@ -70,12 +69,6 @@ function FormField({
   );
 }
 
-function assignCapturedFile(input: HTMLInputElement, file: File) {
-  const transfer = new DataTransfer();
-  transfer.items.add(file);
-  input.files = transfer.files;
-}
-
 export function BeneficiaryRegistry({
   categories,
   filterCategories,
@@ -83,6 +76,7 @@ export function BeneficiaryRegistry({
   beneficiaries,
   selectedCategoryId,
   officerMode = false,
+  initialSearch = "",
 }: {
   categories: RegistryCategory[];
   filterCategories: RegistryCategory[];
@@ -90,9 +84,10 @@ export function BeneficiaryRegistry({
   beneficiaries: RegistryBeneficiary[];
   selectedCategoryId?: string;
   officerMode?: boolean;
+  initialSearch?: string;
 }) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [modalOpen, setModalOpen] = useState(false);
   const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
@@ -370,15 +365,9 @@ function BeneficiaryModal({
   const [step, setStep] = useState(1);
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<Record<string, string>>({});
-  const [cameraField, setCameraField] = useState<"idFront" | "idBack" | null>(null);
-  const [cameraError, setCameraError] = useState("");
-  const [cameraReady, setCameraReady] = useState(false);
   const [imagePreviews, setImagePreviews] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const cameraPreviewRef = useRef<HTMLDivElement>(null);
-  const cameraVideoRef = useRef<HTMLVideoElement>(null);
-  const cameraStreamRef = useRef<MediaStream | null>(null);
   const imagePreviewsRef = useRef<Record<string, string>>({});
   const submittedValuesRef = useRef<Record<string, string>>({});
 
@@ -406,55 +395,6 @@ function BeneficiaryModal({
     },
     [],
   );
-
-  useEffect(() => {
-    if (!cameraField) return;
-
-    let cancelled = false;
-    let stream: MediaStream | null = null;
-    const videoElement = cameraVideoRef.current;
-
-    async function startCamera() {
-      try {
-        if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error("Webcam access is unavailable. Use a secure connection or upload an image.");
-        }
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: false,
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        });
-        if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        cameraStreamRef.current = stream;
-        if (videoElement) videoElement.srcObject = stream;
-        setCameraReady(true);
-        setCameraError("");
-      } catch (error) {
-        setCameraError(
-          error instanceof Error
-            ? `${error.message} You can still upload an image from your device.`
-            : "Could not access the webcam. You can still upload an image from your device.",
-        );
-      }
-    }
-
-    void startCamera();
-    return () => {
-      cancelled = true;
-      stream?.getTracks().forEach((track) => track.stop());
-      if (cameraStreamRef.current === stream) {
-        cameraStreamRef.current = null;
-      }
-      if (videoElement?.srcObject === stream) videoElement.srcObject = null;
-    };
-  }, [cameraField]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -501,13 +441,7 @@ function BeneficiaryModal({
       }
       setAge(calculateAge(submittedValuesRef.current.dateOfBirth ?? ""));
       const fieldErrors = Object.keys(state.fieldErrors ?? {});
-      setStep(
-        fieldErrors.some((field) => field === "idFront" || field === "idBack")
-          ? 2
-          : fieldErrors.includes("profileImage")
-            ? 3
-            : 1,
-      );
+      setStep(fieldErrors.includes("profileImage") ? 2 : 1);
     }
   }, [state, onSaved]);
 
@@ -528,9 +462,6 @@ function BeneficiaryModal({
     const file = input.files?.[0];
     const nextErrors = { ...uploadErrors };
     delete nextErrors[field];
-    if (field === "idFront" || field === "idBack") {
-      closeCamera();
-    }
     if (alternativeField) {
       delete nextErrors.profileImage;
       const alternative = formRef.current?.elements.namedItem(alternativeField);
@@ -583,92 +514,6 @@ function BeneficiaryModal({
     });
   }
 
-  function openCamera(field: "idFront" | "idBack") {
-    setCameraReady(false);
-    setCameraError("");
-    setCameraField(field);
-  }
-
-  function closeCamera() {
-    setCameraReady(false);
-    setCameraError("");
-    setCameraField(null);
-  }
-
-  async function captureIdImage() {
-    const field = cameraField;
-    const video = cameraVideoRef.current;
-    const preview = cameraPreviewRef.current;
-    const input = field && formRef.current?.elements.namedItem(field);
-    if (!field || !video || !preview || !(input instanceof HTMLInputElement) || !video.videoWidth) {
-      setCameraError("The webcam is not ready. Wait for the preview or upload an image from your device.");
-      return;
-    }
-
-    const bounds = preview.getBoundingClientRect();
-    const guideWidth = bounds.width * 0.7;
-    const guideHeight = guideWidth / 1.586;
-    const scale = Math.min(bounds.width / video.videoWidth, bounds.height / video.videoHeight);
-    const renderedWidth = video.videoWidth * scale;
-    const renderedHeight = video.videoHeight * scale;
-    const offsetX = (bounds.width - renderedWidth) / 2;
-    const offsetY = (bounds.height - renderedHeight) / 2;
-    const sourceX = ((bounds.width - guideWidth) / 2 - offsetX) / scale;
-    const sourceY = ((bounds.height - guideHeight) / 2 - offsetY) / scale;
-    const sourceWidth = guideWidth / scale;
-    const sourceHeight = guideHeight / scale;
-    const outputScale = Math.min(1, 1400 / sourceWidth);
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(sourceWidth * outputScale);
-    canvas.height = Math.round(sourceHeight * outputScale);
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      setCameraError("Could not prepare the webcam image. Please try again or upload a file.");
-      return;
-    }
-
-    context.drawImage(
-      video,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
-
-    try {
-      let blob: Blob | null = null;
-      for (const quality of [0.88, 0.76, 0.64, 0.52]) {
-        blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-        if (blob && blob.size <= 1024 * 1024) break;
-      }
-      if (!blob || blob.size > 1024 * 1024) {
-        setCameraError("The captured image is too large. Move closer to the ID or upload a smaller image.");
-        return;
-      }
-
-      const file = new File([blob], `${field}-capture.jpg`, { type: "image/jpeg" });
-      assignCapturedFile(input, file);
-      setImagePreview(field, file);
-      setSelectedFiles((current) => ({ ...current, [field]: file.name }));
-      setUploadErrors((current) => {
-        const nextErrors = { ...current };
-        delete nextErrors[field];
-        return nextErrors;
-      });
-      setCameraError("");
-      setDirty(true);
-      setCameraReady(false);
-      setCameraField(null);
-    } catch {
-      setCameraError("Could not save the webcam image. Please try again or upload a file.");
-    }
-  }
-
   function goToNextStep() {
     if (step === 1) {
       const controls = formRef.current?.querySelectorAll<HTMLElement>(
@@ -686,22 +531,7 @@ function BeneficiaryModal({
       }
     }
 
-    if (step === 2) {
-      const front = formRef.current?.elements.namedItem("idFront");
-      const back = formRef.current?.elements.namedItem("idBack");
-      const nextErrors: Record<string, string> = {};
-      if (!(front instanceof HTMLInputElement) || !front.files?.length) {
-        nextErrors.idFront = "Front image of the valid ID is required.";
-      }
-      if (!(back instanceof HTMLInputElement) || !back.files?.length) {
-        nextErrors.idBack = "Back image of the valid ID is required.";
-      }
-      setUploadErrors(nextErrors);
-      if (Object.keys(nextErrors).length) return;
-    }
-
-    closeCamera();
-    setStep((current) => Math.min(current + 1, 3));
+    setStep((current) => Math.min(current + 1, 2));
   }
 
   function handleDateOfBirthChange(value: string) {
@@ -760,11 +590,10 @@ function BeneficiaryModal({
         </header>
 
         <div className="shrink-0 border-b border-[#E4EAF3] bg-white px-4 pb-4 sm:px-7">
-          <div className="grid grid-cols-3 gap-2" aria-label={`Step ${step} of 3`}>
+          <div className="grid grid-cols-2 gap-2" aria-label={`Step ${step} of 2`}>
             {[
               { number: 1, label: "Details" },
-              { number: 2, label: "Valid ID" },
-              { number: 3, label: "Profile photo" },
+              { number: 2, label: "Profile photo" },
             ].map(({ number, label }) => (
               <div key={number} aria-current={step === number ? "step" : undefined}>
                 <div className={`mb-2 h-1 rounded-full ${step >= number ? "bg-[#0645AD]" : "bg-[#E8EDF4]"}`} />
@@ -786,7 +615,21 @@ function BeneficiaryModal({
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:space-y-5 sm:px-7 sm:py-6">
             {!state.ok && (
               <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
-                {state.message}
+                <p>{state.message}</p>
+                {state.duplicateClient && (
+                  <div className="mt-3 rounded-lg border border-rose-200 bg-white px-3 py-2.5">
+                    <p className="font-semibold text-slate-900">{state.duplicateClient.name}</p>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      Client ID: {state.duplicateClient.beneficiaryNumber} · {state.duplicateClient.categoryName}
+                    </p>
+                    <Link
+                      href={`${officerMode ? "/officer/beneficiaries" : "/admin/beneficiaries"}?q=${encodeURIComponent(state.duplicateClient.beneficiaryNumber)}`}
+                      className="mt-2 inline-flex text-xs font-semibold text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                    >
+                      View existing client record
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
@@ -934,7 +777,7 @@ function BeneficiaryModal({
 
             <section aria-labelledby="assignment-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 border-b border-[#E8EDF4] pb-3">
-                <h3 id="assignment-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Assignment &amp; notes</h3>
+                <h3 id="assignment-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Assignment</h3>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {!officerMode && <FormField id="assignedOfficerId" label="Assigned officer" error={state.fieldErrors?.assignedOfficerId}>
@@ -948,157 +791,11 @@ function BeneficiaryModal({
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6480A9]" aria-hidden="true" />
                   </span>
                 </FormField>}
-                <div className="sm:col-span-2">
-                  <FormField id="remarks" label="Remarks" error={state.fieldErrors?.remarks}>
-                    <textarea
-                      id="remarks"
-                      name="remarks"
-                      rows={3}
-                      aria-invalid={Boolean(state.fieldErrors?.remarks)}
-                      aria-describedby={state.fieldErrors?.remarks ? "remarks-error" : undefined}
-                      className={`w-full rounded-lg border border-[#DCE3EE] bg-white px-3 py-2.5 text-sm text-[#172B4D] outline-none transition placeholder:text-slate-400 focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15 ${state.fieldErrors?.remarks ? "border-rose-400" : ""}`}
-                    />
-                  </FormField>
-                </div>
               </div>
             </section>
             </div>
 
-            <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="valid-id-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-5 border-b border-[#E8EDF4] pb-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A88724]">Required documents</p>
-                <h3 id="valid-id-heading" className="mt-1 text-base font-bold text-[#0B1A3E] sm:text-lg">Valid ID images</h3>
-                <p className="mt-1 text-xs leading-relaxed text-[#7184A0] sm:text-sm">Capture with your webcam or upload a clear image. Include all four ID edges; both sides are required.</p>
-              </div>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <FormField id="idFront" label="Front of valid ID" required error={uploadErrors.idFront ?? state.fieldErrors?.idFront}>
-                  <input
-                    id="idFront"
-                    name="idFront"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    required={step === 2}
-                    aria-invalid={Boolean(uploadErrors.idFront ?? state.fieldErrors?.idFront)}
-                    aria-describedby={uploadErrors.idFront || state.fieldErrors?.idFront ? "idFront-error" : undefined}
-                    onChange={(event) => handleImageSelection(event, "idFront")}
-                    className={inputClass}
-                  />
-                  {imagePreviews.idFront ? (
-                    <div className="mt-3 overflow-hidden rounded-xl border border-[#E4EAF3] bg-[#F3F6FA]">
-                      <div className="relative aspect-[1.586/1]">
-                        <Image
-                          src={imagePreviews.idFront}
-                          alt="Preview of the front of the valid ID"
-                          width={800}
-                          height={505}
-                          unoptimized
-                          className="h-full w-full object-contain"
-                        />
-                        <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-[#173B70] shadow-sm">
-                          Front preview
-                        </span>
-                      </div>
-                      <p className="truncate border-t border-[#E4EAF3] px-3 py-2 text-xs text-[#6480A9]">
-                        {selectedFiles.idFront}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-3 flex aspect-[1.586/1] items-center justify-center rounded-xl border border-dashed border-[#D6DFEC] bg-[#F8FAFD] px-4 text-center text-xs text-[#91A0B5]">
-                      Front of ID preview will appear here
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => openCamera("idFront")}
-                    className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-[#DCE3EE] px-3 text-sm font-semibold text-[#405B80] hover:bg-[#F4F7FB]"
-                  >
-                    <Camera className="h-4 w-4" aria-hidden="true" /> Capture with webcam
-                  </button>
-                </FormField>
-                <FormField id="idBack" label="Back of valid ID" required error={uploadErrors.idBack ?? state.fieldErrors?.idBack}>
-                  <input
-                    id="idBack"
-                    name="idBack"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    required={step === 2}
-                    aria-invalid={Boolean(uploadErrors.idBack ?? state.fieldErrors?.idBack)}
-                    aria-describedby={uploadErrors.idBack || state.fieldErrors?.idBack ? "idBack-error" : undefined}
-                    onChange={(event) => handleImageSelection(event, "idBack")}
-                    className={inputClass}
-                  />
-                  {imagePreviews.idBack ? (
-                    <div className="mt-3 overflow-hidden rounded-xl border border-[#E4EAF3] bg-[#F3F6FA]">
-                      <div className="relative aspect-[1.586/1]">
-                        <Image
-                          src={imagePreviews.idBack}
-                          alt="Preview of the back of the valid ID"
-                          width={800}
-                          height={505}
-                          unoptimized
-                          className="h-full w-full object-contain"
-                        />
-                        <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-[#173B70] shadow-sm">
-                          Back preview
-                        </span>
-                      </div>
-                      <p className="truncate border-t border-[#E4EAF3] px-3 py-2 text-xs text-[#6480A9]">
-                        {selectedFiles.idBack}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-3 flex aspect-[1.586/1] items-center justify-center rounded-xl border border-dashed border-[#D6DFEC] bg-[#F8FAFD] px-4 text-center text-xs text-[#91A0B5]">
-                      Back of ID preview will appear here
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => openCamera("idBack")}
-                    className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg border border-[#DCE3EE] px-3 text-sm font-semibold text-[#405B80] hover:bg-[#F4F7FB]"
-                  >
-                    <Camera className="h-4 w-4" aria-hidden="true" /> Capture with webcam
-                  </button>
-                </FormField>
-              </div>
-              {cameraField && (
-                <div className="mt-5 space-y-3">
-                  <p className="text-sm font-medium text-[#172B4D]">
-                    Align all four edges of the ID inside the guide.
-                  </p>
-                  <div ref={cameraPreviewRef} className="relative mx-auto aspect-video w-full max-w-2xl overflow-hidden rounded-xl bg-black shadow-inner">
-                    <video
-                      ref={cameraVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="h-full w-full object-contain"
-                    />
-                    <div className="pointer-events-none absolute left-1/2 top-1/2 aspect-[1.586/1] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-yellow-300 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
-                  </div>
-                  {cameraError && <p role="alert" className="text-sm text-rose-700">{cameraError}</p>}
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void captureIdImage()}
-                      disabled={!cameraReady}
-                      className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Camera className="h-4 w-4" aria-hidden="true" /> Capture {cameraField === "idFront" ? "front" : "back"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={closeCamera}
-                      className="inline-flex h-10 items-center rounded-lg border border-[#DCE3EE] px-4 text-sm font-semibold text-[#405B80]"
-                    >
-                      Close webcam
-                    </button>
-                  </div>
-                </div>
-              )}
-              {!cameraField && cameraError && <p role="alert" className="mt-3 text-sm text-rose-700">{cameraError}</p>}
-            </section>
-
-            <section data-wizard-step="3" hidden={step !== 3} aria-labelledby="profile-image-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">
+            <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="profile-image-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-5 border-b border-[#E8EDF4] pb-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#A88724]">Optional</p>
                 <h3 id="profile-image-heading" className="mt-1 text-base font-bold text-[#0B1A3E] sm:text-lg">Profile photo</h3>
@@ -1169,10 +866,7 @@ function BeneficiaryModal({
               {step > 1 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    closeCamera();
-                    setStep((current) => current - 1);
-                  }}
+                  onClick={() => setStep((current) => current - 1)}
                   disabled={pending}
                   className="inline-flex h-11 items-center justify-center rounded-lg border border-[#DCE3EE] px-5 text-sm font-semibold text-[#405B80] transition hover:bg-[#F4F7FB] disabled:opacity-50"
                 >
@@ -1188,7 +882,7 @@ function BeneficiaryModal({
               Cancel
             </button>
             </div>
-            {step < 3 ? (
+            {step < 2 ? (
               <button
                 type="button"
                 onClick={goToNextStep}

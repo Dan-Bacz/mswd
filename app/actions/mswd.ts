@@ -9,6 +9,7 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema } from "@/lib/validation";
 import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
+import { buildBeneficiaryIdentityKey, buildFullName } from "@/lib/identity";
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -30,6 +31,12 @@ export type BeneficiaryActionState = {
   message: string;
   fieldErrors?: Record<string, string>;
   saved?: boolean;
+  duplicateClient?: {
+    id: string;
+    beneficiaryNumber: string;
+    name: string;
+    categoryName: string;
+  };
 };
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -61,12 +68,8 @@ async function parseImageUpload(
   value: FormDataEntryValue | null,
   type: BeneficiaryFileType,
   field: string,
-  required: boolean,
 ): Promise<BeneficiaryImage | null> {
   if (!isFile(value) || value.size === 0) {
-    if (required) {
-      throw new ImageUploadError(field, "Upload a clear image of this side of the valid ID.");
-    }
     return null;
   }
 
@@ -159,19 +162,17 @@ export async function createBeneficiaryAction(
 
   let images: BeneficiaryImage[];
   try {
-    const idFront = await parseImageUpload(formData.get("idFront"), "VALID_ID_FRONT", "idFront", true);
-    const idBack = await parseImageUpload(formData.get("idBack"), "VALID_ID_BACK", "idBack", true);
+    const idFront = await parseImageUpload(formData.get("idFront"), "VALID_ID_FRONT", "idFront");
+    const idBack = await parseImageUpload(formData.get("idBack"), "VALID_ID_BACK", "idBack");
     const profileCapture = await parseImageUpload(
       formData.get("profileImageCapture"),
       "PROFILE_IMAGE",
       "profileImage",
-      false,
     );
     const profileUpload = await parseImageUpload(
       formData.get("profileImageUpload"),
       "PROFILE_IMAGE",
       "profileImage",
-      false,
     );
 
     if (profileCapture && profileUpload) {
@@ -196,7 +197,7 @@ export async function createBeneficiaryAction(
     if (!(error instanceof ImageUploadError)) throw error;
     return {
       ok: false,
-      message: "Please check the ID and profile images.",
+      message: "Please check the uploaded images.",
       fieldErrors: { [error.field]: error.message },
     };
   }
@@ -217,6 +218,44 @@ export async function createBeneficiaryAction(
       ok: false,
       message: "Please enter a valid date of birth that is not in the future.",
       fieldErrors: { dateOfBirth: "Enter a valid date of birth." },
+    };
+  }
+
+  const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
+  const identityKey = buildBeneficiaryIdentityKey({
+    firstName: parsed.data.firstName,
+    middleName: parsed.data.middleName,
+    lastName: parsed.data.lastName,
+    dateOfBirth: dob,
+    barangay: parsed.data.barangay,
+  });
+
+  const duplicate = await db.beneficiary.findFirst({
+    where: identityKey
+      ? { identityKey }
+      : {
+          firstName: { equals: parsed.data.firstName, mode: "insensitive" },
+          middleName: parsed.data.middleName
+            ? { equals: parsed.data.middleName, mode: "insensitive" }
+            : null,
+          lastName: { equals: parsed.data.lastName, mode: "insensitive" },
+          dateOfBirth: null,
+          barangay: { equals: parsed.data.barangay, mode: "insensitive" },
+        },
+    include: { category: { select: { name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (duplicate) {
+    return {
+      ok: false,
+      message: "This client or beneficiary already exists in the system.",
+      duplicateClient: {
+        id: duplicate.id,
+        beneficiaryNumber: duplicate.beneficiaryNumber,
+        name: buildFullName(duplicate),
+        categoryName: duplicate.category.name,
+      },
     };
   }
 
@@ -269,6 +308,7 @@ export async function createBeneficiaryAction(
     }
   }
 
+<<<<<<< HEAD
   const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
 
   const possibleDuplicate = await db.beneficiary.findFirst({
@@ -289,11 +329,14 @@ export async function createBeneficiaryAction(
     };
   }
 
+=======
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
   try {
     await db.$transaction(async (transaction) => {
       const beneficiary = await transaction.beneficiary.create({
         data: {
           beneficiaryNumber: generateSequence("BEN"),
+          identityKey,
           firstName: parsed.data.firstName,
           middleName: parsed.data.middleName || null,
           lastName: parsed.data.lastName,
@@ -333,6 +376,26 @@ export async function createBeneficiaryAction(
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002" && identityKey) {
+        const existing = await db.beneficiary.findUnique({
+          where: { identityKey },
+          include: { category: { select: { name: true } } },
+        });
+
+        if (existing) {
+          return {
+            ok: false,
+            message: "This client or beneficiary already exists in the system.",
+            duplicateClient: {
+              id: existing.id,
+              beneficiaryNumber: existing.beneficiaryNumber,
+              name: buildFullName(existing),
+              categoryName: existing.category.name,
+            },
+          };
+        }
+      }
+
       console.error("Unable to save beneficiary:", error);
       return {
         ok: false,

@@ -8,12 +8,13 @@ export default async function BeneficiariesPage({
   searchParams,
 }: {
   searchParams?:
-    | Promise<{ category?: string; categoryId?: string }>
-    | { category?: string; categoryId?: string };
+    | Promise<{ category?: string; categoryId?: string; q?: string }>
+    | { category?: string; categoryId?: string; q?: string };
 }) {
   const params = await Promise.resolve(searchParams ?? {});
   const requestedCategory = typeof params.category === "string" ? params.category : undefined;
   const requestedCategoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;
+  const initialSearch = typeof params.q === "string" ? params.q : "";
 
   const [categories, officers] = await Promise.all([
     db.category.findMany({ orderBy: { name: "asc" } }),
@@ -53,6 +54,7 @@ export default async function BeneficiariesPage({
         status: beneficiary.status,
       }))}
       selectedCategoryId={selectedCategory?.id}
+      initialSearch={initialSearch}
     />
   );
 }

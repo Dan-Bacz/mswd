@@ -4,7 +4,13 @@ import { getCurrentUser } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
-export default async function OfficerBeneficiariesPage() {
+export default async function OfficerBeneficiariesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string }> | { q?: string };
+}) {
+  const params = await Promise.resolve(searchParams ?? {});
+  const initialSearch = typeof params.q === "string" ? params.q : "";
   const user = await getCurrentUser();
 
   if (!user) {
@@ -41,6 +47,7 @@ export default async function OfficerBeneficiariesPage() {
         status: beneficiary.status,
       }))}
       officerMode
+      initialSearch={initialSearch}
     />
   );
 }

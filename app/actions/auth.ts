@@ -12,7 +12,19 @@ import {
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/permissions";
+<<<<<<< HEAD
 import { adminOfficerSchema, categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
+=======
+import { categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
+import { buildFullName } from "@/lib/identity";
+import { validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+  markRegistrationNotificationsReviewed,
+  notifyAdminsOfRegistration,
+} from "@/lib/notifications";
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
 
 export async function loginAction(
   _previousState: { ok: boolean; error: string } | null,
@@ -147,13 +159,26 @@ export async function registerOfficerAction(
     middleName: String(formData.get("middleName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
     position: String(formData.get("position") ?? ""),
+<<<<<<< HEAD
     employeeId: String(formData.get("employeeId") ?? ""),
+=======
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
     email: String(formData.get("email") ?? ""),
     password,
   });
 
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid registration details." };
+  }
+
+  let staffId: Awaited<ReturnType<typeof validateStaffIdUpload>>;
+  try {
+    staffId = await validateStaffIdUpload(formData.get("staffId"));
+  } catch (error) {
+    if (error instanceof UploadValidationError) {
+      return { ok: false, message: error.message };
+    }
+    throw error;
   }
 
   const email = parsed.data.email.toLowerCase();
@@ -168,8 +193,13 @@ export async function registerOfficerAction(
     create: { name: "OFFICER" },
   });
 
+<<<<<<< HEAD
   let officer: { id: string; name: string; email: string; position: string | null; employeeId: string | null };
   const name = [parsed.data.firstName, parsed.data.middleName, parsed.data.lastName].filter(Boolean).join(" ");
+=======
+  const name = buildFullName(parsed.data);
+  let officer: { id: string; name: string; email: string; position: string | null; createdAt: Date };
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
   try {
     officer = await db.user.create({
       data: {
@@ -178,13 +208,21 @@ export async function registerOfficerAction(
         middleName: parsed.data.middleName || null,
         lastName: parsed.data.lastName,
         position: parsed.data.position,
+<<<<<<< HEAD
         employeeId: parsed.data.employeeId,
+=======
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
         email,
         passwordHash: await bcrypt.hash(parsed.data.password, 12),
         roleId: officerRole.id,
         status: "PENDING_APPROVAL",
+        staffIdDocument: { create: staffId },
       },
+<<<<<<< HEAD
       select: { id: true, name: true, email: true, position: true, employeeId: true },
+=======
+      select: { id: true, name: true, email: true, position: true, createdAt: true },
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -192,6 +230,8 @@ export async function registerOfficerAction(
     }
     throw error;
   }
+
+  await notifyAdminsOfRegistration(officer);
 
   const admins = await db.user.findMany({
     where: { role: { name: "ADMIN" }, status: "ACTIVE" },
@@ -208,12 +248,13 @@ export async function registerOfficerAction(
   });
 
   try {
-    await sendNewOfficerRegistrationEmail(admins, officer);
+    await sendNewOfficerRegistrationEmail(admins, { name: officer.name, email: officer.email, position: officer.position });
   } catch (error) {
     console.error("Officer registration was saved, but administrator notification email could not be sent:", error);
     return {
-      ok: false,
-      message: `Registration was saved and is awaiting approval, but the administrator notification email failed: ${error instanceof Error ? error.message : "Unknown email delivery error."} Do not submit the registration again.`,
+      ok: true,
+      message:
+        "Registration submitted and the administrator notification was created in the system, but the email notice failed to send. Do not submit the registration again.",
     };
   }
 
@@ -345,8 +386,16 @@ export async function createOfficerAction(
 ) {
   await requireAdmin();
 
+<<<<<<< HEAD
   const parsed = adminOfficerSchema.safeParse({
     name: String(formData.get("name") ?? ""),
+=======
+  const parsed = officerRegistrationSchema.safeParse({
+    firstName: String(formData.get("firstName") ?? ""),
+    middleName: String(formData.get("middleName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
+    position: String(formData.get("position") ?? ""),
+>>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
   });
@@ -389,11 +438,16 @@ export async function createOfficerAction(
   try {
     await db.user.create({
       data: {
-        name: parsed.data.name,
+        name: buildFullName(parsed.data),
+        firstName: parsed.data.firstName,
+        middleName: parsed.data.middleName || null,
+        lastName: parsed.data.lastName,
+        position: parsed.data.position,
         email,
         passwordHash: await bcrypt.hash(parsed.data.password, 12),
         roleId: officerRole.id,
         status: "ACTIVE",
+        approvedAt: new Date(),
         userCategories: {
           create: categoryIds.map((categoryId) => ({ categoryId })),
         },
@@ -435,34 +489,78 @@ export async function approveOfficerAction(
     return { ok: false, message: "This officer account is no longer awaiting approval." };
   }
 
-  try {
-    await sendOfficerApprovalEmail({ name: officer.name, email: officer.email });
-  } catch (error) {
-    console.error("Unable to send officer approval email:", error);
-    return {
-      ok: false,
-      message: error instanceof Error ? error.message : "Unable to send the approval email. The account remains pending.",
-    };
-  }
-
   const result = await db.user.updateMany({
     where: { id: officer.id, roleId: officer.roleId, status: "PENDING_APPROVAL" },
-    data: { status: "ACTIVE" },
+    data: { status: "ACTIVE", approvedAt: new Date() },
   });
 
   if (result.count !== 1) {
     return {
       ok: false,
-      message: "The approval email was sent, but the account status changed. Refresh and review the account.",
+      message: "The account status changed. Refresh and review the account.",
     };
   }
+
+  await markRegistrationNotificationsReviewed(officer.id);
 
   revalidatePath("/admin/officers");
   revalidatePath(`/admin/officers/${officer.id}`);
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/notifications");
   revalidatePath("/officer/dashboard");
 
+  try {
+    await sendOfficerApprovalEmail({ name: officer.name, email: officer.email, position: officer.position });
+    await db.user.update({ where: { id: officer.id }, data: { approvalEmailSentAt: new Date() } });
+  } catch (error) {
+    console.error("Account approved, but the approval email could not be sent:", error);
+    return {
+      ok: true,
+      message:
+        "Account approved. The approval email could not be sent automatically; use “Resend approval email” on the officer page.",
+    };
+  }
+
   return { ok: true, message: "Account approved and notification email sent." };
+}
+
+export async function resendApprovalEmailAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData,
+) {
+  await requireAdmin();
+
+  const officerId = String(formData.get("officerId") ?? "");
+  if (!officerId) {
+    return { ok: false, message: "Officer was not found." };
+  }
+
+  const officer = await db.user.findUnique({
+    where: { id: officerId },
+    include: { role: true },
+  });
+
+  if (!officer || officer.role.name !== "OFFICER") {
+    return { ok: false, message: "Officer was not found." };
+  }
+  if (officer.status !== "ACTIVE") {
+    return { ok: false, message: "Approval emails can only be resent to active staff accounts." };
+  }
+
+  try {
+    await sendOfficerApprovalEmail({ name: officer.name, email: officer.email, position: officer.position });
+  } catch (error) {
+    console.error("Unable to resend officer approval email:", error);
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Unable to send the approval email.",
+    };
+  }
+
+  await db.user.update({ where: { id: officer.id }, data: { approvalEmailSentAt: new Date() } });
+  revalidatePath(`/admin/officers/${officer.id}`);
+
+  return { ok: true, message: "Approval email resent." };
 }
 
 export async function rejectOfficerAction(
@@ -488,16 +586,6 @@ export async function rejectOfficerAction(
     return { ok: false, message: "This officer account is no longer awaiting approval." };
   }
 
-  try {
-    await sendOfficerRejectionEmail({ name: officer.name, email: officer.email });
-  } catch (error) {
-    console.error("Unable to send officer rejection email:", error);
-    return {
-      ok: false,
-      message: error instanceof Error ? error.message : "Unable to send the rejection email. The account remains pending.",
-    };
-  }
-
   const result = await db.user.updateMany({
     where: { id: officer.id, roleId: officer.roleId, status: "PENDING_APPROVAL" },
     data: { status: "INACTIVE" },
@@ -506,15 +594,47 @@ export async function rejectOfficerAction(
   if (result.count !== 1) {
     return {
       ok: false,
-      message: "The rejection email was sent, but the account status changed. Refresh and review the account.",
+      message: "The account status changed. Refresh and review the account.",
     };
   }
+
+  await markRegistrationNotificationsReviewed(officer.id);
 
   revalidatePath("/admin/officers");
   revalidatePath(`/admin/officers/${officer.id}`);
   revalidatePath("/admin/categories");
+  revalidatePath("/admin/notifications");
+
+  try {
+    await sendOfficerRejectionEmail({ name: officer.name, email: officer.email });
+  } catch (error) {
+    console.error("Account rejected, but the rejection email could not be sent:", error);
+    return {
+      ok: true,
+      message: "Account rejected. The rejection email could not be sent automatically.",
+    };
+  }
 
   return { ok: true, message: "Account rejected and notification email sent." };
+}
+
+export async function markNotificationReadAction(formData: FormData) {
+  const user = await requireAdmin();
+  const notificationId = String(formData.get("notificationId") ?? "");
+  if (!notificationId) {
+    return;
+  }
+
+  await markNotificationRead(notificationId, user.id);
+  revalidatePath("/admin/notifications");
+  revalidatePath("/admin", "layout");
+}
+
+export async function markAllNotificationsReadAction() {
+  const user = await requireAdmin();
+  await markAllNotificationsRead(user.id);
+  revalidatePath("/admin/notifications");
+  revalidatePath("/admin", "layout");
 }
 
 function readCategoryIds(formData: FormData, fieldName = "categoryIds") {
