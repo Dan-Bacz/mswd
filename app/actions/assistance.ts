@@ -48,17 +48,13 @@ const assistanceSchema = z
     followUpReason: z.string().trim().max(1000),
     followUpNotes: z.string().trim().max(1000),
     internalRemarks: z.string().trim().max(2000),
-<<<<<<< HEAD
     medicineCount: z.coerce.number().int().min(0).max(100000).optional(),
     providerName: z.string().trim().max(200).optional(),
-    financialAmount: z.coerce.number().min(0).max(100000000).optional(),
+    financialAmount: amountSchema,
     financialType: z.string().trim().max(100).optional(),
     transactionDetails: z.string().trim().max(1000).optional(),
-=======
-    financialAmount: amountSchema,
     medicineQuantity: quantitySchema,
     doctorName: z.string().trim().max(150),
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
     printProof: z.string().trim(),
   })
   .superRefine((value, context) => {
@@ -181,17 +177,13 @@ export async function saveAssistanceAction(
     followUpReason: String(formData.get("followUpReason") ?? ""),
     followUpNotes: String(formData.get("followUpNotes") ?? ""),
     internalRemarks: String(formData.get("internalRemarks") ?? ""),
-<<<<<<< HEAD
     medicineCount: formData.get("medicineCount") ? Number(formData.get("medicineCount")) : undefined,
     providerName: String(formData.get("providerName") ?? ""),
-    financialAmount: formData.get("financialAmount") ? Number(formData.get("financialAmount")) : undefined,
+    financialAmount: String(formData.get("financialAmount") ?? ""),
     financialType: String(formData.get("financialType") ?? ""),
     transactionDetails: String(formData.get("transactionDetails") ?? ""),
-=======
-    financialAmount: String(formData.get("financialAmount") ?? ""),
     medicineQuantity: String(formData.get("medicineQuantity") ?? ""),
     doctorName: String(formData.get("doctorName") ?? ""),
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
     printProof: String(formData.get("printProof") ?? ""),
   });
 
@@ -276,17 +268,11 @@ export async function saveAssistanceAction(
     followUpReason: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpReason : null,
     followUpNotes: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpNotes : null,
     internalRemarks: parsed.data.internalRemarks || null,
-<<<<<<< HEAD
     medicineCount: parsed.data.medicineCount ?? null,
     providerName: parsed.data.providerName || null,
-    financialAmount: parsed.data.financialAmount ?? null,
+    financialAmount: supportsFinancialAmount(parsed.data.type) && parsed.data.financialAmount ? Number(parsed.data.financialAmount) : null,
     financialType: parsed.data.financialType || null,
     transactionDetails: parsed.data.transactionDetails || null,
-=======
-    financialAmount:
-      supportsFinancialAmount(parsed.data.type) && parsed.data.financialAmount
-        ? Number(parsed.data.financialAmount)
-        : null,
     medicineQuantity:
       parsed.data.type === "MEDICAL_ASSISTANCE" && parsed.data.medicineQuantity
         ? Number(parsed.data.medicineQuantity)
@@ -295,7 +281,6 @@ export async function saveAssistanceAction(
       parsed.data.type === "MEDICAL_ASSISTANCE" && parsed.data.doctorName
         ? parsed.data.doctorName
         : null,
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
   };
 
   const savedRecord = await db.$transaction(async (transaction) => {

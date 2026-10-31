@@ -21,22 +21,6 @@ export function OfficerRegistrationForm() {
       }}
       className="space-y-4"
     >
-<<<<<<< HEAD
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-        <label htmlFor="firstName" className="mb-2 block text-sm font-semibold text-slate-700">First name</label>
-        <input
-          id="firstName"
-          name="firstName"
-          autoComplete="name"
-          required
-          placeholder="First name"
-          className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
-        />
-        </div>
-        <div><label htmlFor="middleName" className="mb-2 block text-sm font-semibold text-slate-700">Middle name</label><input id="middleName" name="middleName" autoComplete="additional-name" placeholder="Optional" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div>
-        <div><label htmlFor="lastName" className="mb-2 block text-sm font-semibold text-slate-700">Last name</label><input id="lastName" name="lastName" autoComplete="family-name" required placeholder="Last name" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div>
-=======
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="firstName" className="mb-2 block text-sm font-semibold text-slate-700">First name</label>
@@ -85,7 +69,6 @@ export function OfficerRegistrationForm() {
             className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
           />
         </div>
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
       </div>
       <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="position" className="mb-2 block text-sm font-semibold text-slate-700">Position / designation</label><input id="position" name="position" required placeholder="e.g. Social Welfare Officer" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div><div><label htmlFor="employeeId" className="mb-2 block text-sm font-semibold text-slate-700">Employee ID</label><input id="employeeId" name="employeeId" required placeholder="MSWD employee ID" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div></div>
       <div>

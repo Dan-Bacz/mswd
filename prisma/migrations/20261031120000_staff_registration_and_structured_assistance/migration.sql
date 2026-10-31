@@ -10,6 +10,5 @@ CREATE UNIQUE INDEX "User_employeeId_key" ON "User"("employeeId");
 ALTER TABLE "BeneficiaryAssistance"
   ADD COLUMN "medicineCount" INTEGER,
   ADD COLUMN "providerName" TEXT,
-  ADD COLUMN "financialAmount" DECIMAL(12,2),
   ADD COLUMN "financialType" TEXT,
   ADD COLUMN "transactionDetails" TEXT;

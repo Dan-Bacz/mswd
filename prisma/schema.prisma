@@ -76,10 +76,7 @@ model User {
   middleName            String?
   lastName              String?
   position              String?
-<<<<<<< HEAD
   employeeId            String?                 @unique
-=======
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
   email                 String                  @unique
   passwordHash          String
   roleId                String
@@ -199,7 +196,6 @@ model BeneficiaryAssistance {
   followUpReason       String?
   followUpNotes        String?
   internalRemarks      String?
-  financialAmount      Decimal?          @db.Decimal(12, 2)
   medicineQuantity     Int?
   doctorName           String?
   providedById         String

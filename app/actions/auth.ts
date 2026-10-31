@@ -12,9 +12,6 @@ import {
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin } from "@/lib/auth/permissions";
-<<<<<<< HEAD
-import { adminOfficerSchema, categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
-=======
 import { categorySchema, loginSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 import { buildFullName } from "@/lib/identity";
 import { validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
@@ -24,7 +21,6 @@ import {
   markRegistrationNotificationsReviewed,
   notifyAdminsOfRegistration,
 } from "@/lib/notifications";
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
 
 export async function loginAction(
   _previousState: { ok: boolean; error: string } | null,
@@ -159,10 +155,7 @@ export async function registerOfficerAction(
     middleName: String(formData.get("middleName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
     position: String(formData.get("position") ?? ""),
-<<<<<<< HEAD
     employeeId: String(formData.get("employeeId") ?? ""),
-=======
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
     email: String(formData.get("email") ?? ""),
     password,
   });
@@ -193,13 +186,8 @@ export async function registerOfficerAction(
     create: { name: "OFFICER" },
   });
 
-<<<<<<< HEAD
-  let officer: { id: string; name: string; email: string; position: string | null; employeeId: string | null };
-  const name = [parsed.data.firstName, parsed.data.middleName, parsed.data.lastName].filter(Boolean).join(" ");
-=======
   const name = buildFullName(parsed.data);
-  let officer: { id: string; name: string; email: string; position: string | null; createdAt: Date };
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
+  let officer: { id: string; name: string; email: string; position: string | null; employeeId: string | null; createdAt: Date };
   try {
     officer = await db.user.create({
       data: {
@@ -208,21 +196,14 @@ export async function registerOfficerAction(
         middleName: parsed.data.middleName || null,
         lastName: parsed.data.lastName,
         position: parsed.data.position,
-<<<<<<< HEAD
         employeeId: parsed.data.employeeId,
-=======
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
         email,
         passwordHash: await bcrypt.hash(parsed.data.password, 12),
         roleId: officerRole.id,
         status: "PENDING_APPROVAL",
-        staffIdDocument: { create: staffId },
+        staffIdDocument: { create: { ...staffId, content: Buffer.from(staffId.content) } },
       },
-<<<<<<< HEAD
-      select: { id: true, name: true, email: true, position: true, employeeId: true },
-=======
-      select: { id: true, name: true, email: true, position: true, createdAt: true },
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
+      select: { id: true, name: true, email: true, position: true, employeeId: true, createdAt: true },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -386,16 +367,12 @@ export async function createOfficerAction(
 ) {
   await requireAdmin();
 
-<<<<<<< HEAD
-  const parsed = adminOfficerSchema.safeParse({
-    name: String(formData.get("name") ?? ""),
-=======
   const parsed = officerRegistrationSchema.safeParse({
     firstName: String(formData.get("firstName") ?? ""),
     middleName: String(formData.get("middleName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
     position: String(formData.get("position") ?? ""),
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
+    employeeId: String(formData.get("employeeId") ?? ""),
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
   });
@@ -443,6 +420,7 @@ export async function createOfficerAction(
         middleName: parsed.data.middleName || null,
         lastName: parsed.data.lastName,
         position: parsed.data.position,
+        employeeId: parsed.data.employeeId,
         email,
         passwordHash: await bcrypt.hash(parsed.data.password, 12),
         roleId: officerRole.id,

@@ -308,9 +308,6 @@ export async function createBeneficiaryAction(
     }
   }
 
-<<<<<<< HEAD
-  const dob = parsed.data.dateOfBirth ? new Date(`${parsed.data.dateOfBirth}T00:00:00.000Z`) : null;
-
   const possibleDuplicate = await db.beneficiary.findFirst({
     where: {
       categoryId: parsed.data.categoryId,
@@ -329,8 +326,6 @@ export async function createBeneficiaryAction(
     };
   }
 
-=======
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
   try {
     await db.$transaction(async (transaction) => {
       const beneficiary = await transaction.beneficiary.create({

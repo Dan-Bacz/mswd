@@ -4,10 +4,7 @@ type OfficerEmail = {
   name: string;
   email: string;
   position?: string | null;
-<<<<<<< HEAD
   employeeId?: string | null;
-=======
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
 };
 
 function parseSenderAddress(value: string) {
@@ -85,12 +82,8 @@ export async function sendNewOfficerRegistrationEmail(
       "A new officer account registration is waiting for administrator review.",
       "",
       `Name: ${officer.name}`,
-<<<<<<< HEAD
       `Position: ${officer.position ?? "Not provided"}`,
       `Employee ID: ${officer.employeeId ?? "Not provided"}`,
-=======
-      `Position: ${officer.position || "Not specified"}`,
->>>>>>> 41a1cf9858653e2d1b3b65c6f58e4f4de75bbbdf
       `Email: ${officer.email}`,
       "",
       `Review registrations: ${managementUrl}`,

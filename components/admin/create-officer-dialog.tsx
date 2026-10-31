@@ -133,6 +133,10 @@ export function CreateOfficerDialog({ categories }: { categories: CategoryOption
             </div>
           </div>
           <div>
+            <label htmlFor="officer-employee-id" className="mb-1.5 block text-sm font-medium text-slate-700">Employee ID</label>
+            <input id="officer-employee-id" name="employeeId" required className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15" />
+          </div>
+          <div>
             <label htmlFor="officer-email" className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
             <input
               id="officer-email"
