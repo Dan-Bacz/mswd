@@ -9,6 +9,7 @@ import {
   sendNewOfficerRegistrationEmail,
   sendOfficerApprovalEmail,
   sendOfficerCategoryAssignmentEmail,
+  sendOfficerDeactivationEmail,
   sendOfficerRejectionEmail,
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
@@ -708,6 +709,60 @@ export async function assignOfficerCategoriesAction(formData: FormData) {
   revalidatePath(`/admin/officers/${officerId}`);
   revalidatePath("/officer/dashboard");
   revalidatePath("/officer/select-category");
+}
+
+export async function deleteOfficerAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData,
+) {
+  const admin = await requireAdmin();
+  const officerId = String(formData.get("officerId") ?? "").trim();
+
+  if (!officerId || officerId === admin.id) {
+    return { ok: false, message: "Select a valid officer account." };
+  }
+
+  const officer = await db.user.findUnique({
+    where: { id: officerId },
+    include: { role: true },
+  });
+
+  if (!officer || officer.role.name !== "OFFICER") {
+    return { ok: false, message: "Officer was not found." };
+  }
+
+  if (officer.status === "INACTIVE") {
+    return { ok: false, message: "This officer account is already inactive." };
+  }
+
+  await db.$transaction([
+    db.user.update({ where: { id: officer.id }, data: { status: "INACTIVE" } }),
+    db.userCategory.deleteMany({ where: { userId: officer.id } }),
+    db.auditLog.create({
+      data: {
+        userId: admin.id,
+        action: "DEACTIVATE",
+        module: "OFFICERS",
+        recordId: officer.id,
+        description: `Deactivated officer account ${officer.email} and revoked category access.`,
+      },
+    }),
+  ]);
+
+  revalidatePath("/admin/officers");
+  revalidatePath(`/admin/officers/${officer.id}`);
+  revalidatePath("/admin/categories");
+  revalidatePath("/officer/dashboard");
+  revalidatePath("/officer/select-category");
+
+  try {
+    await sendOfficerDeactivationEmail({ name: officer.name, email: officer.email });
+  } catch (error) {
+    console.error("Officer account was deactivated, but the deactivation email could not be sent:", error);
+    return { ok: true, message: "Officer account deactivated and access revoked, but the email could not be sent." };
+  }
+
+  return { ok: true, message: "Officer account deactivated, category access revoked, and email sent." };
 }
 
 export async function setCategoryOfficersAction(formData: FormData) {

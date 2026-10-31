@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ApproveOfficerForm } from "@/components/admin/approve-officer-form";
 import { ResendApprovalEmailButton } from "@/components/admin/resend-approval-email-button";
+import { DeleteOfficerForm } from "@/components/admin/delete-officer-form";
 import { assignOfficerCategoriesAction } from "@/app/actions/auth";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +111,8 @@ export default async function OfficerManagePage({
       {officer.status === "ACTIVE" && !officer.approvalEmailSentAt && (
         <ResendApprovalEmailButton officerId={officer.id} />
       )}
+
+      {officer.status === "ACTIVE" && <DeleteOfficerForm officerId={officer.id} officerName={officer.name} />}
 
       <div className="grid gap-4 md:grid-cols-2">
         <MetricCard

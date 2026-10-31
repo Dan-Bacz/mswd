@@ -128,3 +128,14 @@ export async function sendOfficerRejectionEmail({ name, email }: OfficerEmail) {
     text: `Hello ${name},\n\nYour MSWD officer account registration was not approved. If you would like to discuss this decision, please contact the MSWD Office.\n\nMSWD Management System`,
   });
 }
+
+export async function sendOfficerDeactivationEmail({ name, email }: OfficerEmail) {
+  const { transporter, from } = createTransport();
+
+  await transporter.sendMail({
+    from,
+    to: email,
+    subject: "Your MSWD officer account has been deactivated",
+    text: `Hello ${name},\n\nYour MSWD officer account has been deactivated by an administrator. You can no longer sign in to or access the MSWD Management System. If you believe this was done in error, please contact the MSWD Office.\n\nMSWD Management System`,
+  });
+}
