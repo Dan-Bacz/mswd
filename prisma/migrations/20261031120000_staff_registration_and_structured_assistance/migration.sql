@@ -1,8 +1,4 @@
 ALTER TABLE "User"
-  ADD COLUMN "firstName" TEXT,
-  ADD COLUMN "middleName" TEXT,
-  ADD COLUMN "lastName" TEXT,
-  ADD COLUMN "position" TEXT,
   ADD COLUMN "employeeId" TEXT;
 
 CREATE UNIQUE INDEX "User_employeeId_key" ON "User"("employeeId");
