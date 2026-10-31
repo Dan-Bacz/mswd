@@ -139,3 +139,14 @@ export async function sendOfficerDeactivationEmail({ name, email }: OfficerEmail
     text: `Hello ${name},\n\nYour MSWD officer account has been deactivated by an administrator. You can no longer sign in to or access the MSWD Management System. If you believe this was done in error, please contact the MSWD Office.\n\nMSWD Management System`,
   });
 }
+
+export async function sendOfficerDeletionEmail({ name, email }: OfficerEmail) {
+  const { transporter, from } = createTransport();
+
+  await transporter.sendMail({
+    from,
+    to: email,
+    subject: "Your MSWD officer account has been deleted",
+    text: `Hello ${name},\n\nYour MSWD officer account has been permanently deleted by an administrator. You can no longer sign in to or access the MSWD Management System. If you believe this was done in error, please contact the MSWD Office.\n\nMSWD Management System`,
+  });
+}

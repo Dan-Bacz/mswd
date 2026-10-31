@@ -10,6 +10,7 @@ import {
   sendOfficerApprovalEmail,
   sendOfficerCategoryAssignmentEmail,
   sendOfficerDeactivationEmail,
+  sendOfficerDeletionEmail,
   sendOfficerRejectionEmail,
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
@@ -763,6 +764,84 @@ export async function deleteOfficerAction(
   }
 
   return { ok: true, message: "Officer account deactivated, category access revoked, and email sent." };
+}
+
+export async function permanentlyDeleteOfficerAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData,
+) {
+  const admin = await requireAdmin();
+  const officerId = String(formData.get("officerId") ?? "").trim();
+
+  if (!officerId || officerId === admin.id) {
+    return { ok: false, message: "Select a valid officer account." };
+  }
+
+  const officer = await db.user.findUnique({
+    where: { id: officerId },
+    include: {
+      role: true,
+      _count: {
+        select: {
+          userCategories: true,
+          providedAssistance: true,
+          documents: true,
+          assignments: true,
+          assignedBy: true,
+          assignedBeneficiaries: true,
+          households: true,
+          notifications: true,
+          auditLogs: true,
+        },
+      },
+    },
+  });
+
+  if (!officer || officer.role.name !== "OFFICER") {
+    return { ok: false, message: "Officer was not found." };
+  }
+  if (officer.status !== "INACTIVE") {
+    return { ok: false, message: "Deactivate the officer account before permanently deleting it." };
+  }
+
+  const linkedRecords = ([
+    [officer._count.providedAssistance, "assistance records"],
+    [officer._count.documents, "uploaded documents"],
+    [officer._count.assignments, "assignment records"],
+    [officer._count.assignedBy, "assignments created by this officer"],
+    [officer._count.assignedBeneficiaries, "assigned beneficiaries"],
+    [officer._count.households, "households"],
+    [officer._count.auditLogs, "audit log records"],
+  ] as const).filter(([count]) => count > 0).map(([, label]) => label);
+
+  if (linkedRecords.length > 0) {
+    return {
+      ok: false,
+      message: `This account cannot be permanently deleted because it has ${linkedRecords.join(", ")}. It remains safely inactive; remove linked records only through an approved data-retention process.`,
+    };
+  }
+
+  try {
+    await db.user.delete({ where: { id: officer.id } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      return { ok: false, message: "The account still has linked records and cannot be permanently deleted. Keep it inactive instead." };
+    }
+    throw error;
+  }
+
+  revalidatePath("/admin/officers");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/categories");
+
+  try {
+    await sendOfficerDeletionEmail({ name: officer.name, email: officer.email });
+  } catch (error) {
+    console.error("Officer account was deleted, but the deletion email could not be sent:", error);
+    return { ok: true, message: "Officer account permanently deleted, but the email could not be sent." };
+  }
+
+  return { ok: true, message: "Officer account permanently deleted and email sent." };
 }
 
 export async function setCategoryOfficersAction(formData: FormData) {
