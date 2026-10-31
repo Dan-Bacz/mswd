@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import {
   sendNewOfficerRegistrationEmail,
   sendOfficerApprovalEmail,
+  sendOfficerCategoryAssignmentEmail,
   sendOfficerRejectionEmail,
 } from "@/lib/email";
 import { createSession, clearSession } from "@/lib/auth/session";
@@ -68,7 +69,7 @@ export async function loginAction(
   });
 
   revalidatePath("/");
-  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : "/officer/dashboard");
+  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : user.userCategories.length > 1 ? "/officer/select-category" : "/officer/dashboard");
 }
 
 export async function setupAction(
@@ -394,7 +395,7 @@ export async function createOfficerAction(
 
   const categories = await db.category.findMany({
     where: { id: { in: categoryIds } },
-    select: { id: true },
+    select: { id: true, name: true },
   });
   if (categories.length !== categoryIds.length) {
     return { ok: false, message: "One or more selected categories are no longer available. Refresh and try again.", resetKey: _previousState.resetKey };
@@ -436,6 +437,16 @@ export async function createOfficerAction(
       return { ok: false, message: "An account with that email address already exists.", resetKey: _previousState.resetKey };
     }
     throw error;
+  }
+
+  try {
+    await sendOfficerCategoryAssignmentEmail({
+      name: buildFullName(parsed.data),
+      email,
+      categories: categories.map((category) => category.name).sort((a, b) => a.localeCompare(b)),
+    });
+  } catch (error) {
+    console.error("Officer account was created, but the category assignment email could not be sent:", error);
   }
 
   revalidatePath("/admin/officers");
@@ -681,9 +692,22 @@ export async function assignOfficerCategoriesAction(formData: FormData) {
       : []),
   ]);
 
+  if (officer.status === "ACTIVE") {
+    try {
+      await sendOfficerCategoryAssignmentEmail({
+        name: officer.name,
+        email: officer.email,
+        categories: categories.map((category) => category.name).sort((a, b) => a.localeCompare(b)),
+      });
+    } catch (error) {
+      console.error("Officer categories were saved, but the assignment email could not be sent:", error);
+    }
+  }
+
   revalidatePath("/admin/officers");
   revalidatePath(`/admin/officers/${officerId}`);
   revalidatePath("/officer/dashboard");
+  revalidatePath("/officer/select-category");
 }
 
 export async function setCategoryOfficersAction(formData: FormData) {
@@ -766,6 +790,18 @@ export async function setCategoryOfficersAction(formData: FormData) {
         ]
       : []),
   ]);
+
+  await Promise.all(
+    officers
+      .filter((officer) => toAdd.includes(officer.id))
+      .map(async (officer) => {
+        try {
+          await sendOfficerCategoryAssignmentEmail({ name: officer.name, email: officer.email, categories: [category.name] });
+        } catch (error) {
+          console.error(`Category assignment email failed for officer ${officer.id}:`, error);
+        }
+      }),
+  );
 
   revalidatePath("/admin/categories");
   revalidatePath(`/admin/categories/${categoryId}`);

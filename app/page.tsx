@@ -8,5 +8,5 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  redirect(user.role === "ADMIN" ? "/admin/dashboard" : "/officer/dashboard");
+  redirect(user.role === "ADMIN" ? "/admin/dashboard" : user.categoryIds.length > 1 ? "/officer/select-category" : "/officer/dashboard");
 }

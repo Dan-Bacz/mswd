@@ -105,6 +105,19 @@ export async function sendOfficerApprovalEmail({ name, email }: OfficerEmail) {
   });
 }
 
+export async function sendOfficerCategoryAssignmentEmail({ name, email, categories }: OfficerEmail & { categories: string[] }) {
+  const { transporter, from, baseUrl } = createTransport();
+  const dashboardUrl = new URL("/officer/select-category", baseUrl).toString();
+  const categoryList = categories.length > 0 ? categories.map((category) => `- ${category}`).join("\n") : "- No categories currently assigned";
+
+  await transporter.sendMail({
+    from,
+    to: email,
+    subject: "Your MSWD category assignments have been updated",
+    text: `Hello ${name},\n\nThe MSWD administrator updated the categories assigned to your account:\n\n${categoryList}\n\nSign in to choose the category dashboard you want to open:\n${dashboardUrl}\n\nMSWD Management System`,
+  });
+}
+
 export async function sendOfficerRejectionEmail({ name, email }: OfficerEmail) {
   const { transporter, from } = createTransport();
 
