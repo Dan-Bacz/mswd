@@ -9,6 +9,14 @@ function normalize(value: string | null | undefined) {
   return (value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 
+export function capitalizePersonName(value: string | null | undefined) {
+  return (value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase()
+    .replace(/(^|[\s'-])([a-zÀ-ÿ])/g, (_, separator: string, letter: string) => `${separator}${letter.toLocaleUpperCase()}`);
+}
+
 export function buildFullName({ firstName, middleName, lastName, suffix }: PersonName) {
   return [firstName, middleName, lastName, suffix].filter(Boolean).join(" ").trim();
 }

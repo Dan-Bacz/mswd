@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBeneficiaryNameIdentityKey } from "./identity";
+import { buildBeneficiaryNameIdentityKey, capitalizePersonName } from "./identity";
+
+test("capitalizes beneficiary name parts before validation and storage", () => {
+  assert.equal(capitalizePersonName(" juAN de la cruz "), "Juan De La Cruz");
+  assert.equal(capitalizePersonName("o'connor"), "O'Connor");
+});
 
 test("beneficiary name identity keys are case and whitespace insensitive", () => {
   assert.equal(

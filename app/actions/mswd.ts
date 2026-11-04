@@ -9,7 +9,7 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema } from "@/lib/validation";
 import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
-import { buildBeneficiaryIdentityKey, buildBeneficiaryNameIdentityKey, buildFullName } from "@/lib/identity";
+import { buildBeneficiaryIdentityKey, buildBeneficiaryNameIdentityKey, buildFullName, capitalizePersonName } from "@/lib/identity";
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -126,9 +126,9 @@ export async function createBeneficiaryAction(
   const user = await requireAuth();
 
   const raw = {
-    firstName: String(formData.get("firstName") ?? ""),
-    middleName: String(formData.get("middleName") ?? ""),
-    lastName: String(formData.get("lastName") ?? ""),
+    firstName: capitalizePersonName(String(formData.get("firstName") ?? "")),
+    middleName: capitalizePersonName(String(formData.get("middleName") ?? "")),
+    lastName: capitalizePersonName(String(formData.get("lastName") ?? "")),
     suffix: String(formData.get("suffix") ?? ""),
     sex: String(formData.get("sex") ?? ""),
     dateOfBirth: String(formData.get("dateOfBirth") ?? ""),
@@ -400,9 +400,9 @@ export async function updateBeneficiaryAction(
   }
 
   const parsed = beneficiarySchema.safeParse({
-    firstName: String(formData.get("firstName") ?? ""),
-    middleName: String(formData.get("middleName") ?? ""),
-    lastName: String(formData.get("lastName") ?? ""),
+    firstName: capitalizePersonName(String(formData.get("firstName") ?? "")),
+    middleName: capitalizePersonName(String(formData.get("middleName") ?? "")),
+    lastName: capitalizePersonName(String(formData.get("lastName") ?? "")),
     suffix: String(formData.get("suffix") ?? ""),
     sex: String(formData.get("sex") ?? ""),
     dateOfBirth: String(formData.get("dateOfBirth") ?? ""),

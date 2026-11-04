@@ -645,13 +645,13 @@ function BeneficiaryModal({
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField id="firstName" label="First name" required error={state.fieldErrors?.firstName}>
-                  <input {...fieldProps("firstName")} name="firstName" autoComplete="given-name" required />
+                  <input {...fieldProps("firstName")} name="firstName" autoComplete="given-name" className={`${fieldProps("firstName").className} capitalize`} required />
                 </FormField>
                 <FormField id="lastName" label="Last name" required error={state.fieldErrors?.lastName}>
-                  <input {...fieldProps("lastName")} name="lastName" autoComplete="family-name" required />
+                  <input {...fieldProps("lastName")} name="lastName" autoComplete="family-name" className={`${fieldProps("lastName").className} capitalize`} required />
                 </FormField>
                 <FormField id="middleName" label="Middle name" error={state.fieldErrors?.middleName}>
-                  <input {...fieldProps("middleName")} name="middleName" autoComplete="additional-name" />
+                  <input {...fieldProps("middleName")} name="middleName" autoComplete="additional-name" className={`${fieldProps("middleName").className} capitalize`} />
                 </FormField>
                 <FormField id="suffix" label="Suffix" error={state.fieldErrors?.suffix}>
                   <input {...fieldProps("suffix")} name="suffix" placeholder="Jr., Sr., etc." />
