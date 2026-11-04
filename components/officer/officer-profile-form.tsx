@@ -17,7 +17,6 @@ export function OfficerProfileForm({
     firstName: string | null;
     middleName: string | null;
     lastName: string | null;
-    position: string | null;
     email: string;
     employeeId: string | null;
     contactNumber: string | null;
@@ -46,7 +45,6 @@ export function OfficerProfileForm({
           <label className="text-sm font-medium text-slate-700">First name<input name="firstName" required defaultValue={profile.firstName ?? ""} className={`${inputClass} mt-1.5`} /></label>
           <label className="text-sm font-medium text-slate-700">Middle name<input name="middleName" defaultValue={profile.middleName ?? ""} className={`${inputClass} mt-1.5`} /></label>
           <label className="text-sm font-medium text-slate-700">Last name<input name="lastName" required defaultValue={profile.lastName ?? ""} className={`${inputClass} mt-1.5`} /></label>
-          <label className="text-sm font-medium text-slate-700">Position / designation<input name="position" required defaultValue={profile.position ?? ""} className={`${inputClass} mt-1.5`} /></label>
           <label className="text-sm font-medium text-slate-700">Email<input value={profile.email} readOnly className={`${inputClass} mt-1.5 bg-slate-50`} /></label>
           <label className="text-sm font-medium text-slate-700">Employee ID<input value={profile.employeeId ?? ""} readOnly className={`${inputClass} mt-1.5 bg-slate-50`} /></label>
           <label className="text-sm font-medium text-slate-700">Contact number<input name="contactNumber" defaultValue={profile.contactNumber ?? ""} className={`${inputClass} mt-1.5`} /></label>

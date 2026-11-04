@@ -80,56 +80,56 @@ model Role {
 }
 
 model User {
-  id                    String                  @id @default(uuid())
+  id                    String                      @id @default(uuid())
   name                  String
   firstName             String?
   middleName            String?
   lastName              String?
   position              String?
-  employeeId            String?                 @unique
-  email                 String                  @unique
+  employeeId            String?                     @unique
+  email                 String                      @unique
   passwordHash          String
   roleId                String
-  status                UserStatus              @default(ACTIVE)
+  status                UserStatus                  @default(ACTIVE)
   approvedAt            DateTime?
   approvalEmailSentAt   DateTime?
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  role                  Role                    @relation(fields: [roleId], references: [id])
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
+  role                  Role                        @relation(fields: [roleId], references: [id])
   profile               UserProfile?
   verificationSession   OfficerVerificationSession?
   staffIdDocument       StaffIdDocument?
   userCategories        UserCategory[]
   households            Household[]
-  assignedBeneficiaries Beneficiary[]           @relation("OfficerBeneficiaries")
-  providedAssistance    BeneficiaryAssistance[] @relation("AssistanceProvider")
-  documents             Document[]              @relation("UploaderDocuments")
-  assignments           Assignment[]            @relation("AssignedOfficer")
-  assignedBy            Assignment[]            @relation("AssignedBy")
+  assignedBeneficiaries Beneficiary[]               @relation("OfficerBeneficiaries")
+  providedAssistance    BeneficiaryAssistance[]     @relation("AssistanceProvider")
+  documents             Document[]                  @relation("UploaderDocuments")
+  assignments           Assignment[]                @relation("AssignedOfficer")
+  assignedBy            Assignment[]                @relation("AssignedBy")
   notifications         Notification[]
   auditLogs             AuditLog[]
 }
 
 model OfficerVerificationSession {
-  id                    String                    @id @default(uuid())
-  tokenHash             String                    @unique
-  userId                String?                   @unique
-  expiresAt             DateTime
-  qrPayloadHash         String?
-  qrName                String?
-  qrBirthDate           DateTime?
-  qrSex                 String?
-  qrStatus              OfficerVerificationStatus @default(NOT_STARTED)
-  qrAuthenticityStatus  OfficerVerificationStatus @default(NOT_STARTED)
-  livenessStatus        OfficerVerificationStatus @default(NOT_STARTED)
-  faceMatchStatus       OfficerVerificationStatus @default(NOT_STARTED)
-  overallStatus         OfficerVerificationStatus @default(NOT_STARTED)
-  manualReviewReason    String?
-  consentAt             DateTime?
-  submittedAt           DateTime?
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
-  user                  User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id                   String                    @id @default(uuid())
+  tokenHash            String                    @unique
+  userId               String?                   @unique
+  expiresAt            DateTime
+  qrPayloadHash        String?
+  qrName               String?
+  qrBirthDate          DateTime?
+  qrSex                String?
+  qrStatus             OfficerVerificationStatus @default(NOT_STARTED)
+  qrAuthenticityStatus OfficerVerificationStatus @default(NOT_STARTED)
+  livenessStatus       OfficerVerificationStatus @default(NOT_STARTED)
+  faceMatchStatus      OfficerVerificationStatus @default(NOT_STARTED)
+  overallStatus        OfficerVerificationStatus @default(NOT_STARTED)
+  manualReviewReason   String?
+  consentAt            DateTime?
+  submittedAt          DateTime?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  user                 User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([expiresAt, overallStatus])
 }
@@ -307,15 +307,25 @@ model Notification {
 }
 
 model StaffIdDocument {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  fileName     String
-  originalName String
-  mimeType     String
-  size         Int
-  content      Bytes    @db.ByteA
-  uploadedAt   DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  fileName          String
+  originalName      String
+  mimeType          String
+  size              Int
+  content           Bytes    @db.ByteA
+  frontFileName     String?
+  frontOriginalName String?
+  frontMimeType     String?
+  frontSize         Int?
+  frontContent      Bytes?   @db.ByteA
+  backFileName      String?
+  backOriginalName  String?
+  backMimeType      String?
+  backSize          Int?
+  backContent       Bytes?   @db.ByteA
+  uploadedAt        DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {

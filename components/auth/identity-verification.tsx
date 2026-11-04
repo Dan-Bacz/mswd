@@ -19,7 +19,7 @@ import {
 
 type VerificationResult = { ok: boolean; message: string; name?: string; birthDate?: string | null; sex?: string | null };
 
-export function IdentityVerification({ onReadyChange }: { onReadyChange?: (ready: boolean) => void }) {
+export function IdentityVerification({ onReadyChange, onIdentityFieldsChange }: { onReadyChange?: (ready: boolean) => void; onIdentityFieldsChange?: (fields: { name: string; birthDate: string | null; sex: string | null }) => void }) {
   const [sessionId, setSessionId] = useState("");
   const [token, setToken] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
@@ -96,6 +96,7 @@ export function IdentityVerification({ onReadyChange }: { onReadyChange?: (ready
         return;
       }
       setDetails(result);
+      if (result.name) onIdentityFieldsChange?.({ name: result.name, birthDate: result.birthDate ?? null, sex: result.sex ?? null });
       setQrStatus("Decoded");
       setAuthenticityStatus("Not verified — manual review");
       setOverallStatus("Continue to live face verification");

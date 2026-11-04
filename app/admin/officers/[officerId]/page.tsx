@@ -35,7 +35,7 @@ export default async function OfficerManagePage({
         },
       },
       staffIdDocument: {
-        select: { fileName: true, originalName: true, mimeType: true, size: true, uploadedAt: true },
+        select: { fileName: true, originalName: true, mimeType: true, size: true, uploadedAt: true, frontFileName: true, backFileName: true },
       },
       userCategories: { include: { category: true }, orderBy: { category: { name: "asc" } } },
     },
@@ -97,8 +97,10 @@ export default async function OfficerManagePage({
                 className="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 transition hover:bg-sky-100"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
-                View ID document
+                View uploaded ID document
               </a>
+              {officer.staffIdDocument.frontFileName && <a href={`/admin/officers/${officer.id}/id?side=front`} target="_blank" rel="noreferrer" className="ml-2 inline-flex rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">View front</a>}
+              {officer.staffIdDocument.backFileName && <a href={`/admin/officers/${officer.id}/id?side=back`} target="_blank" rel="noreferrer" className="ml-2 inline-flex rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">View back</a>}
               <p className="mt-2 truncate text-xs text-slate-500">{officer.staffIdDocument.originalName}</p>
               <p className="mt-1 text-xs text-slate-400">
                 {(officer.staffIdDocument.size / 1024).toFixed(1)} KB • uploaded{" "}

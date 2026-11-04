@@ -24,7 +24,7 @@ import {
   hashVerificationToken,
   parseRecognizedNationalIdPayload,
 } from "@/lib/verification";
-import { validateProfilePhotoUpload, validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
+import { validateNationalIdImageUpload, validateProfilePhotoUpload, validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
 import {
   markAllNotificationsRead,
   markNotificationRead,
@@ -243,7 +243,6 @@ export async function updateOfficerProfileAction(
     firstName: String(formData.get("firstName") ?? ""),
     middleName: String(formData.get("middleName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
-    position: String(formData.get("position") ?? ""),
     contactNumber: String(formData.get("contactNumber") ?? ""),
     address: String(formData.get("address") ?? ""),
     barangay: String(formData.get("barangay") ?? ""),
@@ -272,7 +271,6 @@ export async function updateOfficerProfileAction(
         firstName: parsed.data.firstName,
         middleName: parsed.data.middleName || null,
         lastName: parsed.data.lastName,
-        position: parsed.data.position,
       },
     });
     await transaction.userProfile.upsert({
@@ -329,7 +327,6 @@ export async function registerOfficerAction(
     firstName: String(formData.get("firstName") ?? ""),
     middleName: String(formData.get("middleName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
-    position: String(formData.get("position") ?? ""),
     employeeId: String(formData.get("employeeId") ?? ""),
     email: String(formData.get("email") ?? ""),
     password,
@@ -358,8 +355,15 @@ export async function registerOfficerAction(
   }
 
   let staffId: Awaited<ReturnType<typeof validateStaffIdUpload>>;
+  let nationalIdFront: Awaited<ReturnType<typeof validateNationalIdImageUpload>>;
+  let nationalIdBack: Awaited<ReturnType<typeof validateNationalIdImageUpload>>;
+  let profilePhoto: Awaited<ReturnType<typeof validateProfilePhotoUpload>>;
   try {
     staffId = await validateStaffIdUpload(formData.get("staffId"));
+    nationalIdFront = await validateNationalIdImageUpload(formData.get("nationalIdFront"), "front");
+    nationalIdBack = await validateNationalIdImageUpload(formData.get("nationalIdBack"), "back");
+    profilePhoto = await validateProfilePhotoUpload(formData.get("profilePhotoCapture"))
+      ?? await validateProfilePhotoUpload(formData.get("profilePhotoUpload"));
   } catch (error) {
     if (error instanceof UploadValidationError) {
       return { ok: false, message: error.message };
@@ -389,13 +393,32 @@ export async function registerOfficerAction(
         firstName: parsed.data.firstName,
         middleName: parsed.data.middleName || null,
         lastName: parsed.data.lastName,
-        position: parsed.data.position,
+        position: null,
         employeeId: parsed.data.employeeId,
         email,
         passwordHash: await bcrypt.hash(parsed.data.password, 12),
         roleId: officerRole.id,
         status: "PENDING_APPROVAL",
-        staffIdDocument: { create: { ...staffId, content: Buffer.from(staffId.content) } },
+        profile: profilePhoto ? { create: {
+          photoFileName: profilePhoto.fileName,
+          photoMimeType: profilePhoto.mimeType,
+          photoSize: profilePhoto.size,
+          photoContent: Buffer.from(profilePhoto.content),
+        } } : undefined,
+        staffIdDocument: { create: {
+          ...staffId,
+          content: Buffer.from(staffId.content),
+          frontFileName: nationalIdFront.fileName,
+          frontOriginalName: nationalIdFront.originalName,
+          frontMimeType: nationalIdFront.mimeType,
+          frontSize: nationalIdFront.size,
+          frontContent: Buffer.from(nationalIdFront.content),
+          backFileName: nationalIdBack.fileName,
+          backOriginalName: nationalIdBack.originalName,
+          backMimeType: nationalIdBack.mimeType,
+          backSize: nationalIdBack.size,
+          backContent: Buffer.from(nationalIdBack.content),
+        } },
         },
         select: { id: true, name: true, email: true, position: true, employeeId: true, createdAt: true },
       });
@@ -423,7 +446,7 @@ export async function registerOfficerAction(
     data: admins.map((admin) => ({
       userId: admin.id,
       title: "New staff registration awaiting review",
-      message: `${name} (${parsed.data.position}, Employee ID ${parsed.data.employeeId}) submitted a registration on ${new Date().toLocaleDateString("en-PH")}.`,
+      message: `${name} (Employee ID ${parsed.data.employeeId}) submitted a registration on ${new Date().toLocaleDateString("en-PH")}.`,
       type: "STAFF_REGISTRATION",
     })),
   });

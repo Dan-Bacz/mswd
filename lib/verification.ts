@@ -72,3 +72,13 @@ export function namesAreSimilar(left: string, right: string) {
   const overlap = [...leftParts].filter((part) => rightParts.has(part)).length;
   return overlap >= Math.min(2, leftParts.size, rightParts.size);
 }
+
+export function splitRecognizedName(name: string) {
+  const parts = name.trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
+  if (parts.length <= 1) return { firstName: parts[0] ?? "", middleName: "", lastName: "" };
+  return {
+    firstName: parts[0],
+    middleName: parts.length > 2 ? parts.slice(1, -1).join(" ") : "",
+    lastName: parts[parts.length - 1],
+  };
+}

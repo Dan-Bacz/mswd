@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Bell, ChevronDown } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -12,6 +13,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const [notificationCount, recentNotifications] = await Promise.all([db.notification.count({
     where: { userId: user.id, isRead: false },
   }), db.notification.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 })]);
+  const profile = await db.userProfile.findUnique({ where: { userId: user.id }, select: { photoContent: true } });
   return (
     <div className="flex min-h-screen bg-[#F4F7FC]">
       <Sidebar role="ADMIN" />
@@ -50,8 +52,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
               <details className="group relative">
                 <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2 py-1.5 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FFD21F]/35 sm:gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-sm font-bold text-[#0B4599] shadow-sm">
-                    {getInitials(user.name)}
+                  <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white text-sm font-bold text-[#0B4599] shadow-sm">
+                    {profile?.photoContent ? <Image src="/api/profile/photo" alt="Administrator profile photo" fill unoptimized className="object-cover" /> : getInitials(user.name)}
                   </span>
                   <span className="hidden text-left sm:block">
                     <span className="block max-w-36 truncate text-sm font-semibold text-white">{user.name}</span>

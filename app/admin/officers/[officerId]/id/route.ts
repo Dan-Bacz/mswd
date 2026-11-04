@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/permissions";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ officerId: string }> },
 ) {
   const user = await getCurrentUser();
@@ -20,13 +20,19 @@ export async function GET(
     return new NextResponse("Document not found", { status: 404 });
   }
 
-  const safeName = document.originalName.replace(/["\r\n]/g, "_");
-  const body = new Blob([new Uint8Array(document.content)], { type: document.mimeType });
+  const side = new URL(request.url).searchParams.get("side");
+  const selected = side === "front" && document.frontContent
+    ? { name: document.frontOriginalName ?? "national-id-front", mimeType: document.frontMimeType ?? "application/octet-stream", size: document.frontSize ?? document.frontContent.byteLength, content: document.frontContent }
+    : side === "back" && document.backContent
+      ? { name: document.backOriginalName ?? "national-id-back", mimeType: document.backMimeType ?? "application/octet-stream", size: document.backSize ?? document.backContent.byteLength, content: document.backContent }
+      : { name: document.originalName, mimeType: document.mimeType, size: document.size, content: document.content };
+  const safeName = selected.name.replace(/["\r\n]/g, "_");
+  const body = new Blob([new Uint8Array(selected.content)], { type: selected.mimeType });
 
   return new NextResponse(body, {
     headers: {
-      "Content-Type": document.mimeType,
-      "Content-Length": String(document.size),
+      "Content-Type": selected.mimeType,
+      "Content-Length": String(selected.size),
       "Content-Disposition": `inline; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",

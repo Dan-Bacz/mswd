@@ -66,6 +66,31 @@ export async function validateStaffIdUpload(value: FormDataEntryValue | null): P
   };
 }
 
+export async function validateNationalIdImageUpload(value: FormDataEntryValue | null, side: "front" | "back"): Promise<ValidatedUpload> {
+  if (!(typeof File !== "undefined" && value instanceof File) || value.size === 0) {
+    throw new UploadValidationError(`Upload the front and back images of your National ID.`);
+  }
+
+  if (value.size > STAFF_ID_MAX_SIZE) {
+    throw new UploadValidationError("Each National ID image must be 5 MB or smaller.");
+  }
+
+  const content = new Uint8Array(await value.arrayBuffer());
+  const detected = detectFileType(content);
+  if (!detected || !detected.mimeType.startsWith("image/")) {
+    throw new UploadValidationError("Upload a valid JPEG, PNG, or WebP National ID image.");
+  }
+
+  const originalName = value.name.replace(/[\\/\u0000-\u001f]/g, "_").slice(0, 255) || `national-id-${side}.${detected.extension}`;
+  return {
+    fileName: `national-id-${side}-${randomUUID()}.${detected.extension}`,
+    originalName,
+    mimeType: detected.mimeType,
+    size: content.byteLength,
+    content,
+  };
+}
+
 export async function validateProfilePhotoUpload(value: FormDataEntryValue | null): Promise<ValidatedUpload | null> {
   if (!(typeof File !== "undefined" && value instanceof File) || value.size === 0) {
     return null;
