@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth/permissions";
+import { getCurrentUser, getSelectedOfficerCategoryId } from "@/lib/auth/permissions";
 import type { NavSection } from "@/components/layout/nav-links";
 import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
 
@@ -32,9 +32,10 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
 
   let sections = adminSections;
   if (role === "OFFICER") {
-    const assignedCategories = currentUser
+    const selectedCategoryId = currentUser ? await getSelectedOfficerCategoryId(currentUser) : null;
+    const assignedCategories = currentUser && selectedCategoryId
       ? await db.category.findMany({
-          where: { userCategories: { some: { userId: currentUser.id } } },
+          where: { id: selectedCategoryId },
           orderBy: { name: "asc" },
           select: { id: true, name: true },
         })
@@ -43,7 +44,7 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
     sections = [
       {
         items: [
-          { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
+          { href: assignedCategories[0] ? `/officer/categories/${assignedCategories[0].id}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
           { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
           { href: "/officer/reports", label: "Reports", icon: "reports" },

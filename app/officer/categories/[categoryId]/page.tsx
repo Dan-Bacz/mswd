@@ -4,7 +4,7 @@ import { ArrowLeft, HandHeart, UserRound } from "lucide-react";
 import { db } from "@/lib/db";
 import { MetricCard } from "@/components/ui/metric-card";
 import { BeneficiaryRegistry } from "@/components/admin/beneficiary-registry";
-import { getCurrentUser } from "@/lib/auth/permissions";
+import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +14,13 @@ export default async function OfficerCategoryDashboardPage({
   params: Promise<{ categoryId: string }>;
 }) {
   const { categoryId } = await params;
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { user, categoryId: selectedCategoryId } = await requireSelectedOfficerCategory();
+  if (categoryId !== selectedCategoryId) redirect(`/officer/categories/${selectedCategoryId}`);
 
   const category = await db.category.findUnique({ where: { id: categoryId } });
 
   if (!category) {
     notFound();
-  }
-
-  if (user.role !== "ADMIN" && !user.categoryIds.includes(categoryId)) {
-    redirect("/officer/dashboard");
   }
 
   const [beneficiaryCount, assistanceCount, beneficiaries] = await Promise.all([

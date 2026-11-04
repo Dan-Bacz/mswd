@@ -13,8 +13,8 @@ import {
   sendOfficerDeletionEmail,
   sendOfficerRejectionEmail,
 } from "@/lib/email";
-import { createSession, clearSession } from "@/lib/auth/session";
-import { requireAdmin, requireAuth } from "@/lib/auth/permissions";
+import { createSession, clearSession, setSelectedOfficerCategory } from "@/lib/auth/session";
+import { requireAdmin, requireAuth, requireRole } from "@/lib/auth/permissions";
 import { categorySchema, loginSchema, officerProfileSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 import { buildFullName } from "@/lib/identity";
 import {
@@ -78,7 +78,19 @@ export async function loginAction(
   });
 
   revalidatePath("/");
-  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : user.userCategories.length > 1 ? "/officer/select-category" : "/officer/dashboard");
+  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : "/officer/select-category");
+}
+
+export async function selectOfficerCategoryAction(formData: FormData) {
+  const user = await requireRole("OFFICER");
+  const categoryId = String(formData.get("categoryId") ?? "").trim();
+  if (!categoryId || !user.categoryIds.includes(categoryId)) {
+    redirect("/officer/select-category");
+  }
+
+  await setSelectedOfficerCategory(categoryId);
+  revalidatePath("/officer");
+  redirect(`/officer/categories/${categoryId}`);
 }
 
 export async function setupAction(

@@ -4,14 +4,18 @@ import Link from "next/link";
 import { Bell, ChevronDown } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { db } from "@/lib/db";
-import { requireRole } from "@/lib/auth/permissions";
+import { getSelectedOfficerCategoryId, requireRole } from "@/lib/auth/permissions";
 import { getInitials } from "@/lib/utils";
 import { logoutAction } from "@/app/actions/auth";
 
 export default async function OfficerLayout({ children }: { children: ReactNode }) {
   const user = await requireRole("OFFICER");
+  const selectedCategoryId = await getSelectedOfficerCategoryId(user);
+  if (!selectedCategoryId) {
+    return <div className="min-h-screen bg-[#F4F7FC]">{children}</div>;
+  }
   const assignedCategories = await db.category.findMany({
-    where: { id: { in: user.categoryIds } },
+    where: { id: selectedCategoryId },
     orderBy: { name: "asc" },
     select: { name: true },
   });

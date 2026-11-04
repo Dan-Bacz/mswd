@@ -27,6 +27,7 @@ export function getReportDateRange(
 export async function getReportData(
   dateRange: ReportDateRange,
   officerId?: string,
+  categoryId?: string,
 ) {
   const start = new Date(`${dateRange.startDate}T00:00:00.000Z`);
   const endExclusive = new Date(`${dateRange.endDate}T00:00:00.000Z`);
@@ -36,6 +37,7 @@ export async function getReportData(
     db.beneficiary.findMany({
       where: {
         ...(officerId ? { assignedOfficerId: officerId } : {}),
+        ...(categoryId ? { categoryId } : {}),
         registrationDate: { gte: start, lt: endExclusive },
       },
       select: {
@@ -54,6 +56,7 @@ export async function getReportData(
     db.beneficiaryAssistance.findMany({
       where: {
         ...(officerId ? { providedById: officerId } : {}),
+        ...(categoryId ? { beneficiary: { categoryId } } : {}),
         visitDate: { gte: start, lt: endExclusive },
       },
       select: {

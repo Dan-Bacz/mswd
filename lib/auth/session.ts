@@ -2,6 +2,7 @@
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE = "mswd_session";
+export const SELECTED_OFFICER_CATEGORY_COOKIE = "mswd_officer_category";
 
 export type SessionUser = {
   id: string;
@@ -41,6 +42,23 @@ export async function createSession(user: SessionUser) {
 export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(SELECTED_OFFICER_CATEGORY_COOKIE);
+}
+
+export async function setSelectedOfficerCategory(categoryId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(SELECTED_OFFICER_CATEGORY_COOKIE, categoryId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+export async function getSelectedOfficerCategory() {
+  const cookieStore = await cookies();
+  return cookieStore.get(SELECTED_OFFICER_CATEGORY_COOKIE)?.value ?? null;
 }
 
 export async function getSession(): Promise<SessionUser | null> {
