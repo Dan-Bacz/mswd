@@ -24,7 +24,7 @@ import {
   hashVerificationToken,
   parseRecognizedNationalIdPayload,
 } from "@/lib/verification";
-import { validateNationalIdImageUpload, validateProfilePhotoUpload, validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
+import { validateNationalIdImageUpload, validateProfilePhotoUpload, UploadValidationError } from "@/lib/uploads";
 import {
   markAllNotificationsRead,
   markNotificationRead,
@@ -316,8 +316,6 @@ export async function registerOfficerAction(
 ) {
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
-  const verificationSessionId = String(formData.get("verificationSessionId") ?? "").trim();
-  const verificationToken = String(formData.get("verificationToken") ?? "").trim();
 
   if (password !== confirmPassword) {
     return { ok: false, message: "Passwords do not match." };
@@ -336,30 +334,10 @@ export async function registerOfficerAction(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid registration details." };
   }
 
-  const verification = verificationSessionId && verificationToken
-    ? await db.officerVerificationSession.findFirst({
-        where: { id: verificationSessionId, tokenHash: hashVerificationToken(verificationToken) },
-        select: { id: true, expiresAt: true, qrStatus: true, livenessStatus: true, faceMatchStatus: true, overallStatus: true, submittedAt: true },
-      })
-    : null;
-  if (
-    !verification ||
-    verification.submittedAt ||
-    verification.expiresAt <= new Date() ||
-    verification.qrStatus !== "QR_DECODED" ||
-    verification.livenessStatus !== "INCONCLUSIVE" ||
-    verification.faceMatchStatus !== "INCONCLUSIVE" ||
-    verification.overallStatus !== "MANUAL_REVIEW"
-  ) {
-    return { ok: false, message: "Complete the National ID scan and live face verification first. Automated identity verification is not available, so the registration must be submitted for manual review." };
-  }
-
-  let staffId: Awaited<ReturnType<typeof validateStaffIdUpload>>;
   let nationalIdFront: Awaited<ReturnType<typeof validateNationalIdImageUpload>>;
   let nationalIdBack: Awaited<ReturnType<typeof validateNationalIdImageUpload>>;
   let profilePhoto: Awaited<ReturnType<typeof validateProfilePhotoUpload>>;
   try {
-    staffId = await validateStaffIdUpload(formData.get("staffId"));
     nationalIdFront = await validateNationalIdImageUpload(formData.get("nationalIdFront"), "front");
     nationalIdBack = await validateNationalIdImageUpload(formData.get("nationalIdBack"), "back");
     profilePhoto = await validateProfilePhotoUpload(formData.get("profilePhotoCapture"))
@@ -406,8 +384,11 @@ export async function registerOfficerAction(
           photoContent: Buffer.from(profilePhoto.content),
         } } : undefined,
         staffIdDocument: { create: {
-          ...staffId,
-          content: Buffer.from(staffId.content),
+          fileName: nationalIdFront.fileName,
+          originalName: nationalIdFront.originalName,
+          mimeType: nationalIdFront.mimeType,
+          size: nationalIdFront.size,
+          content: Buffer.from(nationalIdFront.content),
           frontFileName: nationalIdFront.fileName,
           frontOriginalName: nationalIdFront.originalName,
           frontMimeType: nationalIdFront.mimeType,
@@ -421,10 +402,6 @@ export async function registerOfficerAction(
         } },
         },
         select: { id: true, name: true, email: true, position: true, employeeId: true, createdAt: true },
-      });
-      await transaction.officerVerificationSession.update({
-        where: { id: verification.id },
-        data: { userId: created.id, submittedAt: new Date() },
       });
       return created;
     });
