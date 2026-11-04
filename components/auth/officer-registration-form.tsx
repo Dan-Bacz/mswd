@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { registerOfficerAction } from "@/app/actions/auth";
+import { IdentityVerification } from "@/components/auth/identity-verification";
 
 const initialState = { ok: true, message: "" };
 
@@ -9,6 +10,7 @@ export function OfficerRegistrationForm() {
   const [state, formAction, pending] = useActionState(registerOfficerAction, initialState);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [verificationReady, setVerificationReady] = useState(false);
   const passwordsDoNotMatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   return (
@@ -70,7 +72,10 @@ export function OfficerRegistrationForm() {
           />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="position" className="mb-2 block text-sm font-semibold text-slate-700">Position / designation</label><input id="position" name="position" required placeholder="e.g. Social Welfare Officer" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div><div><label htmlFor="employeeId" className="mb-2 block text-sm font-semibold text-slate-700">Employee ID</label><input id="employeeId" name="employeeId" required placeholder="MSWD employee ID" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" /></div></div>
+      <div>
+        <label htmlFor="employeeId" className="mb-2 block text-sm font-semibold text-slate-700">Employee ID</label>
+        <input id="employeeId" name="employeeId" required placeholder="MSWD employee ID" className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10" />
+      </div>
       <div>
         <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700">Email address</label>
         <input
@@ -83,6 +88,7 @@ export function OfficerRegistrationForm() {
           className="w-full rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#0B4599] focus:bg-white focus:ring-4 focus:ring-[#0B4599]/10"
         />
       </div>
+      <IdentityVerification onReadyChange={setVerificationReady} />
       <div>
         <label htmlFor="staffId" className="mb-2 block text-sm font-semibold text-slate-700">
           Government-issued ID / employment document
@@ -157,10 +163,10 @@ export function OfficerRegistrationForm() {
 
       <button
         type="submit"
-        disabled={pending || passwordsDoNotMatch || password.length === 0 || confirmPassword.length === 0}
+        disabled={pending || !verificationReady || passwordsDoNotMatch || password.length === 0 || confirmPassword.length === 0}
         className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#073783] px-4 py-3.5 font-semibold text-white shadow-lg shadow-[#073783]/15 transition hover:-translate-y-0.5 hover:bg-[#0B4599] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0"
       >
-        {pending ? "Submitting registration..." : "Submit registration"}
+        {pending ? "Submitting registration..." : verificationReady ? "Submit registration for manual review" : "Complete identity verification first"}
         {!pending && <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>}
       </button>
     </form>

@@ -15,7 +15,7 @@ const dateSchema = z
   .string()
   .trim()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid date.")
-  .refine((value) => {
+  .refine((value: string) => {
     const date = new Date(`${value}T00:00:00.000Z`);
     return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
   }, "Choose a valid date.");
@@ -23,12 +23,12 @@ const dateSchema = z
 const amountSchema = z
   .string()
   .trim()
-  .refine((value) => value === "" || /^\d{1,10}(\.\d{1,2})?$/.test(value), "Enter a valid amount with up to 2 decimal places.");
+  .refine((value: string) => value === "" || /^\d{1,10}(\.\d{1,2})?$/.test(value), "Enter a valid amount with up to 2 decimal places.");
 
 const quantitySchema = z
   .string()
   .trim()
-  .refine((value) => value === "" || /^\d{1,7}$/.test(value), "Enter a whole number.");
+  .refine((value: string) => value === "" || /^\d{1,7}$/.test(value), "Enter a whole number.");
 
 const assistanceSchema = z
   .object({

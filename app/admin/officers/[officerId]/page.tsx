@@ -20,6 +20,20 @@ export default async function OfficerManagePage({
     where: { id: officerId },
     include: {
       role: true,
+      verificationSession: {
+        select: {
+          qrName: true,
+          qrBirthDate: true,
+          qrSex: true,
+          qrStatus: true,
+          qrAuthenticityStatus: true,
+          livenessStatus: true,
+          faceMatchStatus: true,
+          overallStatus: true,
+          manualReviewReason: true,
+          expiresAt: true,
+        },
+      },
       staffIdDocument: {
         select: { fileName: true, originalName: true, mimeType: true, size: true, uploadedAt: true },
       },
@@ -96,6 +110,26 @@ export default async function OfficerManagePage({
           )}
         </div>
       </section>
+
+      {officer.verificationSession && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <h2 className="text-lg font-semibold text-amber-950">Identity verification review</h2>
+          <p className="mt-1 text-sm text-amber-900">Automated verification is not a substitute for National ID authenticity review or an authorized portrait comparison.</p>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <ReviewStatus label="QR" value={officer.verificationSession.qrStatus} />
+            <ReviewStatus label="ID authenticity" value={officer.verificationSession.qrAuthenticityStatus} />
+            <ReviewStatus label="Liveness" value={officer.verificationSession.livenessStatus} />
+            <ReviewStatus label="Face match" value={officer.verificationSession.faceMatchStatus} />
+          </dl>
+          <p className="mt-4 text-sm font-semibold text-amber-950">Overall: {officer.verificationSession.overallStatus}</p>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+            <ReviewStatus label="Decoded name" value={officer.verificationSession.qrName ?? "Not available"} />
+            <ReviewStatus label="Decoded birth date" value={officer.verificationSession.qrBirthDate?.toISOString().slice(0, 10) ?? "Not available"} />
+            <ReviewStatus label="Decoded sex" value={officer.verificationSession.qrSex ?? "Not available"} />
+          </dl>
+          {officer.verificationSession.manualReviewReason && <p className="mt-1 text-xs text-amber-900">{officer.verificationSession.manualReviewReason}</p>}
+        </section>
+      )}
 
       {officer.status === "PENDING_APPROVAL" ? (
         <ApproveOfficerForm officerId={officer.id} />
@@ -206,4 +240,8 @@ export default async function OfficerManagePage({
       </div>
     </div>
   );
+}
+
+function ReviewStatus({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-amber-200 bg-white/70 p-3"><dt className="text-xs text-amber-800">{label}</dt><dd className="mt-1 text-sm font-semibold text-amber-950">{value}</dd></div>;
 }

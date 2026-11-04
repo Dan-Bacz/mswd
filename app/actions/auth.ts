@@ -17,6 +17,13 @@ import { createSession, clearSession } from "@/lib/auth/session";
 import { requireAdmin, requireAuth } from "@/lib/auth/permissions";
 import { categorySchema, loginSchema, officerProfileSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 import { buildFullName } from "@/lib/identity";
+import {
+  VERIFICATION_SESSION_TTL_MS,
+  createVerificationToken,
+  hashQrPayload,
+  hashVerificationToken,
+  parseRecognizedNationalIdPayload,
+} from "@/lib/verification";
 import { validateProfilePhotoUpload, validateStaffIdUpload, UploadValidationError } from "@/lib/uploads";
 import {
   markAllNotificationsRead,
@@ -142,6 +149,91 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+export async function createOfficerVerificationSessionAction() {
+  const token = createVerificationToken();
+  const session = await db.officerVerificationSession.create({
+    data: {
+      tokenHash: hashVerificationToken(token),
+      expiresAt: new Date(Date.now() + VERIFICATION_SESSION_TTL_MS),
+      consentAt: new Date(),
+    },
+    select: { id: true, expiresAt: true },
+  });
+  return { ok: true, sessionId: session.id, token, expiresAt: session.expiresAt.toISOString() };
+}
+
+export async function recordOfficerNationalIdScanAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData,
+) {
+  const sessionId = String(formData.get("verificationSessionId") ?? "").trim();
+  const token = String(formData.get("verificationToken") ?? "").trim();
+  const payload = String(formData.get("qrPayload") ?? "");
+  if (!sessionId || !token || !payload) return { ok: false, message: "Start a new verification session and scan the QR code again." };
+
+  const session = await db.officerVerificationSession.findFirst({
+    where: { id: sessionId, tokenHash: hashVerificationToken(token) },
+    select: { id: true, expiresAt: true, submittedAt: true },
+  });
+  if (!session || session.submittedAt || session.expiresAt <= new Date()) {
+    return { ok: false, message: "The verification session has expired. Start again." };
+  }
+
+  const parsed = parseRecognizedNationalIdPayload(payload);
+  if (!parsed) {
+    return { ok: false, message: "The QR code was readable, but its format is not a recognized PhilSys identity payload. Authenticity was not verified." };
+  }
+
+  await db.officerVerificationSession.update({
+    where: { id: session.id },
+    data: {
+      qrPayloadHash: hashQrPayload(payload),
+      qrName: parsed.name,
+      qrBirthDate: parsed.birthDate,
+      qrSex: parsed.sex,
+      qrStatus: "QR_DECODED",
+      qrAuthenticityStatus: "INCONCLUSIVE",
+      overallStatus: "INCONCLUSIVE",
+      manualReviewReason: "QR decoded locally; official Philippine National ID authenticity verification is unavailable.",
+    },
+  });
+
+  return {
+    ok: true,
+    message: "QR decoded. National ID authenticity is not verified and will require administrator/manual review.",
+    name: parsed.name,
+    birthDate: parsed.birthDate?.toISOString().slice(0, 10) ?? null,
+    sex: parsed.sex,
+  };
+}
+
+export async function recordOfficerLivenessInconclusiveAction(
+  _previousState: { ok: boolean; message: string } | null,
+  formData: FormData,
+) {
+  const sessionId = String(formData.get("verificationSessionId") ?? "").trim();
+  const token = String(formData.get("verificationToken") ?? "").trim();
+  if (!sessionId || !token) return { ok: false, message: "Start a verification session first." };
+
+  const session = await db.officerVerificationSession.findFirst({
+    where: { id: sessionId, tokenHash: hashVerificationToken(token) },
+    select: { id: true, expiresAt: true, qrStatus: true, submittedAt: true },
+  });
+  if (!session || session.submittedAt || session.expiresAt <= new Date()) return { ok: false, message: "The verification session has expired. Start again." };
+  if (session.qrStatus !== "QR_DECODED") return { ok: false, message: "Decode a recognized National ID QR payload before starting face verification." };
+
+  await db.officerVerificationSession.update({
+    where: { id: session.id },
+    data: {
+      livenessStatus: "INCONCLUSIVE",
+      faceMatchStatus: "INCONCLUSIVE",
+      overallStatus: "MANUAL_REVIEW",
+      manualReviewReason: "Automated liveness and face matching are unavailable without a validated anti-spoofing detector and authorized reference portrait.",
+    },
+  });
+  return { ok: true, message: "Face verification is inconclusive. Registration will remain pending manual review." };
+}
+
 export async function updateOfficerProfileAction(
   _previousState: { ok: boolean; message: string } | null,
   formData: FormData,
@@ -226,6 +318,8 @@ export async function registerOfficerAction(
 ) {
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  const verificationSessionId = String(formData.get("verificationSessionId") ?? "").trim();
+  const verificationToken = String(formData.get("verificationToken") ?? "").trim();
 
   if (password !== confirmPassword) {
     return { ok: false, message: "Passwords do not match." };
@@ -243,6 +337,24 @@ export async function registerOfficerAction(
 
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid registration details." };
+  }
+
+  const verification = verificationSessionId && verificationToken
+    ? await db.officerVerificationSession.findFirst({
+        where: { id: verificationSessionId, tokenHash: hashVerificationToken(verificationToken) },
+        select: { id: true, expiresAt: true, qrStatus: true, livenessStatus: true, faceMatchStatus: true, overallStatus: true, submittedAt: true },
+      })
+    : null;
+  if (
+    !verification ||
+    verification.submittedAt ||
+    verification.expiresAt <= new Date() ||
+    verification.qrStatus !== "QR_DECODED" ||
+    verification.livenessStatus !== "INCONCLUSIVE" ||
+    verification.faceMatchStatus !== "INCONCLUSIVE" ||
+    verification.overallStatus !== "MANUAL_REVIEW"
+  ) {
+    return { ok: false, message: "Complete the National ID scan and live face verification first. Automated identity verification is not available, so the registration must be submitted for manual review." };
   }
 
   let staffId: Awaited<ReturnType<typeof validateStaffIdUpload>>;
@@ -270,8 +382,9 @@ export async function registerOfficerAction(
   const name = buildFullName(parsed.data);
   let officer: { id: string; name: string; email: string; position: string | null; employeeId: string | null; createdAt: Date };
   try {
-    officer = await db.user.create({
-      data: {
+    officer = await db.$transaction(async (transaction) => {
+      const created = await transaction.user.create({
+        data: {
         name,
         firstName: parsed.data.firstName,
         middleName: parsed.data.middleName || null,
@@ -283,8 +396,14 @@ export async function registerOfficerAction(
         roleId: officerRole.id,
         status: "PENDING_APPROVAL",
         staffIdDocument: { create: { ...staffId, content: Buffer.from(staffId.content) } },
-      },
-      select: { id: true, name: true, email: true, position: true, employeeId: true, createdAt: true },
+        },
+        select: { id: true, name: true, email: true, position: true, employeeId: true, createdAt: true },
+      });
+      await transaction.officerVerificationSession.update({
+        where: { id: verification.id },
+        data: { userId: created.id, submittedAt: new Date() },
+      });
+      return created;
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -548,7 +667,7 @@ export async function approveOfficerAction(
 
   const officer = await db.user.findUnique({
     where: { id: officerId },
-    include: { role: true },
+    include: { role: true, verificationSession: { select: { overallStatus: true, submittedAt: true, expiresAt: true } } },
   });
 
   if (!officer || officer.role.name !== "OFFICER") {
@@ -556,6 +675,9 @@ export async function approveOfficerAction(
   }
   if (officer.status !== "PENDING_APPROVAL") {
     return { ok: false, message: "This officer account is no longer awaiting approval." };
+  }
+  if (officer.verificationSession && officer.verificationSession.overallStatus !== "MANUAL_REVIEW" && officer.verificationSession.overallStatus !== "VERIFIED") {
+    return { ok: false, message: "Complete the required identity review before approving this account." };
   }
 
   const result = await db.user.updateMany({
