@@ -9,9 +9,7 @@ import {
   FolderTree,
   HeartHandshake,
   Settings,
-  ReceiptText,
   ShieldCheck,
-  ShoppingCart,
   UserCircle2,
   Users,
   type LucideIcon,
@@ -28,8 +26,6 @@ const iconMap: Record<string, LucideIcon> = {
   beneficiaries: Users,
   assistance: HeartHandshake,
   notifications: Bell,
-  sales: ShoppingCart,
-  receipt: ReceiptText,
 };
 
 export type NavLinkItem = {

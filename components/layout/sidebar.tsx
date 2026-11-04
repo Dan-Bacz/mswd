@@ -11,8 +11,6 @@ const adminSections: NavSection[] = [
       { href: "/admin/reports", label: "Reports", icon: "reports" },
       { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
       { href: "/admin/assistance", label: "Assistance", icon: "assistance" },
-      { href: "/admin/sales/pos", label: "Sales / POS", icon: "sales" },
-      { href: "/admin/sales/receipts", label: "Sales receipts", icon: "receipt" },
       { href: "/admin/officers", label: "Officers", icon: "users" },
       { href: "/admin/notifications", label: "Notifications", icon: "notifications" },
       { href: "/admin/settings", label: "Settings", icon: "settings" },
