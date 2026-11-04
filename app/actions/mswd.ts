@@ -9,7 +9,7 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { beneficiarySchema } from "@/lib/validation";
 import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
-import { buildBeneficiaryIdentityKey, buildFullName } from "@/lib/identity";
+import { buildBeneficiaryIdentityKey, buildBeneficiaryNameIdentityKey, buildFullName } from "@/lib/identity";
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -229,19 +229,10 @@ export async function createBeneficiaryAction(
     dateOfBirth: dob,
     barangay: parsed.data.barangay,
   });
+  const nameIdentityKey = buildBeneficiaryNameIdentityKey(parsed.data);
 
   const duplicate = await db.beneficiary.findFirst({
-    where: identityKey
-      ? { identityKey }
-      : {
-          firstName: { equals: parsed.data.firstName, mode: "insensitive" },
-          middleName: parsed.data.middleName
-            ? { equals: parsed.data.middleName, mode: "insensitive" }
-            : null,
-          lastName: { equals: parsed.data.lastName, mode: "insensitive" },
-          dateOfBirth: null,
-          barangay: { equals: parsed.data.barangay, mode: "insensitive" },
-        },
+    where: { nameIdentityKey },
     include: { category: { select: { name: true } } },
     orderBy: { createdAt: "asc" },
   });
@@ -308,30 +299,13 @@ export async function createBeneficiaryAction(
     }
   }
 
-  const possibleDuplicate = await db.beneficiary.findFirst({
-    where: {
-      categoryId: parsed.data.categoryId,
-      firstName: { equals: parsed.data.firstName, mode: "insensitive" },
-      lastName: { equals: parsed.data.lastName, mode: "insensitive" },
-      ...(dob ? { dateOfBirth: dob } : {}),
-      status: { not: "ARCHIVED" },
-    },
-    select: { beneficiaryNumber: true },
-  });
-  if (possibleDuplicate) {
-    return {
-      ok: false,
-      message: "This client or beneficiary is already registered in the system.",
-      fieldErrors: { firstName: `Existing Client ID: ${possibleDuplicate.beneficiaryNumber}. Review the existing record instead of creating a duplicate.` },
-    };
-  }
-
   try {
     await db.$transaction(async (transaction) => {
       const beneficiary = await transaction.beneficiary.create({
         data: {
           beneficiaryNumber: generateSequence("BEN"),
           identityKey,
+          nameIdentityKey,
           firstName: parsed.data.firstName,
           middleName: parsed.data.middleName || null,
           lastName: parsed.data.lastName,
@@ -371,9 +345,9 @@ export async function createBeneficiaryAction(
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002" && identityKey) {
-        const existing = await db.beneficiary.findUnique({
-          where: { identityKey },
+      if (error.code === "P2002") {
+        const existing = await db.beneficiary.findFirst({
+          where: { OR: [...(identityKey ? [{ identityKey }] : []), { nameIdentityKey }] },
           include: { category: { select: { name: true } } },
         });
 
@@ -463,6 +437,14 @@ export async function updateBeneficiaryAction(
     dateOfBirth: dob,
     barangay: parsed.data.barangay,
   });
+  const nameIdentityKey = buildBeneficiaryNameIdentityKey(parsed.data);
+  const duplicateByName = await db.beneficiary.findFirst({
+    where: { nameIdentityKey, id: { not: beneficiaryId } },
+    select: { beneficiaryNumber: true },
+  });
+  if (duplicateByName) {
+    return { ok: false, message: "This client or beneficiary is already registered in the system.", fieldErrors: { firstName: `Existing Client ID: ${duplicateByName.beneficiaryNumber}.` } };
+  }
   if (identityKey) {
     const duplicate = await db.beneficiary.findFirst({ where: { identityKey, id: { not: beneficiaryId } }, select: { beneficiaryNumber: true } });
     if (duplicate) return { ok: false, message: "This client or beneficiary is already registered in the system.", fieldErrors: { firstName: `Existing Client ID: ${duplicate.beneficiaryNumber}.` } };
@@ -482,6 +464,7 @@ export async function updateBeneficiaryAction(
         where: { id: beneficiaryId },
         data: {
           identityKey,
+          nameIdentityKey,
           firstName: parsed.data.firstName,
           middleName: parsed.data.middleName || null,
           lastName: parsed.data.lastName,

@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:verification": "tsx --test lib/verification.test.ts",
+    "test:identity": "tsx --test lib/identity.test.ts",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts"

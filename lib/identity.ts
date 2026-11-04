@@ -40,3 +40,13 @@ export function buildBeneficiaryIdentityKey(input: {
     normalize(input.barangay),
   ].join("|");
 }
+
+export function buildBeneficiaryNameIdentityKey(input: {
+  firstName: string;
+  middleName?: string | null;
+  lastName: string;
+}) {
+  return [input.firstName, input.middleName, input.lastName]
+    .map((value) => normalize(value))
+    .join("|");
+}

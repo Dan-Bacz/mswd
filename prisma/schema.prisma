@@ -196,6 +196,7 @@ model Beneficiary {
   id                String                  @id @default(uuid())
   beneficiaryNumber String                  @unique
   identityKey       String?                 @unique
+  nameIdentityKey   String?                 @unique
   firstName         String
   middleName        String?
   lastName          String
