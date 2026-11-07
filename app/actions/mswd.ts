@@ -57,6 +57,13 @@ function collectGeneralIntakeData(formData: FormData): Prisma.InputJsonObject {
     if (value) data[field] = value;
   }
   data.familyComposition = formData.getAll("intakeFamilyMember").map(String).map((value) => value.trim()).filter(Boolean);
+  for (const [field, value] of formData.entries()) {
+    if (!field.startsWith("vawc") || typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    const existing = data[field];
+    data[field] = existing === undefined ? trimmed : Array.isArray(existing) ? [...existing, trimmed] : [existing, trimmed];
+  }
   return data as Prisma.InputJsonObject;
 }
 
@@ -144,16 +151,16 @@ export async function createBeneficiaryAction(
   const user = await requireAuth();
 
   const raw = {
-    firstName: capitalizePersonName(String(formData.get("firstName") ?? "")),
-    middleName: capitalizePersonName(String(formData.get("middleName") ?? "")),
-    lastName: capitalizePersonName(String(formData.get("lastName") ?? "")),
+    firstName: capitalizePersonName(String(formData.get("firstName") ?? formData.get("vawcVictimFirstName") ?? "")),
+    middleName: capitalizePersonName(String(formData.get("middleName") ?? formData.get("vawcVictimMiddleName") ?? "")),
+    lastName: capitalizePersonName(String(formData.get("lastName") ?? formData.get("vawcVictimLastName") ?? "")),
     suffix: String(formData.get("suffix") ?? ""),
-    sex: String(formData.get("sex") ?? ""),
-    dateOfBirth: String(formData.get("dateOfBirth") ?? ""),
+    sex: String(formData.get("sex") ?? formData.get("vawcVictimSex") ?? ""),
+    dateOfBirth: String(formData.get("dateOfBirth") ?? formData.get("vawcVictimBirthdate") ?? ""),
     civilStatus: String(formData.get("civilStatus") ?? ""),
     contactNumber: String(formData.get("contactNumber") ?? ""),
     email: String(formData.get("email") ?? ""),
-    address: String(formData.get("address") ?? ""),
+    address: String(formData.get("address") ?? formData.get("vawcVictimAddress") ?? ""),
     barangay: String(formData.get("barangay") ?? ""),
     province: String(formData.get("province") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
@@ -244,7 +251,7 @@ export async function createBeneficiaryAction(
   }
 
   const categoryName = category.name.toLowerCase();
-  if (categoryName.includes("aics") || categoryName.includes("disaster")) {
+  if (categoryName.includes("aics") || categoryName.includes("disaster") || categoryName.includes("vawc") || categoryName.includes("special protection")) {
     generalIntakeData = collectGeneralIntakeData(formData);
   }
 

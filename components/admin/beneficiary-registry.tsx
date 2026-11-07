@@ -205,6 +205,8 @@ export function BeneficiaryRegistry({
     ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/solo-parent`
     : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster")
       ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
+      : selectedCategoryName.includes("vawc") || selectedCategoryName.includes("special protection")
+        ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/vawc-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
       : null;
   const activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length;
   const normalizedSearch = search.trim().toLowerCase();
