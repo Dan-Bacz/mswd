@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { ArrowLeft, LoaderCircle, Save } from "lucide-react";
 import { createBeneficiaryAction, type BeneficiaryActionState } from "@/app/actions/mswd";
-import { SoloParentApplicationFields, type RegistryCategory, type RegistryOfficer } from "@/components/admin/beneficiary-registry";
+import { type RegistryCategory, type RegistryOfficer } from "@/components/admin/beneficiary-registry";
+import { SoloParentOfficialFields } from "@/components/beneficiaries/solo-parent-official-fields";
 
 const initialState: BeneficiaryActionState = { ok: true, message: "" };
 
@@ -67,12 +68,10 @@ export function SoloParentPageForm({
         <form ref={formRef} action={formAction} encType="multipart/form-data">
           {!state.ok && <div role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{state.message}</div>}
           <div data-solo-step="1" hidden={step !== 1}>
-            <SoloParentApplicationFields
-              categories={[category]}
+            <SoloParentOfficialFields
+              category={category}
               officers={officers}
               officerMode={officerMode}
-              categoryId={category.id}
-              onCategoryChange={() => undefined}
               fieldErrors={state.fieldErrors}
             />
           </div>
