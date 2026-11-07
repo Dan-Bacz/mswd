@@ -67,6 +67,19 @@ function collectGeneralIntakeData(formData: FormData): Prisma.InputJsonObject {
   return data as Prisma.InputJsonObject;
 }
 
+const REQUIRED_VAWC_FIELDS = [
+  "vawcIntakeDate", "vawcInterviewedBy", "vawcHandlingOrganization", "vawcReportingType",
+  "lastName", "firstName", "middleName", "sex", "dateOfBirth", "address", "vawcVictimNationality",
+  "vawcVictimCivilStatus", "vawcVictimAge", "vawcVictimEthnicity", "vawcVictimOccupation",
+  "vawcVictimEmployment", "vawcVictimMigratoryStatus", "vawcVictimCurrentAddress",
+  "vawcIncidentDescription", "vawcIncidentDate", "vawcIncidentLocation", "vawcPerpetratorLastName",
+  "vawcPerpetratorFirstName", "vawcPerpetratorAddress",
+] as const;
+
+function missingVawcFields(formData: FormData) {
+  return REQUIRED_VAWC_FIELDS.filter((field) => String(formData.get(field) ?? "").trim().length === 0);
+}
+
 type BeneficiaryImage = {
   type: BeneficiaryFileType;
   fileName: string;
@@ -252,6 +265,16 @@ export async function createBeneficiaryAction(
 
   const categoryName = category.name.toLowerCase();
   if (categoryName.includes("aics") || categoryName.includes("disaster") || categoryName.includes("vawc") || categoryName.includes("special protection")) {
+    if (categoryName.includes("vawc") || categoryName.includes("special protection")) {
+      const missingFields = missingVawcFields(formData);
+      if (missingFields.length > 0) {
+        return {
+          ok: false,
+          message: "Please complete all required Annex D fields before saving the beneficiary.",
+          fieldErrors: Object.fromEntries(missingFields.map((field) => [field, "This field is required."])),
+        };
+      }
+    }
     generalIntakeData = collectGeneralIntakeData(formData);
   }
 

@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { Save, UserCircle2 } from "lucide-react";
 import { updateBeneficiaryAction, type BeneficiaryActionState } from "@/app/actions/mswd";
 import { MAHAYAG_BARANGAYS } from "@/lib/locations";
+import { VawcIntakeProfile } from "@/components/beneficiaries/vawc-intake-profile";
 
 const initialState: BeneficiaryActionState = { ok: true, message: "" };
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100";
@@ -43,6 +44,7 @@ export function BeneficiaryProfile({
     remarks: string | null;
     assistanceCount: number;
     hasPhoto: boolean;
+    generalIntakeData: Record<string, unknown> | null;
   };
   canEdit: boolean;
   backHref: string;
@@ -59,6 +61,7 @@ export function BeneficiaryProfile({
         </div>
         <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Client ID {beneficiary.beneficiaryNumber}</p><h1 className="mt-1 text-3xl font-bold text-slate-900">{name}</h1><p className="mt-1 text-sm text-slate-600">{beneficiary.categoryName} · {beneficiary.status}</p></div>
       </header>
+      {beneficiary.generalIntakeData && (beneficiary.categoryName.toLowerCase().includes("vawc") || beneficiary.categoryName.toLowerCase().includes("special protection")) && <VawcIntakeProfile data={beneficiary.generalIntakeData} />}
       {canEdit ? (
         <form action={formAction} encType="multipart/form-data" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <input type="hidden" name="beneficiaryId" value={beneficiary.id} /><input type="hidden" name="categoryId" value={beneficiary.categoryId} />
