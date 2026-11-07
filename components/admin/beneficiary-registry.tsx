@@ -69,6 +69,111 @@ function FormField({
   );
 }
 
+function SoloParentApplicationFields({
+  categories,
+  officers,
+  officerMode,
+  categoryId,
+  onCategoryChange,
+  fieldErrors,
+}: {
+  categories: RegistryCategory[];
+  officers: RegistryOfficer[];
+  officerMode: boolean;
+  categoryId: string;
+  onCategoryChange: (categoryId: string) => void;
+  fieldErrors?: Record<string, string>;
+}) {
+  const soloInput = "mt-1.5 h-10 w-full rounded-lg border border-[#DCE3EE] bg-white px-3 text-sm text-[#172B4D] outline-none focus:border-[#C9A93F] focus:ring-4 focus:ring-[#C9A93F]/15";
+  const error = (field: string) => fieldErrors?.[field];
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 border-b border-[#E8EDF4] pb-3">
+          <p className="text-center text-[10px] font-medium text-[#405B80]">Republic of the Philippines</p>
+          <p className="text-center text-[10px] font-medium text-[#405B80]">Province of Zamboanga del Sur</p>
+          <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#0B4599]">Municipal Social Welfare and Development Office</p>
+          <p className="text-center text-[10px] font-medium text-[#405B80]">Mahayag, Zamboanga del Sur</p>
+          <p className="mt-1 text-center text-[10px] text-[#7184A0]">Mobile Nos. 0963-286-8189 / 0953-267-8147 · E-mail: bagaslaoft@gmail.com</p>
+          <h3 className="mt-4 text-center text-base font-bold text-[#0B1A3E] sm:text-lg">Application Form: Solo Parent Identification Card</h3>
+          <p className="mt-1 text-center text-xs leading-relaxed text-[#7184A0]">Complete the official Solo Parent application information and family composition.</p>
+        </div>
+        <FormField id="categoryId" label="Beneficiary category" required error={error("categoryId")}>
+          {officerMode ? (
+            <>
+              <input id="categoryName" value={categories.find((category) => category.id === categoryId)?.name ?? ""} readOnly className={`${soloInput} bg-slate-50`} />
+              <input type="hidden" name="categoryId" value={categoryId} />
+            </>
+          ) : (
+            <select id="categoryId" name="categoryId" value={categoryId} onChange={(event) => onCategoryChange(event.currentTarget.value)} className={soloInput} required>
+              <option value="" disabled>Select a category</option>
+              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+          )}
+        </FormField>
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <FormField id="firstName" label="First name" required error={error("firstName")}><input id="firstName" name="firstName" className={`${soloInput} capitalize`} required /></FormField>
+          <FormField id="middleName" label="Middle name" error={error("middleName")}><input id="middleName" name="middleName" className={`${soloInput} capitalize`} /></FormField>
+          <FormField id="lastName" label="Last name" required error={error("lastName")}><input id="lastName" name="lastName" className={`${soloInput} capitalize`} required /></FormField>
+          <FormField id="sex" label="Sex" required error={error("sex")}><select id="sex" name="sex" className={soloInput} defaultValue="MALE" required><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option></select></FormField>
+          <FormField id="dateOfBirth" label="Date of birth" error={error("dateOfBirth")}><input id="dateOfBirth" name="dateOfBirth" type="date" className={soloInput} /></FormField>
+          <FormField id="placeOfBirth" label="Place of birth" error={error("placeOfBirth")}><input id="placeOfBirth" name="placeOfBirth" className={soloInput} /></FormField>
+          <FormField id="address" label="Address" required error={error("address")}><input id="address" name="address" className={`${soloInput} sm:col-span-2`} required /></FormField>
+          <FormField id="barangay" label="Barangay" required error={error("barangay")}><select id="barangay" name="barangay" className={soloInput} required><option value="" disabled>Select a barangay</option>{MAHAYAG_BARANGAYS.map((barangay) => <option key={barangay} value={barangay}>{barangay}</option>)}</select></FormField>
+          <FormField id="highestEducationalAttainment" label="Highest educational attainment" error={error("highestEducationalAttainment")}><input id="highestEducationalAttainment" name="highestEducationalAttainment" className={soloInput} /></FormField>
+          <FormField id="occupation" label="Occupation" error={error("occupation")}><input id="occupation" name="occupation" className={soloInput} /></FormField>
+          <FormField id="monthlyIncome" label="Monthly income" error={error("monthlyIncome")}><input id="monthlyIncome" name="monthlyIncome" type="number" min="0" step="0.01" className={soloInput} /></FormField>
+          <FormField id="totalMonthlyFamilyIncome" label="Total monthly family income" error={error("totalMonthlyFamilyIncome")}><input id="totalMonthlyFamilyIncome" name="totalMonthlyFamilyIncome" type="number" min="0" step="0.01" className={soloInput} /></FormField>
+          <FormField id="age" label="Age"><input id="age" name="age" className={`${soloInput} bg-slate-50`} readOnly placeholder="Based on date of birth" /></FormField>
+          <FormField id="religion" label="Religion" error={error("religion")}><input id="religion" name="religion" className={soloInput} /></FormField>
+          <FormField id="mobileNumber" label="Mobile number" error={error("mobileNumber")}><input id="mobileNumber" name="mobileNumber" type="tel" className={soloInput} /></FormField>
+          <FormField id="contactNumber" label="Contact number" error={error("contactNumber")}><input id="contactNumber" name="contactNumber" type="tel" className={soloInput} /></FormField>
+          <FormField id="email" label="Email" error={error("email")}><input id="email" name="email" type="email" className={soloInput} /></FormField>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+        <h3 className="border-b border-[#E8EDF4] pb-3 text-sm font-bold text-[#0B1A3E] sm:text-base">Marital status (please check)</h3>
+        <div className="mt-4 flex flex-wrap gap-4 text-sm text-[#405B80]">
+          {[['SINGLE', 'Single'], ['ANNULLED', 'Annulled'], ['WIDOWED', 'Widow / Widower'], ['MARRIED', 'Married'], ['SEPARATED', 'Separated (with certificate of legal separation)']].map(([value, label]) => (
+            <label key={value} className="inline-flex items-center gap-2"><input type="radio" name="soloParentMaritalStatus" value={value} required />{label}</label>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4"><h3 className="text-sm font-bold text-[#0B1A3E] sm:text-base">Family composition</h3><p className="mt-1 text-xs text-[#7184A0]">Include all family members and other members of the household.</p></div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[920px] text-left text-xs"><thead className="bg-[#F4F7FB] text-[#6480A9]"><tr><th className="p-2">Name</th><th className="p-2">Relationship</th><th className="p-2">Age</th><th className="p-2">Civil status</th><th className="p-2">Educational attainment</th><th className="p-2">Occupation &amp; monthly income</th></tr></thead><tbody>
+            {Array.from({ length: 8 }, (_, index) => <tr key={index} className="border-t border-[#E8EDF4]">{['familyMemberName', 'familyMemberRelationship', 'familyMemberAge', 'familyMemberCivilStatus', 'familyMemberEducation', 'familyMemberOccupationIncome'].map((name) => <td key={name} className="p-1.5"><input name={name} aria-label={`${name} ${index + 1}`} className="h-9 w-full rounded border border-[#DCE3EE] px-2 outline-none focus:border-[#C9A93F]" /></td>)}</tr>)}
+          </tbody></table>
+        </div>
+      </section>
+
+      <section className="grid gap-5 rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5">
+        <FormField id="classification" label="Classification / circumstances of being a Solo Parent" required error={error("classification")}><textarea id="classification" name="classification" className="mt-1.5 min-h-28 w-full rounded-lg border border-[#DCE3EE] p-3 text-sm outline-none focus:border-[#C9A93F]" required /></FormField>
+        <FormField id="incidenceDate" label="When" error={error("incidenceDate")}><input id="incidenceDate" name="incidenceDate" type="date" className={soloInput} /></FormField>
+        <FormField id="needsProblems" label="Needs / problems of Solo Parent" error={error("needsProblems")}><textarea id="needsProblems" name="needsProblems" className="mt-1.5 min-h-28 w-full rounded-lg border border-[#DCE3EE] p-3 text-sm outline-none focus:border-[#C9A93F]" /></FormField>
+        <FormField id="familyResources" label="Family resources" error={error("familyResources")}><textarea id="familyResources" name="familyResources" className="mt-1.5 min-h-28 w-full rounded-lg border border-[#DCE3EE] p-3 text-sm outline-none focus:border-[#C9A93F]" /></FormField>
+      </section>
+
+      <section className="grid gap-4 rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5">
+        <FormField id="submittedRequirements" label="Submitted requirements" error={error("submittedRequirements")}><textarea id="submittedRequirements" name="submittedRequirements" placeholder="List submitted requirements" className="mt-1.5 min-h-24 w-full rounded-lg border border-[#DCE3EE] p-3 text-sm outline-none focus:border-[#C9A93F]" /></FormField>
+        <FormField id="soloParentIdNumber" label="ID No." error={error("idNumber")}><input id="soloParentIdNumber" name="soloParentIdNumber" className={soloInput} /></FormField>
+        <fieldset><legend className="text-sm font-medium text-[#172B4D]">Poverty threshold</legend><div className="mt-3 flex gap-5 text-sm text-[#405B80]"><label className="inline-flex items-center gap-2"><input type="radio" name="povertyThreshold" value="ABOVE" required />A - Above</label><label className="inline-flex items-center gap-2"><input type="radio" name="povertyThreshold" value="BELOW" required />B - Below</label></div></fieldset>
+        <div className="grid grid-cols-2 gap-3"><FormField id="dateIssued" label="Date issued" error={error("dateIssued")}><input id="dateIssued" name="dateIssued" type="date" className={soloInput} /></FormField><FormField id="expiryDate" label="Expiry date" error={error("expiryDate")}><input id="expiryDate" name="expiryDate" type="date" className={soloInput} /></FormField></div>
+        <FormField id="interviewedAssessedBy" label="Interviewed and assessed by" error={error("interviewedAssessedBy")}><input id="interviewedAssessedBy" name="interviewedAssessedBy" className={soloInput} /></FormField>
+        <FormField id="assessmentDate" label="Assessment date" error={error("assessmentDate")}><input id="assessmentDate" name="assessmentDate" type="date" className={soloInput} /></FormField>
+        <FormField id="applicantSignatureName" label="Signature / thumbmark over printed name" error={error("applicantSignatureName")}><input id="applicantSignatureName" name="applicantSignatureName" className={soloInput} /></FormField>
+        <FormField id="signatureDate" label="Signature date" error={error("signatureDate")}><input id="signatureDate" name="signatureDate" type="date" className={soloInput} /></FormField>
+        {!officerMode && <FormField id="assignedOfficerId" label="Assigned officer"><select id="assignedOfficerId" name="assignedOfficerId" className={soloInput} defaultValue=""><option value="">Unassigned</option>{officers.map((officer) => <option key={officer.id} value={officer.id}>{officer.name}</option>)}</select></FormField>}
+      </section>
+      <p className="rounded-lg border border-[#E4EAF3] bg-[#F8FAFE] p-3 text-xs leading-relaxed text-[#6480A9]">I certify that the information given above is true and correct and understand that misinterpretation may subject me to applicable civil and criminal liabilities.</p>
+    </div>
+  );
+}
+
 export function BeneficiaryRegistry({
   categories,
   filterCategories,
@@ -367,6 +472,7 @@ function BeneficiaryModal({
   const [dirty, setDirty] = useState(false);
   const [age, setAge] = useState<number | null>(null);
   const [step, setStep] = useState(1);
+  const [formCategoryId, setFormCategoryId] = useState(selectedCategoryId ?? "");
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [selectedFiles, setSelectedFiles] = useState<Record<string, string>>({});
   const [imagePreviews, setImagePreviews] = useState<Record<string, string>>({});
@@ -374,6 +480,8 @@ function BeneficiaryModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const imagePreviewsRef = useRef<Record<string, string>>({});
   const submittedValuesRef = useRef<Record<string, string>>({});
+  const activeCategory = categories.find((category) => category.id === formCategoryId);
+  const isSoloParent = activeCategory?.name.toLowerCase().includes("solo parent") ?? false;
 
   const requestClose = useCallback(() => {
     if (pending) return;
@@ -638,6 +746,16 @@ function BeneficiaryModal({
             )}
 
             <div data-wizard-step="1" hidden={step !== 1} className="space-y-6">
+            {isSoloParent ? (
+              <SoloParentApplicationFields
+                categories={categories}
+                officers={officers}
+                officerMode={officerMode}
+                categoryId={formCategoryId}
+                onCategoryChange={setFormCategoryId}
+                fieldErrors={state.fieldErrors}
+              />
+            ) : <>
             <section aria-labelledby="personal-info-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 border-b border-[#E8EDF4] pb-3">
                 <h3 id="personal-info-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Personal information</h3>
@@ -698,18 +816,19 @@ function BeneficiaryModal({
                       <input
                         {...fieldProps("categoryId")}
                         name="categoryName"
-                        value={categories.find((category) => category.id === selectedCategoryId)?.name ?? ""}
+                        value={categories.find((category) => category.id === formCategoryId)?.name ?? ""}
                         readOnly
                         className={`${inputClass} bg-slate-50`}
                       />
-                      <input type="hidden" name="categoryId" value={selectedCategoryId ?? ""} />
+                      <input type="hidden" name="categoryId" value={formCategoryId} />
                     </>
                   ) : <span className="relative block">
                     <select
                       {...fieldProps("categoryId")}
                       name="categoryId"
                       required
-                      defaultValue={selectedCategoryId ?? ""}
+                      value={formCategoryId}
+                      onChange={(event) => setFormCategoryId(event.currentTarget.value)}
                     >
                       <option value="" disabled>Select a category</option>
                       {categories.map((category) => (
@@ -797,6 +916,7 @@ function BeneficiaryModal({
                 </FormField>}
               </div>
             </section>
+            </>}
             </div>
 
             <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="profile-image-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">

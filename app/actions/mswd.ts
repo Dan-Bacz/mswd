@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/permissions";
-import { beneficiarySchema } from "@/lib/validation";
+import { beneficiarySchema, soloParentApplicationSchema } from "@/lib/validation";
 import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
 import { buildBeneficiaryIdentityKey, buildBeneficiaryNameIdentityKey, buildFullName, capitalizePersonName } from "@/lib/identity";
@@ -160,6 +160,70 @@ export async function createBeneficiaryAction(
     };
   }
 
+  const category = await db.category.findUnique({ where: { id: parsed.data.categoryId } });
+
+  if (!category) {
+    return {
+      ok: false,
+      message: "Selected category was not found. Refresh the page and try again.",
+      fieldErrors: { categoryId: "Select a valid beneficiary category." },
+    };
+  }
+
+  let soloParentData: ReturnType<typeof soloParentApplicationSchema.parse> | undefined;
+  if (category.name.toLowerCase().includes("solo parent")) {
+    const familyNames = formData.getAll("familyMemberName").map(String);
+    const familyRelationships = formData.getAll("familyMemberRelationship").map(String);
+    const familyAges = formData.getAll("familyMemberAge").map(String);
+    const familyCivilStatuses = formData.getAll("familyMemberCivilStatus").map(String);
+    const familyEducation = formData.getAll("familyMemberEducation").map(String);
+    const familyOccupationIncome = formData.getAll("familyMemberOccupationIncome").map(String);
+    const familyComposition = familyNames.map((name, index) => ({
+      name,
+      relationship: familyRelationships[index] ?? "",
+      age: familyAges[index] ?? "",
+      civilStatus: familyCivilStatuses[index] ?? "",
+      educationalAttainment: familyEducation[index] ?? "",
+      occupationMonthlyIncome: familyOccupationIncome[index] ?? "",
+    })).filter((member) => Object.values(member).some((value) => value.trim()));
+
+    const soloParentParsed = soloParentApplicationSchema.safeParse({
+      placeOfBirth: String(formData.get("placeOfBirth") ?? ""),
+      highestEducationalAttainment: String(formData.get("highestEducationalAttainment") ?? ""),
+      occupation: String(formData.get("occupation") ?? ""),
+      monthlyIncome: String(formData.get("monthlyIncome") ?? ""),
+      totalMonthlyFamilyIncome: String(formData.get("totalMonthlyFamilyIncome") ?? ""),
+      mobileNumber: String(formData.get("mobileNumber") ?? ""),
+      contactNumber: String(formData.get("contactNumber") ?? ""),
+      religion: String(formData.get("religion") ?? ""),
+      maritalStatus: String(formData.get("soloParentMaritalStatus") ?? ""),
+      classification: String(formData.get("classification") ?? ""),
+      incidenceDate: String(formData.get("incidenceDate") ?? ""),
+      needsProblems: String(formData.get("needsProblems") ?? ""),
+      familyResources: String(formData.get("familyResources") ?? ""),
+      familyComposition,
+      submittedRequirements: String(formData.get("submittedRequirements") ?? ""),
+      idNumber: String(formData.get("soloParentIdNumber") ?? ""),
+      povertyThreshold: String(formData.get("povertyThreshold") ?? ""),
+      dateIssued: String(formData.get("dateIssued") ?? ""),
+      expiryDate: String(formData.get("expiryDate") ?? ""),
+      interviewedAssessedBy: String(formData.get("interviewedAssessedBy") ?? ""),
+      assessmentDate: String(formData.get("assessmentDate") ?? ""),
+      applicantSignatureName: String(formData.get("applicantSignatureName") ?? ""),
+      signatureDate: String(formData.get("signatureDate") ?? ""),
+    });
+
+    if (!soloParentParsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of soloParentParsed.error.issues) {
+        const field = issue.path[0];
+        if (typeof field === "string" && !fieldErrors[field]) fieldErrors[field] = issue.message;
+      }
+      return { ok: false, message: "Please complete the Solo Parent application form.", fieldErrors };
+    }
+    soloParentData = soloParentParsed.data;
+  }
+
   let images: BeneficiaryImage[];
   try {
     const idFront = await parseImageUpload(formData.get("idFront"), "VALID_ID_FRONT", "idFront");
@@ -199,16 +263,6 @@ export async function createBeneficiaryAction(
       ok: false,
       message: "Please check the uploaded images.",
       fieldErrors: { [error.field]: error.message },
-    };
-  }
-
-  const category = await db.category.findUnique({ where: { id: parsed.data.categoryId } });
-
-  if (!category) {
-    return {
-      ok: false,
-      message: "Selected category was not found. Refresh the page and try again.",
-      fieldErrors: { categoryId: "Select a valid beneficiary category." },
     };
   }
 
@@ -325,6 +379,7 @@ export async function createBeneficiaryAction(
             ? user.id
             : parsed.data.assignedOfficerId || null,
           remarks: parsed.data.remarks || null,
+          soloParentData,
           status: "ACTIVE",
         },
       });

@@ -62,3 +62,38 @@ export const beneficiarySchema = z.object({
   assignedOfficerId: z.string().trim().optional().or(z.literal("")),
   remarks: z.string().trim().max(500).optional().or(z.literal("")),
 });
+
+const soloParentFamilyMemberSchema = z.object({
+  name: z.string().trim().max(120),
+  relationship: z.string().trim().max(80),
+  age: z.string().trim().max(10),
+  civilStatus: z.string().trim().max(40),
+  educationalAttainment: z.string().trim().max(120),
+  occupationMonthlyIncome: z.string().trim().max(160),
+});
+
+export const soloParentApplicationSchema = z.object({
+  placeOfBirth: z.string().trim().max(160),
+  highestEducationalAttainment: z.string().trim().max(160),
+  occupation: z.string().trim().max(160),
+  monthlyIncome: z.string().trim().max(40),
+  totalMonthlyFamilyIncome: z.string().trim().max(40),
+  mobileNumber: z.string().trim().max(40),
+  contactNumber: z.string().trim().max(40),
+  religion: z.string().trim().max(100),
+  maritalStatus: z.enum(["SINGLE", "ANNULLED", "WIDOWED", "MARRIED", "SEPARATED"]),
+  classification: z.string().trim().min(1, "Classification or circumstance is required.").max(500),
+  incidenceDate: z.string().trim().max(20),
+  needsProblems: z.string().trim().max(2000),
+  familyResources: z.string().trim().max(2000),
+  familyComposition: z.array(soloParentFamilyMemberSchema).max(8),
+  submittedRequirements: z.string().trim().max(1000),
+  idNumber: z.string().trim().max(100),
+  povertyThreshold: z.enum(["ABOVE", "BELOW"]),
+  dateIssued: z.string().trim().max(20),
+  expiryDate: z.string().trim().max(20),
+  interviewedAssessedBy: z.string().trim().max(160),
+  assessmentDate: z.string().trim().max(20),
+  applicantSignatureName: z.string().trim().max(160),
+  signatureDate: z.string().trim().max(20),
+});
