@@ -21,8 +21,8 @@ import {
 import { MAHAYAG_BARANGAYS, MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
 
-type RegistryCategory = { id: string; name: string };
-type RegistryOfficer = { id: string; name: string; categoryIds: string[] };
+export type RegistryCategory = { id: string; name: string };
+export type RegistryOfficer = { id: string; name: string; categoryIds: string[] };
 type RegistryBeneficiary = {
   id: string;
   beneficiaryNumber: string;
@@ -69,7 +69,7 @@ function FormField({
   );
 }
 
-function SoloParentApplicationFields({
+export function SoloParentApplicationFields({
   categories,
   officers,
   officerMode,
@@ -200,6 +200,9 @@ export function BeneficiaryRegistry({
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+  const soloParentPageHref = selectedCategory?.name.toLowerCase().includes("solo parent")
+    ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/solo-parent`
+    : null;
   const activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
@@ -260,15 +263,17 @@ export function BeneficiaryRegistry({
               : "Manage and register MSWD beneficiaries."}
           </p>
         </div>
-        <button
-          ref={modalTriggerRef}
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          Add Beneficiary
-        </button>
+        {soloParentPageHref ? (
+          <Link href={soloParentPageHref} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Add Solo Parent beneficiary
+          </Link>
+        ) : (
+          <button ref={modalTriggerRef} type="button" onClick={() => setModalOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Add Beneficiary
+          </button>
+        )}
       </header>
 
       <section aria-label="Beneficiary summary" className="grid gap-3 sm:grid-cols-2">
@@ -411,16 +416,11 @@ export function BeneficiaryRegistry({
                 ? "Try another name or beneficiary ID."
                 : "There are no records for this view yet. Add a beneficiary to get started."}
             </p>
-            {!normalizedSearch && (
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add Beneficiary
-              </button>
-            )}
+            {!normalizedSearch && (soloParentPageHref ? (
+              <Link href={soloParentPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add Solo Parent beneficiary</Link>
+            ) : (
+              <button type="button" onClick={() => setModalOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add Beneficiary</button>
+            ))}
           </div>
         )}
       </section>
@@ -480,8 +480,6 @@ function BeneficiaryModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const imagePreviewsRef = useRef<Record<string, string>>({});
   const submittedValuesRef = useRef<Record<string, string>>({});
-  const activeCategory = categories.find((category) => category.id === formCategoryId);
-  const isSoloParent = activeCategory?.name.toLowerCase().includes("solo parent") ?? false;
 
   const requestClose = useCallback(() => {
     if (pending) return;
@@ -746,16 +744,6 @@ function BeneficiaryModal({
             )}
 
             <div data-wizard-step="1" hidden={step !== 1} className="space-y-6">
-            {isSoloParent ? (
-              <SoloParentApplicationFields
-                categories={categories}
-                officers={officers}
-                officerMode={officerMode}
-                categoryId={formCategoryId}
-                onCategoryChange={setFormCategoryId}
-                fieldErrors={state.fieldErrors}
-              />
-            ) : <>
             <section aria-labelledby="personal-info-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-5">
               <div className="mb-4 border-b border-[#E8EDF4] pb-3">
                 <h3 id="personal-info-heading" className="text-sm font-bold text-[#0B1A3E] sm:text-base">Personal information</h3>
@@ -831,7 +819,7 @@ function BeneficiaryModal({
                       onChange={(event) => setFormCategoryId(event.currentTarget.value)}
                     >
                       <option value="" disabled>Select a category</option>
-                      {categories.map((category) => (
+                      {categories.filter((category) => !category.name.toLowerCase().includes("solo parent")).map((category) => (
                         <option key={category.id} value={category.id}>{category.name}</option>
                       ))}
                     </select>
@@ -916,7 +904,6 @@ function BeneficiaryModal({
                 </FormField>}
               </div>
             </section>
-            </>}
             </div>
 
             <section data-wizard-step="2" hidden={step !== 2} aria-labelledby="profile-image-heading" className="rounded-xl border border-[#E4EAF3] bg-white p-4 shadow-sm sm:p-6">
