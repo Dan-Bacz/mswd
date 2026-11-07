@@ -51,18 +51,6 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
           { href: "/officer/profile", label: "My Profile", icon: "profile" },
         ],
       },
-      ...(assignedCategories.length > 0
-        ? [
-            {
-              title: "My category dashboards",
-              items: assignedCategories.map((category) => ({
-                href: `/officer/categories/${category.id}`,
-                label: category.name,
-                icon: "categories" as const,
-              })),
-            },
-          ]
-        : []),
     ];
   }
 
