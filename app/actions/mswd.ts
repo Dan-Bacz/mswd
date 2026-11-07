@@ -41,6 +41,24 @@ export type BeneficiaryActionState = {
 
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const MAX_TOTAL_IMAGE_SIZE = 3 * MAX_IMAGE_SIZE;
+const GENERAL_INTAKE_FIELDS = [
+  "clientStatus", "mobileNumber", "placeOfBirth", "relationshipToBeneficiary", "highestEducationalAttainment",
+  "religion", "nationality", "philhealthNumber", "modeOfAdmission", "referringParty", "contactPerson",
+  "assessmentProblemPresented", "socialWorkersAssessment", "clientSubCategory", "financialAssistanceType",
+  "financialAssistanceValue", "financialAssistanceAmount", "modeOfFinancialAssistance", "sourceOfAssistance",
+  "materialAssistanceType", "materialAssistanceSpecify", "materialAssistanceSource", "clientSignatureName",
+  "interviewedBy", "intakeDate",
+] as const;
+
+function collectGeneralIntakeData(formData: FormData): Prisma.InputJsonObject {
+  const data: Record<string, Prisma.InputJsonValue> = {};
+  for (const field of GENERAL_INTAKE_FIELDS) {
+    const value = String(formData.get(field) ?? "").trim();
+    if (value) data[field] = value;
+  }
+  data.familyComposition = formData.getAll("intakeFamilyMember").map(String).map((value) => value.trim()).filter(Boolean);
+  return data as Prisma.InputJsonObject;
+}
 
 type BeneficiaryImage = {
   type: BeneficiaryFileType;
@@ -171,6 +189,7 @@ export async function createBeneficiaryAction(
   }
 
   let soloParentData: ReturnType<typeof soloParentApplicationSchema.parse> | undefined;
+  let generalIntakeData: Prisma.InputJsonObject | undefined;
   if (category.name.toLowerCase().includes("solo parent")) {
     const familyNames = formData.getAll("familyMemberName").map(String);
     const familyRelationships = formData.getAll("familyMemberRelationship").map(String);
@@ -222,6 +241,11 @@ export async function createBeneficiaryAction(
       return { ok: false, message: "Please complete the Solo Parent application form.", fieldErrors };
     }
     soloParentData = soloParentParsed.data;
+  }
+
+  const categoryName = category.name.toLowerCase();
+  if (categoryName.includes("aics") || categoryName.includes("disaster")) {
+    generalIntakeData = collectGeneralIntakeData(formData);
   }
 
   let images: BeneficiaryImage[];
@@ -380,6 +404,7 @@ export async function createBeneficiaryAction(
             : parsed.data.assignedOfficerId || null,
           remarks: parsed.data.remarks || null,
           soloParentData,
+          generalIntakeData,
           status: "ACTIVE",
         },
       });

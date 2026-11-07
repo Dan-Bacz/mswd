@@ -219,6 +219,7 @@ model Beneficiary {
   status            BeneficiaryStatus       @default(ACTIVE)
   remarks           String?
   soloParentData    Json?
+  generalIntakeData Json?
   category          Category                @relation(fields: [categoryId], references: [id])
   household         Household?              @relation(fields: [householdId], references: [id])
   assignedOfficer   User?                   @relation("OfficerBeneficiaries", fields: [assignedOfficerId], references: [id])

@@ -200,9 +200,12 @@ export function BeneficiaryRegistry({
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
-  const soloParentPageHref = selectedCategory?.name.toLowerCase().includes("solo parent")
+  const selectedCategoryName = selectedCategory?.name.toLowerCase() ?? "";
+  const dedicatedPageHref = selectedCategoryName.includes("solo parent")
     ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/solo-parent`
-    : null;
+    : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster")
+      ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
+      : null;
   const activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
@@ -263,10 +266,10 @@ export function BeneficiaryRegistry({
               : "Manage and register MSWD beneficiaries."}
           </p>
         </div>
-        {soloParentPageHref ? (
-          <Link href={soloParentPageHref} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
+        {dedicatedPageHref ? (
+          <Link href={dedicatedPageHref} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add Solo Parent beneficiary
+            Add {selectedCategory?.name ?? "beneficiary"}
           </Link>
         ) : (
           <button ref={modalTriggerRef} type="button" onClick={() => setModalOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
@@ -416,8 +419,8 @@ export function BeneficiaryRegistry({
                 ? "Try another name or beneficiary ID."
                 : "There are no records for this view yet. Add a beneficiary to get started."}
             </p>
-            {!normalizedSearch && (soloParentPageHref ? (
-              <Link href={soloParentPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add Solo Parent beneficiary</Link>
+            {!normalizedSearch && (dedicatedPageHref ? (
+              <Link href={dedicatedPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add {selectedCategory?.name ?? "beneficiary"}</Link>
             ) : (
               <button type="button" onClick={() => setModalOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add Beneficiary</button>
             ))}
