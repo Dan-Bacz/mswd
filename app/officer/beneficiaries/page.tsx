@@ -42,6 +42,7 @@ export default async function OfficerBeneficiariesPage({
         officerName: user.name,
         status: beneficiary.status,
       }))}
+      selectedCategoryId={categoryId}
       officerMode
       initialSearch={initialSearch}
     />
