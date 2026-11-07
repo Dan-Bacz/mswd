@@ -61,31 +61,68 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
+type DashboardPeriod = "all" | "week" | "month";
+
+function getDashboardRange(period: DashboardPeriod, now = new Date()) {
+  if (period === "all") return undefined;
+  const manilaDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now).replaceAll("/", "-");
+  const calendarDate = new Date(`${manilaDate}T00:00:00.000Z`);
+  const startCalendar = new Date(calendarDate);
+
+  if (period === "week") {
+    const day = startCalendar.getUTCDay();
+    startCalendar.setUTCDate(startCalendar.getUTCDate() - (day === 0 ? 6 : day - 1));
+  } else {
+    startCalendar.setUTCDate(1);
+  }
+
+  const endCalendar = new Date(startCalendar);
+  if (period === "week") endCalendar.setUTCDate(endCalendar.getUTCDate() + 7);
+  else endCalendar.setUTCMonth(endCalendar.getUTCMonth() + 1);
+
+  const dateOnly = (value: Date) => value.toISOString().slice(0, 10);
+  return {
+    gte: new Date(`${dateOnly(startCalendar)}T00:00:00+08:00`),
+    lt: new Date(`${dateOnly(endCalendar)}T00:00:00+08:00`),
+  };
+}
+
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ period?: string }> | { period?: string };
+}) {
   const user = await requireAdmin();
-  const [
-    beneficiaries,
-    assistanceRecords,
-    allCategories,
-    recentActivity,
-    systemSettings,
-  ] = await Promise.all([
-    db.beneficiary.count(),
-    db.beneficiaryAssistance.count(),
-    db.category.findMany({
-      orderBy: { name: "asc" },
-      include: { _count: { select: { beneficiaries: true } } },
-    }),
+  const params = await Promise.resolve(searchParams ?? {});
+  const period: DashboardPeriod = params.period === "week" || params.period === "month" ? params.period : "all";
+  const dateRange = getDashboardRange(period);
+  const [allCategories, recentActivity, systemSettings, beneficiaries, assistanceRecords] = await Promise.all([
+    db.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, description: true } }),
     db.auditLog.findMany({
+      where: dateRange ? { createdAt: dateRange } : undefined,
       include: { user: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
     db.systemSetting.findMany({ select: { key: true, value: true } }),
+    db.beneficiary.count({ where: dateRange ? { registrationDate: dateRange } : undefined }),
+    db.beneficiaryAssistance.count({ where: dateRange ? { visitDate: dateRange } : undefined }),
   ]);
   const categories = allCategories.filter((category) => !isHiddenDashboardCategory(category.name));
+  const categoryCounts = await Promise.all(
+    categories.map(async (category) => [
+      category.id,
+      await db.beneficiary.count({ where: { categoryId: category.id, ...(dateRange ? { registrationDate: dateRange } : {}) } }),
+    ] as const),
+  );
+  const categoryCountMap = new Map(categoryCounts);
 
   const municipality =
     systemSettings.find((setting) =>
@@ -105,7 +142,7 @@ export default async function AdminDashboardPage() {
   }).format(now);
   const categoryStats = categories.map((category, index) => ({
     name: category.name,
-    beneficiaries: category._count.beneficiaries,
+    beneficiaries: categoryCountMap.get(category.id) ?? 0,
     color: categoryAppearance(category.name, index).color,
   }));
   const quickActions = [
@@ -161,14 +198,23 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-[#173B70]">Programs &amp; Services</h2>
             <span className="mt-2 block h-1 w-12 rounded-full bg-[#FFD21F]" />
           </div>
-          <Link href="/admin/categories" className="inline-flex items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">
-            Manage programs <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <form method="get" className="flex items-center gap-2">
+              <label htmlFor="dashboard-period" className="text-xs font-semibold text-[#405B80]">Show</label>
+              <select id="dashboard-period" name="period" defaultValue={period} className="h-9 rounded-lg border border-[#DCE3EE] bg-white px-2 text-xs font-semibold text-[#405B80] focus:border-[#0645AD] focus:outline-none">
+                <option value="all">All time</option>
+                <option value="week">This week</option>
+                <option value="month">This month</option>
+              </select>
+              <button type="submit" className="h-9 rounded-lg bg-[#0645AD] px-3 text-xs font-semibold text-white hover:bg-[#073783]">Apply</button>
+            </form>
+            <Link href="/admin/categories" className="inline-flex items-center gap-1 text-xs font-semibold text-[#0645AD] hover:underline">Manage programs <ArrowRight className="h-3.5 w-3.5" /></Link>
+          </div>
         </div>
         {categories.length > 0 ? (
           <div className="space-y-3">
@@ -192,7 +238,7 @@ export default async function AdminDashboardPage() {
                       {category.description || "View beneficiaries enrolled in this program."}
                     </span>
                     <span className="mt-2 block text-[11px] font-medium text-[#405B80]">
-                      {category._count.beneficiaries.toLocaleString()} beneficiaries
+                      {(categoryCountMap.get(category.id) ?? 0).toLocaleString()} beneficiaries
                     </span>
                   </span>
                   <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#8CA2BF] transition group-hover:translate-x-0.5 group-hover:text-[#0645AD]" />
@@ -211,7 +257,7 @@ export default async function AdminDashboardPage() {
         <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
           <div className="mb-3">
             <h2 className="text-base font-bold text-[#173B70]">Beneficiary Distribution</h2>
-            <p className="mt-1 text-xs text-[#6480A9]">Registered beneficiaries by program category</p>
+            <p className="mt-1 text-xs text-[#6480A9]">Registered beneficiaries by program category{period === "week" ? " this week" : period === "month" ? " this month" : ""}</p>
           </div>
           <BeneficiaryDistributionChart categories={categoryStats} />
         </div>

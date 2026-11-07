@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { registerOfficerAction } from "@/app/actions/auth";
 import { NationalIdCapture } from "@/components/auth/national-id-capture";
 
@@ -15,6 +16,8 @@ export function OfficerRegistrationForm() {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [idFilesReady, setIdFilesReady] = useState(false);
   const [photoSelected, setPhotoSelected] = useState(false);
   const profileCaptureRef = useRef<HTMLInputElement>(null);
@@ -58,8 +61,8 @@ export function OfficerRegistrationForm() {
           <div className="mt-5 space-y-4">
             <label className="block text-sm font-semibold text-slate-700">Email address<input name="email" type="email" autoComplete="email" required placeholder="you@example.com" className={`${inputClass} mt-2`} /></label>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-sm font-semibold text-slate-700">Password<input name="password" type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" className={`${inputClass} mt-2`} /></label>
-              <label className="text-sm font-semibold text-slate-700">Confirm password<input name="confirmPassword" type="password" autoComplete="new-password" required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" aria-invalid={passwordsDoNotMatch} className={`${inputClass} mt-2 ${passwordsDoNotMatch ? "border-rose-300" : ""}`} /></label>
+              <label className="text-sm font-semibold text-slate-700">Password<div className="relative mt-2"><input name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" className={`${inputClass} pr-11`} /><button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-500 hover:text-[#0B4599]"><span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>{showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}</button></div></label>
+              <label className="text-sm font-semibold text-slate-700">Confirm password<div className="relative mt-2"><input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" aria-invalid={passwordsDoNotMatch} className={`${inputClass} pr-11 ${passwordsDoNotMatch ? "border-rose-300" : ""}`} /><button type="button" onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-500 hover:text-[#0B4599]"><span className="sr-only">{showConfirmPassword ? "Hide confirm password" : "Show confirm password"}</span>{showConfirmPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}</button></div></label>
             </div>
             <p className={`text-xs ${passwordsDoNotMatch ? "text-rose-600" : "text-slate-500"}`}>{passwordsDoNotMatch ? "Passwords do not match yet." : "Use at least 8 characters for your password."}</p>
           </div>

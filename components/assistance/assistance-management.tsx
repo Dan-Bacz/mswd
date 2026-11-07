@@ -28,7 +28,6 @@ import {
   ASSISTANCE_TYPE_LABELS,
   ASSISTANCE_TYPE_OPTIONS,
   formatPeso,
-  supportsFinancialAmount,
   type AssistanceType,
 } from "@/lib/assistance";
 
@@ -251,9 +250,25 @@ export function AssistanceManagement({
   }
 
   const editingRecord = editId ? records.find((record) => record.id === editId) : undefined;
+  const assistanceDetailsLabel: Record<string, string> = {
+    FOOD_ASSISTANCE: "Food assistance details",
+    BURIAL_FUNERAL_ASSISTANCE: "Burial/funeral assistance details",
+    TRANSPORTATION_ASSISTANCE: "Transportation assistance details",
+    EDUCATIONAL_ASSISTANCE: "Educational assistance details",
+    PSYCHOSOCIAL_SUPPORT: "Psychosocial support details",
+    REFERRAL_LINKAGE: "Referral/linkage details",
+    OTHER: "Other assistance details",
+  };
+  const assistanceDetailsPlaceholder: Record<string, string> = {
+    FOOD_ASSISTANCE: "List the food package, quantity, or items provided.",
+    BURIAL_FUNERAL_ASSISTANCE: "Record the burial/funeral support and related details.",
+    TRANSPORTATION_ASSISTANCE: "Record the route, transportation support, or fare details.",
+    EDUCATIONAL_ASSISTANCE: "Record the school, supplies, fees, or educational support provided.",
+    PSYCHOSOCIAL_SUPPORT: "Record the intervention, session, or support provided.",
+    REFERRAL_LINKAGE: "Record the agency or service referral and coordination details.",
+    OTHER: "Describe the specific assistance or service provided.",
+  };
   const selectedBeneficiary = beneficiaries.find((beneficiary) => beneficiary.id === selectedBeneficiaryId);
-  const showFinancialAmount = assistanceType ? supportsFinancialAmount(assistanceType as AssistanceType) : false;
-  const showMedicalFields = assistanceType === "MEDICAL_ASSISTANCE";
   const beneficiaryMatches = beneficiaries
     .filter((beneficiary) => {
       const query = beneficiarySearch.trim().toLocaleLowerCase();
@@ -409,6 +424,7 @@ export function AssistanceManagement({
                     "Assistance Type",
                     "Date of Visit",
                     "Outcome",
+                    "Amount",
                     "Date Provided",
                     "Recording Officer",
                     "Actions",
@@ -431,6 +447,7 @@ export function AssistanceManagement({
                         {ASSISTANCE_OUTCOME_LABELS[record.outcome]}
                       </span>
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-[#173B70]">{record.financialAmount !== null ? formatPeso(Number(record.financialAmount)) : "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-[#405B80]">{formatDate(record.providedAt)}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-[#405B80]">{record.providedBy.name}</td>
                     <td className="whitespace-nowrap px-4 py-3">
@@ -632,25 +649,37 @@ export function AssistanceManagement({
                         <FieldError message={state.fieldErrors?.providedAt} />
                       </label>
                       <label className="block text-xs font-semibold text-[#405B80] sm:col-span-2">
-                        Assistance provided or service delivered <span className="text-rose-600">*</span>
-                        <textarea name="providedDescription" rows={2} maxLength={2000} required defaultValue={editingRecord?.providedDescription ?? ""} aria-invalid={Boolean(state.fieldErrors?.providedDescription)} className={`${inputClass} mt-1.5 resize-y`} />
+                        {assistanceType === "MEDICAL_ASSISTANCE" ? "Medical assistance details" : assistanceType === "FINANCIAL_ASSISTANCE" ? "Financial assistance details" : assistanceDetailsLabel[assistanceType] ?? `${ASSISTANCE_TYPE_LABELS[assistanceType as AssistanceType] ?? "Assistance"} details`} <span className="text-rose-600">*</span>
+                        <textarea name="providedDescription" rows={2} maxLength={2000} required defaultValue={editingRecord?.providedDescription ?? ""} aria-invalid={Boolean(state.fieldErrors?.providedDescription)} className={`${inputClass} mt-1.5 resize-y`} placeholder={assistanceType === "MEDICAL_ASSISTANCE" ? "List medicines or medical service provided." : assistanceType === "FINANCIAL_ASSISTANCE" ? "Describe the financial assistance released." : assistanceDetailsPlaceholder[assistanceType] ?? "Describe the specific assistance or service provided."} />
                         <FieldError message={state.fieldErrors?.providedDescription} />
                       </label>
-                      <label className="block text-xs font-semibold text-[#405B80]">Number of medicines provided
-                        <input name="medicineCount" type="number" min="0" step="1" defaultValue={editingRecord?.medicineCount ?? ""} className={`${inputClass} mt-1.5`} />
-                      </label>
-                      <label className="block text-xs font-semibold text-[#405B80]">Doctor / pharmacist
-                        <input name="providerName" defaultValue={editingRecord?.providerName ?? ""} className={`${inputClass} mt-1.5`} />
-                      </label>
-                      <label className="block text-xs font-semibold text-[#405B80]">Financial amount
-                        <input name="financialAmount" type="number" min="0" step="0.01" defaultValue={editingRecord?.financialAmount?.toString() ?? ""} className={`${inputClass} mt-1.5`} />
-                      </label>
-                      <label className="block text-xs font-semibold text-[#405B80]">Financial assistance type
-                        <select name="financialType" defaultValue={editingRecord?.financialType ?? ""} className={`${inputClass} mt-1.5`}><option value="">Not applicable</option><option value="Cash grant">Cash grant</option><option value="Medical expense">Medical expense</option><option value="Burial expense">Burial expense</option><option value="Transportation">Transportation</option><option value="Other">Other</option></select>
-                      </label>
-                      <label className="block text-xs font-semibold text-[#405B80] sm:col-span-2">Transaction details
-                        <input name="transactionDetails" defaultValue={editingRecord?.transactionDetails ?? ""} placeholder="Reference, receipt, or release details" className={`${inputClass} mt-1.5`} />
-                      </label>
+                      {assistanceType === "MEDICAL_ASSISTANCE" && (
+                        <>
+                          <label className="block text-xs font-semibold text-[#405B80]">Number of medicines provided
+                            <input name="medicineQuantity" type="number" min="0" step="1" defaultValue={editingRecord?.medicineQuantity ?? editingRecord?.medicineCount ?? ""} className={`${inputClass} mt-1.5`} />
+                            <FieldError message={state.fieldErrors?.medicineQuantity} />
+                          </label>
+                          <label className="block text-xs font-semibold text-[#405B80]">Doctor / pharmacist
+                            <input name="doctorName" defaultValue={editingRecord?.doctorName ?? editingRecord?.providerName ?? ""} className={`${inputClass} mt-1.5`} />
+                            <FieldError message={state.fieldErrors?.doctorName} />
+                          </label>
+                        </>
+                      )}
+                      {assistanceType === "FINANCIAL_ASSISTANCE" && (
+                        <>
+                          <label className="block text-xs font-semibold text-[#405B80]">Financial amount (₱) <span className="text-rose-600">*</span>
+                            <div className="relative mt-1.5"><span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-bold text-[#405B80]">₱</span><input name="financialAmount" type="number" min="0.01" step="0.01" required defaultValue={editingRecord?.financialAmount?.toString() ?? ""} className={`${inputClass} pl-8`} /></div>
+                            <FieldError message={state.fieldErrors?.financialAmount} />
+                          </label>
+                          <label className="block text-xs font-semibold text-[#405B80]">Financial assistance type
+                            <select name="financialType" required defaultValue={editingRecord?.financialType ?? ""} className={`${inputClass} mt-1.5`}><option value="">Select type</option><option value="Cash grant">Cash grant</option><option value="Medical expense">Medical expense</option><option value="Burial expense">Burial expense</option><option value="Transportation">Transportation</option><option value="Other">Other</option></select>
+                            <FieldError message={state.fieldErrors?.financialType} />
+                          </label>
+                          <label className="block text-xs font-semibold text-[#405B80] sm:col-span-2">Transaction details
+                            <input name="transactionDetails" defaultValue={editingRecord?.transactionDetails ?? ""} placeholder="Reference, receipt, or release details" className={`${inputClass} mt-1.5`} />
+                          </label>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -730,6 +759,10 @@ export function AssistanceManagement({
                 <Detail label="Purpose or reason" value={selectedRecord.purpose} />
                 <Detail label="Requested assistance" value={selectedRecord.requestedDescription} />
                 {selectedRecord.outcome === "PROVIDED" && <Detail label="Service delivered" value={selectedRecord.providedDescription ?? "—"} />}
+                {selectedRecord.financialAmount !== null && <Detail label="Financial amount" value={formatPeso(Number(selectedRecord.financialAmount))} />}
+                {selectedRecord.financialType && <Detail label="Financial assistance type" value={selectedRecord.financialType} />}
+                {selectedRecord.medicineQuantity !== null && <Detail label="Medicine quantity" value={String(selectedRecord.medicineQuantity)} />}
+                {selectedRecord.doctorName && <Detail label="Doctor / pharmacist" value={selectedRecord.doctorName} />}
                 {selectedRecord.notProvidedReason && <Detail label="Reason not provided" value={selectedRecord.notProvidedReason} />}
                 {selectedRecord.referralDetails && <Detail label="Referral details" value={selectedRecord.referralDetails} />}
                 {selectedRecord.followUpReason && <Detail label="Follow-up reason" value={selectedRecord.followUpReason} />}
