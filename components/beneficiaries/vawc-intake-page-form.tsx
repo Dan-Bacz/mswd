@@ -9,15 +9,22 @@ import { MAHAYAG_BARANGAYS } from "@/lib/locations";
 
 const initialState: BeneficiaryActionState = { ok: true, message: "" };
 const inputClass = "h-full w-full border-0 bg-transparent px-1 text-[10px] leading-none text-black outline-none focus:bg-white/40";
+const alignedTop: Record<string, string> = {
+  vawcIntakeDate: "31.5%", vawcInterviewedByLastName: "35.8%", vawcInterviewedBy: "35.8%", vawcInterviewerMiddleName: "35.8%", vawcInterviewerExtension: "35.8%", vawcInterviewerPosition: "39.9%",
+  vawcHandlingOrganization: "43.5%", vawcOfficeAddress: "43.5%", vawcClientCode: "47.4%", vawcIncidentNumber: "47.4%", vawcInformantName: "57.6%", vawcInformantRelationship: "60.1%", vawcInformantContact: "63.3%",
+  vawcPerpetratorLastName: "15.2%", vawcPerpetratorFirstName: "15.2%", vawcPerpetratorMiddleName: "15.2%", vawcPerpetratorExtension: "15.2%", vawcPerpetratorAlias: "15.2%",
+  vawcPerpetratorSex: "17.5%", vawcPerpetratorBirthdate: "17.5%", vawcPerpetratorPlaceOfBirth: "22.3%", vawcPerpetratorAge: "22.3%", vawcPerpetratorGuardian: "27.5%",
+  vawcPerpetratorNationality: "32.2%", vawcPerpetratorOccupation: "32.2%", vawcPerpetratorReligion: "37.5%", vawcPerpetratorAddress: "41.5%",
+};
 
 type OverlayFieldProps = { name: string; label?: string; type?: string; required?: boolean; left: string; top: string; width: string; height?: string; className?: string };
 
 function OverlayField({ name, label, type = "text", required = true, left, top, width, height = "2.4%", className = "" }: OverlayFieldProps) {
-  return <label className={`absolute z-10 ${className}`} style={{ left, top, width, height }}><span className="sr-only">{label ?? name}</span><input name={name} type={type} required={required} className={inputClass} /></label>;
+  return <label className={`absolute z-10 ${className}`} style={{ left, top: alignedTop[name] ?? top, width, height }}><span className="sr-only">{label ?? name}</span><input name={name} type={type} required={required} className={inputClass} /></label>;
 }
 
 function OverlayArea({ name, label, left, top, width, height, required = true }: Omit<OverlayFieldProps, "type" | "height"> & { height: string }) {
-  return <label className="absolute z-10" style={{ left, top, width, height }}><span className="sr-only">{label ?? name}</span><textarea name={name} required={required} className="h-full w-full resize-none border-0 bg-transparent px-1 text-[10px] text-black outline-none focus:bg-white/40" /></label>;
+  return <label className="absolute z-10" style={{ left, top: alignedTop[name] ?? top, width, height }}><span className="sr-only">{label ?? name}</span><textarea name={name} required={required} className="h-full w-full resize-none border-0 bg-transparent px-1 text-[10px] text-black outline-none focus:bg-white/40" /></label>;
 }
 
 function OverlayCheck({ name, value, left, top, label }: { name: string; value: string; left: string; top: string; label?: string }) {
@@ -69,15 +76,15 @@ function PageTwo() {
     <OverlayField name="vawcVictimOccupation" label="Occupation" left="70%" top="23.3%" width="27%" />
     <OverlayField name="vawcVictimMonthlyIncome" label="Monthly income" type="number" required={false} left="17%" top="29.5%" width="80%" />
     <OverlayField name="vawcVictimEmployment" label="Employment status" left="17%" top="36.6%" width="80%" />
-    <OverlayField name="vawcVictimMigratoryStatus" label="Migratory status" left="17%" top="44.1%" width="80%" />
-    <OverlayField name="vawcVictimReligionDetails" label="Religion" required={false} left="17%" top="50.6%" width="80%" />
-    <OverlayArea name="vawcVictimCurrentAddress" label="Current address" required left="17%" top="55.2%" width="80%" height="5.2%" />
-    <OverlayCheck name="vawcInternallyDisplaced" value="Yes" label="Internally displaced yes" left="17%" top="63.3%" />
-    <OverlayCheck name="vawcInternallyDisplaced" value="No" label="Internally displaced no" left="17%" top="65.1%" />
-    <OverlayCheck name="vawcIsPwd" value="No" label="PWD no" left="51%" top="65.2%" />
-    <OverlayCheck name="vawcIsPwd" value="Yes" label="PWD yes" left="51%" top="67.1%" />
-    {['Deaf or Hard of Hearing', 'Intellectual Disability', 'Learning Disability', 'Mental Disability', 'Orthopedic Disability', 'Physical Disability', 'Psychosocial Disability', 'Speech and Language Disability', 'Visual Disability'].map((value, index) => <OverlayCheck key={value} name="vawcDisabilityType" value={value} label={value} left={`${57 + (index > 3 ? 27 : 0)}%`} top={`${67 + (index % (index > 3 ? 5 : 4)) * 2.6}%`} />)}
-    <OverlayArea name="contactNumber" label="Contact information" required={false} left="17%" top="89.8%" width="80%" height="6%" />
+    <OverlayField name="vawcVictimMigratoryStatus" label="Migratory status" left="17%" top="40.1%" width="80%" />
+    <OverlayField name="vawcVictimReligionDetails" label="Religion" required={false} left="17%" top="45.5%" width="80%" />
+    <OverlayArea name="vawcVictimCurrentAddress" label="Current address" required left="17%" top="49%" width="80%" height="5%" />
+    <OverlayCheck name="vawcInternallyDisplaced" value="Yes" label="Internally displaced yes" left="17%" top="54.4%" />
+    <OverlayCheck name="vawcInternallyDisplaced" value="No" label="Internally displaced no" left="17%" top="56.2%" />
+    <OverlayCheck name="vawcIsPwd" value="No" label="PWD no" left="51%" top="56.2%" />
+    <OverlayCheck name="vawcIsPwd" value="Yes" label="PWD yes" left="51%" top="58%" />
+    {['Deaf or Hard of Hearing', 'Intellectual Disability', 'Learning Disability', 'Mental Disability', 'Orthopedic Disability', 'Physical Disability', 'Psychosocial Disability', 'Speech and Language Disability', 'Visual Disability'].map((value, index) => <OverlayCheck key={value} name="vawcDisabilityType" value={value} label={value} left={`${57 + (index > 3 ? 27 : 0)}%`} top={`${58 + (index % (index > 3 ? 5 : 4)) * 2.6}%`} />)}
+    <OverlayArea name="contactNumber" label="Contact information" required={false} left="17%" top="72.2%" width="80%" height="8%" />
   </OfficialPage>;
 }
 
