@@ -113,7 +113,7 @@ For Gmail, set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER` to the s
    Add `DIRECT_URL` only if your database provider supplies a separate direct connection string for migrations. SMTP credentials and database URLs must be entered as Vercel environment-variable values—do not commit them to `.env.example` or source control.
 
 5. Click **Save**, then redeploy so the deployment receives the new variables. If you change a variable later, redeploy again.
-6. Apply all pending database migrations with `npx prisma migrate deploy` using the production database before using newly deployed features such as officer registration and assistance tracking.
+6. Apply pending database migrations separately with `npx prisma migrate deploy` from a machine or deployment job that can reach the production database. The Vercel build command only generates Prisma Client and builds the Next.js application, so a temporary database-network outage cannot fail the frontend deployment.
 
 Vercel does not provide an SMTP mailbox. Get the SMTP host, port, username, and password from an email provider that permits SMTP connections from Vercel, and ensure `EMAIL_FROM` is an approved sender address with that provider.
 
