@@ -191,6 +191,7 @@ export function BeneficiaryRegistry({
 }) {
   const [search, setSearch] = useState(initialSearch);
   const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
+  const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
@@ -210,6 +211,14 @@ export function BeneficiaryRegistry({
     const searchable = `${beneficiary.fullName} ${beneficiary.beneficiaryNumber}`.toLowerCase();
     return searchable.includes(normalizedSearch);
   });
+
+  function categoryAddHref(category: RegistryCategory) {
+    const name = category.name.toLowerCase();
+    const base = officerMode ? "/officer" : "/admin";
+    if (name.includes("solo parent")) return `${base}/beneficiaries/new/solo-parent`;
+    if (name.includes("vawc") || (name.includes("special protection") && !name.includes("children in need of special protection"))) return `${base}/beneficiaries/new/vawc-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(category.id)}`}`;
+    return `${base}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(category.id)}`}`;
+  }
 
   useEffect(() => {
     if (!categoryFilterOpen) return;
@@ -254,10 +263,10 @@ export function BeneficiaryRegistry({
             Add {selectedCategory?.name ?? "beneficiary"}
           </Link>
         ) : (
-          <Link href={officerMode ? "/officer/beneficiaries" : "/admin/categories"} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
+          <button type="button" onClick={() => setCategoryPickerOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Choose category to add
-          </Link>
+          </button>
         )}
       </header>
 
@@ -404,11 +413,24 @@ export function BeneficiaryRegistry({
             {!normalizedSearch && (dedicatedPageHref ? (
               <Link href={dedicatedPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add {selectedCategory?.name ?? "beneficiary"}</Link>
             ) : (
-              <Link href={officerMode ? "/officer/beneficiaries" : "/admin/categories"} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Choose category to add</Link>
+              <button type="button" onClick={() => setCategoryPickerOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Choose category to add</button>
             ))}
           </div>
         )}
       </section>
+
+      {categoryPickerOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#071329]/65 p-4" role="dialog" aria-modal="true" aria-labelledby="category-picker-title">
+          <section className="w-full max-w-2xl rounded-2xl border border-white/80 bg-white p-5 shadow-2xl sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#A88724]">Beneficiary registration</p><h2 id="category-picker-title" className="mt-1 text-xl font-bold text-[#0B1A3E]">Choose a category to add</h2><p className="mt-1 text-sm text-[#6480A9]">Select a category to open its correct beneficiary form.</p></div>
+              <button type="button" onClick={() => setCategoryPickerOpen(false)} aria-label="Close category picker" className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">{categories.map((category) => <Link key={category.id} href={categoryAddHref(category)} onClick={() => setCategoryPickerOpen(false)} className="rounded-xl border border-[#DCE3EE] px-4 py-4 text-sm font-semibold text-[#173B70] transition hover:border-[#0645AD] hover:bg-[#F4F7FB]"><span className="block">{category.name}</span><span className="mt-1 block text-xs font-normal text-[#6480A9]">Open category form</span></Link>)}</div>
+            {!categories.length && <p className="mt-5 rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500">No categories are available.</p>}
+          </section>
+        </div>
+      )}
 
     </div>
   );
