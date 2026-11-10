@@ -6,6 +6,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { ArrowLeft, LoaderCircle, Save } from "lucide-react";
 import { createBeneficiaryAction, type BeneficiaryActionState } from "@/app/actions/mswd";
 import type { RegistryCategory, RegistryOfficer } from "@/components/admin/beneficiary-registry";
+import { MAHAYAG_BARANGAYS } from "@/lib/locations";
 
 const initialState: BeneficiaryActionState = { ok: true, message: "" };
 const lineInput = "min-w-0 w-full border-0 border-b border-[#111827] bg-transparent px-1 py-0.5 text-[10px] leading-tight text-[#111827] outline-none focus:border-[#0645AD] focus:ring-0";
@@ -16,6 +17,21 @@ function LineField({ label, name, type = "text", required = false, error, classN
     <label className={`flex min-w-0 items-end gap-1 text-[9px] leading-tight text-[#111827] ${className}`}>
       <span className="shrink-0">{label}{required ? "*" : ""}</span>
       <span className="min-w-0 flex-1"><input name={name} type={type} required={required} className={lineInput} />{error && <span className={errorText}>{error}</span>}</span>
+    </label>
+  );
+}
+
+function SelectLineField({ label, name, options, required = false, error, className = "" }: { label: string; name: string; options: readonly [string, string][]; required?: boolean; error?: string; className?: string }) {
+  return (
+    <label className={`flex min-w-0 items-end gap-1 text-[9px] leading-tight text-[#111827] ${className}`}>
+      <span className="shrink-0">{label}{required ? "*" : ""}</span>
+      <span className="min-w-0 flex-1">
+        <select name={name} required={required} className={`${lineInput} cursor-pointer`}>
+          {!required && <option value="">Select</option>}
+          {options.map(([value, optionLabel]) => <option key={value} value={value}>{optionLabel}</option>)}
+        </select>
+        {error && <span className={errorText}>{error}</span>}
+      </span>
     </label>
   );
 }
@@ -43,11 +59,11 @@ export function GeneralIntakeOfficialFields({ category, officers, officerMode, f
 
         <section className="border-x border-b border-[#111827] p-2 text-[9px]">
           <div className="grid gap-1 sm:grid-cols-[1fr_1fr_1fr_1fr]"><LineField label="PCN" name="pcn" /><LineField label="Status:" name="clientStatus" /><span className="flex gap-3"><CheckField name="statusOption" label="Approved" /><CheckField name="statusOption" label="Disapproved" /></span><LineField label="Remarks" name="remarks" /></div>
-          <div className="mt-1 grid gap-1 border-t border-[#111827] pt-1 sm:grid-cols-[1fr_1fr_1fr]"><LineField label="MOBILE NO." name="mobileNumber" type="tel" /><LineField label="Age*" name="age" type="number" /><label className="flex items-end gap-1">2. Sex*<select name="sex" defaultValue="MALE" required className={lineInput}><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option></select></label></div>
+          <div className="mt-1 grid gap-1 border-t border-[#111827] pt-1 sm:grid-cols-[1fr_1fr_1fr]"><LineField label="MOBILE NO." name="mobileNumber" type="tel" /><LineField label="Age*" name="age" type="number" /><SelectLineField label="2. Sex" name="sex" required options={[["MALE", "Male"], ["FEMALE", "Female"], ["OTHER", "Other"]]} /></div>
           <div className="mt-1 grid gap-1 sm:grid-cols-[1.7fr_1fr]"><label className="flex min-w-0 items-end gap-1">1. Client&apos;s Name*<span className="grid min-w-0 flex-1 grid-cols-3 gap-1"><input name="lastName" placeholder="Last Name" required className={lineInput} /><input name="firstName" placeholder="First Name" required className={lineInput} /><input name="middleName" placeholder="Middle Name" className={lineInput} /></span></label><LineField label="Date of Birth*" name="dateOfBirth" type="date" required error={error("dateOfBirth")} /></div>
           <div className="mt-1"><LineField label="4. Present Address*" name="address" required error={error("address")} /></div>
-          <div className="mt-1 grid gap-1 sm:grid-cols-[1.3fr_1fr_1fr]"><LineField label="5. Place of Birth" name="placeOfBirth" /><LineField label="6. Relationship to Beneficiary" name="relationshipToBeneficiary" /><LineField label="Barangay" name="barangay" /></div>
-          <div className="mt-1 grid gap-1 sm:grid-cols-4"><LineField label="Civil Status" name="civilStatus" /><LineField label="8. Religion" name="religion" /><LineField label="9. Nationality" name="nationality" /><LineField label="Highest Educational Attainment" name="highestEducationalAttainment" /></div>
+          <div className="mt-1 grid gap-1 sm:grid-cols-[1.3fr_1fr_1fr]"><LineField label="5. Place of Birth" name="placeOfBirth" /><LineField label="6. Relationship to Beneficiary" name="relationshipToBeneficiary" /><SelectLineField label="Barangay" name="barangay" required options={MAHAYAG_BARANGAYS.map((barangay) => [barangay, barangay] as [string, string])} /></div>
+          <div className="mt-1 grid gap-1 sm:grid-cols-4"><SelectLineField label="Civil Status" name="civilStatus" options={[["SINGLE", "Single"], ["MARRIED", "Married"], ["WIDOWED", "Widowed"], ["SEPARATED", "Separated"], ["DIVORCED", "Divorced"], ["OTHERS", "Others"]]} /><LineField label="8. Religion" name="religion" /><LineField label="9. Nationality" name="nationality" /><LineField label="Highest Educational Attainment" name="highestEducationalAttainment" /></div>
           <div className="mt-1 grid gap-1 sm:grid-cols-4"><LineField label="11. Skills/Occupation" name="occupation" /><LineField label="12. Estimated Monthly Income" name="monthlyIncome" type="number" /><LineField label="13. Philhealth No." name="philhealthNumber" /><LineField label="16. Contact #" name="contactNumber" type="tel" /></div>
           <div className="mt-1 grid gap-1 sm:grid-cols-3"><LineField label="14. Mode of Admission" name="modeOfAdmission" /><LineField label="15. Referring Party" name="referringParty" /><LineField label="Contact of Referring Party" name="contactPerson" /></div>
         </section>
