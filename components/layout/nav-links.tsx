@@ -82,7 +82,7 @@ export function NavLinks({
                     title={collapsed ? label : undefined}
                     onClick={onNavigate}
                     className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sky-100 transition duration-200 ease-out hover:translate-x-0.5 hover:bg-white/10 hover:text-white",
+                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sky-100/90 transition duration-200 ease-out hover:translate-x-0.5 hover:bg-white/10 hover:text-white",
                     collapsed && "justify-center px-2 hover:translate-x-0",
                       active && activeClassName,
                     )}

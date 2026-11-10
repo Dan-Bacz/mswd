@@ -15,9 +15,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   }), db.notification.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 })]);
   const profile = await db.userProfile.findUnique({ where: { userId: user.id }, select: { photoContent: true } });
   return (
-    <div className="flex min-h-screen bg-[#F4F7FC]">
+    <div className="app-shell flex min-h-screen">
       <Sidebar role="ADMIN" />
-      <div className="min-w-0 flex-1">
+      <div className="app-content min-w-0 flex-1">
         <header className="relative overflow-visible border-b border-[#0B3478] bg-gradient-to-r from-[#0B4599] via-[#0D4A9F] to-[#1556AA] px-4 py-4 text-white shadow-[0_6px_22px_rgba(7,55,131,0.18)] after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[#FFD21F]/80 after:to-transparent sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#FFD21F]" />
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
@@ -82,7 +82,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </div>
           </div>
         </header>
-        <main className="min-w-0 w-full p-3 sm:p-5 lg:p-7">{children}</main>
+        <main className="app-main">{children}</main>
       </div>
     </div>
   );

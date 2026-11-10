@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f7fb;
+  --background: #eef3f9;
   --foreground: #10233f;
+  --mswd-navy: #082b59;
+  --mswd-blue: #0b4599;
+  --mswd-ink: #10233f;
+  --mswd-muted: #647b99;
+  --mswd-border: #dbe5f1;
+  --mswd-gold: #d3a82c;
 }
 
 @theme inline {
@@ -21,9 +27,11 @@ html {
 }
 
 body {
-  background: #f4f7fb;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(205, 225, 250, 0.52), transparent 28rem),
+    linear-gradient(135deg, #f6f9fc 0%, #eef3f9 54%, #eaf1f8 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 a {
@@ -35,6 +43,64 @@ select,
 textarea,
 button {
   font: inherit;
+}
+
+::selection {
+  background: #c8dcf7;
+  color: #082b59;
+}
+
+*:focus-visible {
+  outline: 3px solid rgba(211, 168, 44, 0.7);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e8eff7;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid #e8eff7;
+  border-radius: 999px;
+  background: #9eb4ce;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6f8eaf;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.app-content {
+  min-height: 100vh;
+  background: rgba(246, 249, 252, 0.38);
+}
+
+.app-main {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1680px;
+  padding: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .app-main {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-main {
+    padding: 2rem 2.5rem;
+  }
 }
 
 .beneficiary-modal-backdrop {
