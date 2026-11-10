@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, HandHeart, ShieldCheck, UserRound, Users } from "lucide-react";
+import { ArrowLeft, HandHeart, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { db } from "@/lib/db";
 import { MetricCard } from "@/components/ui/metric-card";
 import { setCategoryOfficersAction } from "@/app/actions/auth";
@@ -40,6 +40,14 @@ export default async function AdminCategoryDashboardPage({
   ]);
 
   const assignedOfficerIds = new Set(assignedOfficers.map((officer) => officer.id));
+  const categoryName = category.name.toLowerCase();
+  const addBeneficiaryHref = categoryName.includes("solo parent")
+    ? "/admin/beneficiaries/new/solo-parent"
+    : categoryName.includes("aics") || categoryName.includes("disaster") || categoryName.includes("children in need of special protection")
+      ? `/admin/beneficiaries/new/general-intake?categoryId=${encodeURIComponent(category.id)}`
+      : categoryName.includes("vawc") || categoryName.includes("special protection")
+        ? `/admin/beneficiaries/new/vawc-intake?categoryId=${encodeURIComponent(category.id)}`
+        : `/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`;
 
   return (
     <div className="space-y-6">
@@ -50,10 +58,17 @@ export default async function AdminCategoryDashboardPage({
         >
           <ArrowLeft className="h-4 w-4" /> Back to categories
         </Link>
-        <h1 className="text-3xl font-bold text-slate-900">{category.name}</h1>
-        <p className="mt-2 text-slate-600">
-          {category.description ?? "Manage beneficiaries, assistance, and officers for this category."}
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">{category.name}</h1>
+            <p className="mt-2 text-slate-600">
+              {category.description ?? "Manage beneficiaries, assistance, and officers for this category."}
+            </p>
+          </div>
+          <Link href={addBeneficiaryHref} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-800">
+            <Plus className="h-4 w-4" /> Add beneficiary
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

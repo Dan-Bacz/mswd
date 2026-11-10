@@ -630,6 +630,18 @@ function BeneficiaryModal({
   }
 
   function goToNextStep() {
+    const selectedCategoryName = categories.find((category) => category.id === formCategoryId)?.name.toLowerCase() ?? "";
+    const specializedPath = selectedCategoryName.includes("solo parent")
+      ? "/admin/beneficiaries/new/solo-parent"
+      : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster") || selectedCategoryName.includes("children in need of special protection")
+        ? `/admin/beneficiaries/new/general-intake?categoryId=${encodeURIComponent(formCategoryId)}`
+        : selectedCategoryName.includes("vawc") || selectedCategoryName.includes("special protection")
+          ? `/admin/beneficiaries/new/vawc-intake?categoryId=${encodeURIComponent(formCategoryId)}`
+          : "";
+    if (specializedPath && !officerMode) {
+      window.location.assign(specializedPath);
+      return;
+    }
     if (step === 1) {
       const controls = formRef.current?.querySelectorAll<HTMLElement>(
         '[data-wizard-step="1"] input, [data-wizard-step="1"] select, [data-wizard-step="1"] textarea',
