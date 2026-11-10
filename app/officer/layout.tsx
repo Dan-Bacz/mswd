@@ -23,7 +23,11 @@ export default async function OfficerLayout({ children }: { children: ReactNode 
   const notificationCount = await db.notification.count({
     where: { userId: user.id, isRead: false },
   });
-  const profile = await db.userProfile.findUnique({ where: { userId: user.id }, select: { photoContent: true } });
+  const [profile, maintenanceSetting] = await Promise.all([
+    db.userProfile.findUnique({ where: { userId: user.id }, select: { photoContent: true } }),
+    db.systemSetting.findUnique({ where: { key: "maintenance_mode" }, select: { value: true } }),
+  ]);
+  const maintenanceMode = maintenanceSetting?.value === "true";
   return (
     <div className="app-shell flex min-h-screen">
       <Sidebar role="OFFICER" />
@@ -88,6 +92,7 @@ export default async function OfficerLayout({ children }: { children: ReactNode 
               </details>
             </div>
           </div>
+          {maintenanceMode && <div className="relative z-10 mt-3 flex items-center justify-center rounded-lg border border-amber-200/30 bg-amber-300/15 px-3 py-2 text-center text-xs font-semibold text-amber-100"><span className="mr-2 h-2 w-2 animate-pulse rounded-full bg-amber-300" aria-hidden="true" />System is under maintenance. Some services may be temporarily unavailable.</div>}
         </header>
         <main className="app-main">{children}</main>
       </div>

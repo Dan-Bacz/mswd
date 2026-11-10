@@ -6,6 +6,7 @@ import {
   BarChart3,
   Bell,
   ClipboardCheck,
+  DatabaseBackup,
   FileText,
   FolderTree,
   HeartHandshake,
@@ -28,6 +29,7 @@ const iconMap: Record<string, LucideIcon> = {
   assistance: HeartHandshake,
   notifications: Bell,
   membership: ClipboardCheck,
+  backup: DatabaseBackup,
 };
 
 export type NavLinkItem = {
