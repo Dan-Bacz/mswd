@@ -3,112 +3,46 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
-import { Save, UserCircle2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, ClipboardList, MapPin, Save, ShieldCheck, UserCircle2 } from "lucide-react";
 import { updateBeneficiaryAction, type BeneficiaryActionState } from "@/app/actions/mswd";
 import { MAHAYAG_BARANGAYS } from "@/lib/locations";
 import { VawcIntakeProfile } from "@/components/beneficiaries/vawc-intake-profile";
 
 const initialState: BeneficiaryActionState = { ok: true, message: "" };
-const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100";
+const inputClass = "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100";
 
 function fullName(beneficiary: { firstName: string; middleName: string | null; lastName: string; suffix: string | null }) {
   return [beneficiary.firstName, beneficiary.middleName, beneficiary.lastName, beneficiary.suffix].filter(Boolean).join(" ");
 }
 
-export function BeneficiaryProfile({
-  beneficiary,
-  canEdit,
-  backHref,
-}: {
-  beneficiary: {
-    id: string;
-    beneficiaryNumber: string;
-    firstName: string;
-    middleName: string | null;
-    lastName: string;
-    suffix: string | null;
-    sex: string;
-    dateOfBirth: string | null;
-    age: number | null;
-    civilStatus: string | null;
-    contactNumber: string | null;
-    email: string | null;
-    address: string;
-    barangay: string | null;
-    municipality: string | null;
-    province: string | null;
-    categoryId: string;
-    categoryName: string;
-    assignedOfficerName: string | null;
-    status: string;
-    remarks: string | null;
-    assistanceCount: number;
-    hasPhoto: boolean;
-    generalIntakeData: Record<string, unknown> | null;
-    soloParentData: Record<string, unknown> | null;
-  };
-  canEdit: boolean;
-  backHref: string;
-}) {
+type BeneficiaryProfileData = {
+  id: string; beneficiaryNumber: string; firstName: string; middleName: string | null; lastName: string; suffix: string | null; sex: string; dateOfBirth: string | null; age: number | null; civilStatus: string | null; contactNumber: string | null; email: string | null; address: string; barangay: string | null; municipality: string | null; province: string | null; categoryId: string; categoryName: string; assignedOfficerName: string | null; status: string; remarks: string | null; assistanceCount: number; hasPhoto: boolean; generalIntakeData: Record<string, unknown> | null; soloParentData: Record<string, unknown> | null;
+};
+
+export function BeneficiaryProfile({ beneficiary, canEdit, backHref }: { beneficiary: BeneficiaryProfileData; canEdit: boolean; backHref: string }) {
   const [state, formAction, pending] = useActionState(updateBeneficiaryAction, initialState);
   const name = fullName(beneficiary);
   const dateOfBirth = beneficiary.dateOfBirth ? beneficiary.dateOfBirth.slice(0, 10) : "";
-  return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <Link href={backHref} className="text-sm font-semibold text-sky-700 hover:text-sky-900">← Back to beneficiaries</Link>
-      <header className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center">
-        <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
-          {beneficiary.hasPhoto ? <Image src={`/api/beneficiaries/${beneficiary.id}/photo`} alt={`${name} profile photo`} fill unoptimized className="object-cover" /> : <UserCircle2 className="h-12 w-12 text-slate-300" />}
-        </div>
-        <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Client ID {beneficiary.beneficiaryNumber}</p><h1 className="mt-1 text-3xl font-bold text-slate-900">{name}</h1><p className="mt-1 text-sm text-slate-600">{beneficiary.categoryName} · {beneficiary.status}</p></div>
-      </header>
-      {beneficiary.generalIntakeData && (beneficiary.categoryName.toLowerCase().includes("vawc") || (beneficiary.categoryName.toLowerCase().includes("special protection") && !beneficiary.categoryName.toLowerCase().includes("children in need of special protection"))) && <VawcIntakeProfile data={beneficiary.generalIntakeData} />}
-      {canEdit ? (
-        <form action={formAction} encType="multipart/form-data" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-          <input type="hidden" name="beneficiaryId" value={beneficiary.id} /><input type="hidden" name="categoryId" value={beneficiary.categoryId} />
-          {(beneficiary.generalIntakeData || beneficiary.soloParentData) && <SavedFormDataEditor data={beneficiary.soloParentData ?? beneficiary.generalIntakeData ?? {}} />}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700">First name<input name="firstName" required defaultValue={beneficiary.firstName} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Middle name<input name="middleName" defaultValue={beneficiary.middleName ?? ""} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Last name<input name="lastName" required defaultValue={beneficiary.lastName} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Suffix<input name="suffix" defaultValue={beneficiary.suffix ?? ""} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Sex<select name="sex" defaultValue={beneficiary.sex} className={`${inputClass} mt-1.5`}><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option></select></label>
-            <label className="text-sm font-medium text-slate-700">Date of birth<input name="dateOfBirth" type="date" defaultValue={dateOfBirth} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Civil status<select name="civilStatus" defaultValue={beneficiary.civilStatus ?? ""} className={`${inputClass} mt-1.5`}><option value="">Select</option><option value="SINGLE">Single</option><option value="MARRIED">Married</option><option value="WIDOWED">Widowed</option><option value="SEPARATED">Separated</option><option value="DIVORCED">Divorced</option><option value="OTHERS">Others</option></select></label>
-            <label className="text-sm font-medium text-slate-700">Contact number<input name="contactNumber" defaultValue={beneficiary.contactNumber ?? ""} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Email<input name="email" type="email" defaultValue={beneficiary.email ?? ""} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">Address<input name="address" required defaultValue={beneficiary.address} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700">Barangay<select name="barangay" required defaultValue={beneficiary.barangay ?? ""} className={`${inputClass} mt-1.5`}><option value="">Select barangay</option>{MAHAYAG_BARANGAYS.map((barangay) => <option key={barangay} value={barangay}>{barangay}</option>)}</select></label>
-            <label className="text-sm font-medium text-slate-700">Province<input name="province" defaultValue={beneficiary.province ?? ""} className={`${inputClass} mt-1.5`} /></label>
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">Profile photo<input name="profileImage" type="file" accept="image/jpeg,image/png,image/webp" className={`${inputClass} mt-1.5 h-auto py-2 text-xs`} /><span className="mt-1 block text-xs font-normal text-slate-500">Upload a new photo to replace the current one. Maximum 1 MB.</span></label>
-            <label className="text-sm font-medium text-slate-700 sm:col-span-2">Remarks<textarea name="remarks" defaultValue={beneficiary.remarks ?? ""} className="mt-1.5 min-h-24 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100" /></label>
-          </div>
-          <div className="mt-5 flex flex-wrap items-center gap-4"><button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-60"><Save className="h-4 w-4" />{pending ? "Saving..." : "Save changes"}</button>{state.message && <p role={state.ok ? "status" : "alert"} className={state.ok ? "text-sm text-emerald-700" : "text-sm text-rose-700"}>{state.message}</p>}</div>
-        </form>
-      ) : <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Only the administrator or the officer assigned to this beneficiary can edit this profile.</p>}
-      {!canEdit && (beneficiary.generalIntakeData || beneficiary.soloParentData) && <SavedFormDataReadOnly data={beneficiary.soloParentData ?? beneficiary.generalIntakeData ?? {}} />}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Info label="Age" value={beneficiary.age === null ? "Not recorded" : String(beneficiary.age)} /><Info label="Municipality" value={beneficiary.municipality ?? "Not recorded"} /><Info label="Assigned officer" value={beneficiary.assignedOfficerName ?? "Unassigned"} /><Info label="Assistance records" value={String(beneficiary.assistanceCount)} /></section>
-    </div>
-  );
+  const categoryFormData = beneficiary.soloParentData ?? beneficiary.generalIntakeData;
+  const categoryName = beneficiary.categoryName.toLowerCase();
+  const isVawc = categoryName.includes("vawc") || (categoryName.includes("special protection") && !categoryName.includes("children in need of special protection"));
+  return <div className="mx-auto max-w-6xl space-y-6 pb-8">
+    <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#0B4599] transition hover:text-[#073783]"><ArrowLeft className="h-4 w-4" />Back to beneficiaries</Link>
+    <header className="relative overflow-hidden rounded-2xl bg-[#071C3A] text-white shadow-lg"><div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,111,190,0.38),transparent_45%)]" /><div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-7"><div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/20 bg-white/10 shadow-inner">{beneficiary.hasPhoto ? <Image src={`/api/beneficiaries/${beneficiary.id}/photo`} alt={`${name} profile photo`} fill unoptimized className="object-cover" /> : <UserCircle2 className="h-16 w-16 text-blue-100/60" />}</div><div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-200">MSWD beneficiary profile</p><h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{name}</h1><div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-blue-100"><span className="rounded-md bg-white/10 px-2.5 py-1 font-semibold">Client ID: {beneficiary.beneficiaryNumber}</span><span className="text-blue-200">{beneficiary.categoryName}</span></div></div><div className="self-start rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-emerald-100"><ShieldCheck className="mr-1 inline h-4 w-4" />{beneficiary.status}</div></div><div className="relative grid border-t border-white/10 bg-black/10 sm:grid-cols-3"><HeaderMeta icon={<MapPin />} label="Registered location" value={[beneficiary.barangay, beneficiary.municipality].filter(Boolean).join(", ") || "Not recorded"} /><HeaderMeta icon={<CalendarDays />} label="Date of birth" value={dateOfBirth || "Not recorded"} /><HeaderMeta icon={<ClipboardList />} label="Assigned officer" value={beneficiary.assignedOfficerName ?? "Unassigned"} /></div></header>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Info label="Age" value={beneficiary.age === null ? "Not recorded" : String(beneficiary.age)} /><Info label="Civil status" value={beneficiary.civilStatus ?? "Not recorded"} /><Info label="Assistance records" value={String(beneficiary.assistanceCount)} /><Info label="Province" value={beneficiary.province ?? "Not recorded"} /></div>
+    {isVawc && beneficiary.generalIntakeData && <VawcIntakeProfile data={beneficiary.generalIntakeData} />}
+    {canEdit ? <form action={formAction} encType="multipart/form-data" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-7"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#A88724]">Authorized editing</p><h2 className="mt-1 text-xl font-bold text-[#102A4C]">Beneficiary information</h2><p className="mt-1 text-sm text-slate-500">Update the official profile and saved category responses.</p></div><div className="space-y-6 p-5 sm:p-7"><input type="hidden" name="beneficiaryId" value={beneficiary.id} /><input type="hidden" name="categoryId" value={beneficiary.categoryId} />{categoryFormData && <SavedFormDataEditor data={categoryFormData} />}<section><SectionTitle title="Personal identity" /><div className="grid gap-4 sm:grid-cols-2"><Field name="firstName" label="First name" required defaultValue={beneficiary.firstName} /><Field name="middleName" label="Middle name" defaultValue={beneficiary.middleName ?? ""} /><Field name="lastName" label="Last name" required defaultValue={beneficiary.lastName} /><Field name="suffix" label="Suffix" defaultValue={beneficiary.suffix ?? ""} /><SelectField name="sex" label="Sex" defaultValue={beneficiary.sex} options={[["MALE", "Male"], ["FEMALE", "Female"], ["OTHER", "Other"]]} /><Field name="dateOfBirth" label="Date of birth" type="date" defaultValue={dateOfBirth} /><SelectField name="civilStatus" label="Civil status" defaultValue={beneficiary.civilStatus ?? ""} options={[["", "Select"], ["SINGLE", "Single"], ["MARRIED", "Married"], ["WIDOWED", "Widowed"], ["SEPARATED", "Separated"], ["DIVORCED", "Divorced"], ["OTHERS", "Others"]]} /></div></section><section><SectionTitle title="Contact and residence" /><div className="grid gap-4 sm:grid-cols-2"><Field name="contactNumber" label="Contact number" defaultValue={beneficiary.contactNumber ?? ""} /><Field name="email" label="Email" type="email" defaultValue={beneficiary.email ?? ""} /><Field name="address" label="Complete address" required className="sm:col-span-2" defaultValue={beneficiary.address} /><SelectField name="barangay" label="Barangay" required defaultValue={beneficiary.barangay ?? ""} options={[["", "Select barangay"], ...MAHAYAG_BARANGAYS.map((barangay) => [barangay, barangay] as [string, string])]} /><Field name="province" label="Province" defaultValue={beneficiary.province ?? ""} /></div></section><section><SectionTitle title="Records and profile photo" /><div className="grid gap-4 sm:grid-cols-2"><FileField name="profileImage" label="Replace profile photo" /><label className="text-sm font-medium text-slate-700 sm:col-span-2">Remarks<textarea name="remarks" defaultValue={beneficiary.remarks ?? ""} className="mt-1.5 min-h-24 w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100" /></label></div></section><div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5"><p className="flex items-center gap-2 text-xs text-slate-500"><ShieldCheck className="h-4 w-4 text-emerald-600" />Authorized staff only</p><div className="flex items-center gap-4"><span role={state.ok ? "status" : "alert"} className={state.message ? (state.ok ? "text-sm text-emerald-700" : "text-sm text-rose-700") : "hidden"}>{state.message}</span><button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-lg bg-[#0B4599] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#073783] disabled:opacity-60"><Save className="h-4 w-4" />{pending ? "Saving..." : "Save changes"}</button></div></div></div></form> : <><section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Only the administrator or the officer assigned to this beneficiary can edit this profile.</section>{categoryFormData && <SavedFormDataReadOnly data={categoryFormData} />}</>}
+  </div>;
 }
 
-function Info({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div>; }
-
-function displayFormValue(value: unknown) {
-  if (Array.isArray(value)) return value.map(String).join(", ");
-  if (value === null || value === undefined) return "";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
-function SavedFormDataEditor({ data }: { data: Record<string, unknown> }) {
-  const entries = Object.entries(data).filter(([key]) => !["firstName", "middleName", "lastName", "sex", "dateOfBirth", "address"].includes(key));
-  if (!entries.length) return null;
-  return <section className="mb-6 rounded-xl border border-sky-200 bg-sky-50/40 p-4"><h2 className="text-base font-semibold text-slate-900">Saved category form</h2><p className="mt-1 text-xs text-slate-600">Update the saved form responses below. Changes are saved with the beneficiary profile.</p><div className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <label key={key} className="text-sm font-medium text-slate-700"><span>{key.replace(/^vawc/, "").replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase())}</span><textarea name={`formField_${key}`} defaultValue={displayFormValue(value)} rows={Array.isArray(value) || displayFormValue(value).length > 100 ? 3 : 1} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100" /></label>)}</div></section>;
-}
-
-function SavedFormDataReadOnly({ data }: { data: Record<string, unknown> }) {
-  const entries = Object.entries(data).filter(([key, value]) => value !== "" && !["firstName", "middleName", "lastName", "sex", "dateOfBirth", "address"].includes(key));
-  if (!entries.length) return null;
-  return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-base font-semibold text-slate-900">Saved category form</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <div key={key}><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{key.replace(/^vawc/, "").replace(/([A-Z])/g, " $1")}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{displayFormValue(value)}</dd></div>)}</dl></section>;
-}
+function HeaderMeta({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="flex items-center gap-3 border-white/10 px-5 py-3 text-blue-100 first:border-l-0 sm:border-l"><span className="text-blue-300 [&>svg]:h-4 [&>svg]:w-4">{icon}</span><span className="min-w-0"><span className="block text-[10px] uppercase tracking-wide text-blue-300">{label}</span><span className="block truncate text-sm font-medium text-white">{value}</span></span></div>; }
+function SectionTitle({ title }: { title: string }) { return <div className="mb-4 flex items-center gap-3 border-b border-slate-200 pb-3"><span className="h-5 w-1 rounded-full bg-[#C9A93F]" /><h3 className="text-sm font-bold uppercase tracking-wide text-[#173B70]">{title}</h3></div>; }
+function Field({ name, label, defaultValue, type = "text", required = false, className = "" }: { name: string; label: string; defaultValue?: string; type?: string; required?: boolean; className?: string }) { return <label className={`text-sm font-medium text-slate-700 ${className}`}>{label}{required && <span className="ml-1 text-rose-600">*</span>}<input name={name} type={type} required={required} defaultValue={defaultValue} className={`${inputClass} mt-1.5`} /></label>; }
+function SelectField({ name, label, defaultValue, options, required = false }: { name: string; label: string; defaultValue: string; options: [string, string][]; required?: boolean }) { return <label className="text-sm font-medium text-slate-700">{label}{required && <span className="ml-1 text-rose-600">*</span>}<select name={name} required={required} defaultValue={defaultValue} className={`${inputClass} mt-1.5`}>{options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>; }
+function FileField({ name, label }: { name: string; label: string }) { return <label className="text-sm font-medium text-slate-700 sm:col-span-2">{label}<input name={name} type="file" accept="image/jpeg,image/png,image/webp" className={`${inputClass} mt-1.5 h-auto py-2 text-xs`} /><span className="mt-1 block text-xs font-normal text-slate-500">JPEG, PNG, or WebP. Maximum 1 MB.</span></label>; }
+function Info({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-lg font-bold text-[#173B70]">{value}</p></div>; }
+function displayFormValue(value: unknown) { if (Array.isArray(value)) return value.map(String).join(", "); if (value === null || value === undefined) return ""; if (typeof value === "object") return JSON.stringify(value); return String(value); }
+function formLabel(key: string) { return key.replace(/^vawc/, "").replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase()); }
+function formEntries(data: Record<string, unknown>) { return Object.entries(data).filter(([key]) => !["firstName", "middleName", "lastName", "sex", "dateOfBirth", "address"].includes(key)); }
+function SavedFormDataEditor({ data }: { data: Record<string, unknown> }) { const entries = formEntries(data); if (!entries.length) return null; return <section className="rounded-xl border border-[#C9DDF5] bg-[#F5F9FF] p-4 sm:p-5"><div className="flex items-start gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#0B4599]" /><div><h3 className="font-bold text-[#173B70]">Saved category form responses</h3><p className="mt-1 text-xs text-slate-600">Edit the information saved from the category intake form.</p></div></div><div className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <label key={key} className="text-sm font-medium text-slate-700">{formLabel(key)}<textarea name={`formField_${key}`} defaultValue={displayFormValue(value)} rows={Array.isArray(value) || displayFormValue(value).length > 100 ? 3 : 1} className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100" /></label>)}</div></section>; }
+function SavedFormDataReadOnly({ data }: { data: Record<string, unknown> }) { const entries = formEntries(data).filter(([, value]) => value !== ""); if (!entries.length) return null; return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 border-b border-slate-200 pb-3"><ClipboardList className="h-5 w-5 text-[#0B4599]" /><h2 className="font-bold text-[#173B70]">Saved category form</h2></div><dl className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <div key={key}><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formLabel(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{displayFormValue(value)}</dd></div>)}</dl></section>; }
