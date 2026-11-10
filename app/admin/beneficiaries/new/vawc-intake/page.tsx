@@ -11,7 +11,7 @@ export default async function NewVawcIntakeBeneficiaryPage({ searchParams }: { s
   const categoryId = typeof params.categoryId === "string" ? params.categoryId : "";
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true, name: true } });
   const name = category?.name.toLowerCase() ?? "";
-  if (!category || (!name.includes("vawc") && !name.includes("special protection"))) notFound();
+  if (!category || (!name.includes("vawc") && (!name.includes("special protection") || name.includes("children in need of special protection")))) notFound();
   const officers = await db.user.findMany({
     where: { role: { name: "OFFICER" }, status: "ACTIVE", userCategories: { some: { categoryId: category.id } } },
     orderBy: { name: "asc" },

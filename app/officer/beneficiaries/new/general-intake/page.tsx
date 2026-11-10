@@ -9,6 +9,6 @@ export default async function NewGeneralIntakeBeneficiaryPage() {
   const { categoryId } = await requireSelectedOfficerCategory();
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true, name: true } });
   const categoryName = category?.name.toLowerCase() ?? "";
-  if (!category || (!categoryName.includes("aics") && !categoryName.includes("disaster"))) notFound();
+  if (!category || (!categoryName.includes("aics") && !categoryName.includes("disaster") && !categoryName.includes("children in need of special protection"))) notFound();
   return <GeneralIntakePageForm category={category} officers={[]} officerMode backHref="/officer/beneficiaries" />;
 }

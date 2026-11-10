@@ -61,7 +61,7 @@ export function BeneficiaryProfile({
         </div>
         <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Client ID {beneficiary.beneficiaryNumber}</p><h1 className="mt-1 text-3xl font-bold text-slate-900">{name}</h1><p className="mt-1 text-sm text-slate-600">{beneficiary.categoryName} · {beneficiary.status}</p></div>
       </header>
-      {beneficiary.generalIntakeData && (beneficiary.categoryName.toLowerCase().includes("vawc") || beneficiary.categoryName.toLowerCase().includes("special protection")) && <VawcIntakeProfile data={beneficiary.generalIntakeData} />}
+      {beneficiary.generalIntakeData && (beneficiary.categoryName.toLowerCase().includes("vawc") || (beneficiary.categoryName.toLowerCase().includes("special protection") && !beneficiary.categoryName.toLowerCase().includes("children in need of special protection"))) && <VawcIntakeProfile data={beneficiary.generalIntakeData} />}
       {canEdit ? (
         <form action={formAction} encType="multipart/form-data" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <input type="hidden" name="beneficiaryId" value={beneficiary.id} /><input type="hidden" name="categoryId" value={beneficiary.categoryId} />

@@ -203,7 +203,7 @@ export function BeneficiaryRegistry({
   const selectedCategoryName = selectedCategory?.name.toLowerCase() ?? "";
   const dedicatedPageHref = selectedCategoryName.includes("solo parent")
     ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/solo-parent`
-    : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster")
+      : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster") || selectedCategoryName.includes("children in need of special protection")
       ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
       : selectedCategoryName.includes("vawc") || selectedCategoryName.includes("special protection")
         ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/vawc-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`

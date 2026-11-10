@@ -264,8 +264,8 @@ export async function createBeneficiaryAction(
   }
 
   const categoryName = category.name.toLowerCase();
-  if (categoryName.includes("aics") || categoryName.includes("disaster") || categoryName.includes("vawc") || categoryName.includes("special protection")) {
-    if (categoryName.includes("vawc") || categoryName.includes("special protection")) {
+  if (categoryName.includes("aics") || categoryName.includes("disaster") || categoryName.includes("vawc") || categoryName.includes("special protection") || categoryName.includes("children in need of special protection")) {
+    if (categoryName.includes("vawc") || (categoryName.includes("special protection") && !categoryName.includes("children in need of special protection"))) {
       const missingFields = missingVawcFields(formData);
       if (missingFields.length > 0) {
         return {

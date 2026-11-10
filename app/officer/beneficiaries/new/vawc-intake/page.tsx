@@ -9,6 +9,6 @@ export default async function NewVawcIntakeBeneficiaryPage() {
   const { categoryId } = await requireSelectedOfficerCategory();
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true, name: true } });
   const name = category?.name.toLowerCase() ?? "";
-  if (!category || (!name.includes("vawc") && !name.includes("special protection"))) notFound();
+  if (!category || (!name.includes("vawc") && (!name.includes("special protection") || name.includes("children in need of special protection")))) notFound();
   return <VawcIntakePageForm category={category} officers={[]} officerMode backHref="/officer/beneficiaries" />;
 }
