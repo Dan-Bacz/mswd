@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Bell,
+  ClipboardCheck,
   FileText,
   FolderTree,
   HeartHandshake,
@@ -26,6 +27,7 @@ const iconMap: Record<string, LucideIcon> = {
   beneficiaries: Users,
   assistance: HeartHandshake,
   notifications: Bell,
+  membership: ClipboardCheck,
 };
 
 export type NavLinkItem = {

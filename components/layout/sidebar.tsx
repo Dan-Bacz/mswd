@@ -10,6 +10,7 @@ const adminSections: NavSection[] = [
       { href: "/admin/categories", label: "Programs & Services", icon: "categories" },
       { href: "/admin/reports", label: "Reports", icon: "reports" },
       { href: "/admin/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
+      { href: "/admin/membership", label: "Membership Form", icon: "membership" },
       { href: "/admin/assistance", label: "Assistance", icon: "assistance" },
       { href: "/admin/officers", label: "Officers", icon: "users" },
       { href: "/admin/notifications", label: "Notifications", icon: "notifications" },
@@ -46,6 +47,7 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
         items: [
           { href: assignedCategories[0] ? `/officer/categories/${assignedCategories[0].id}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
           { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
+          { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
           { href: "/officer/reports", label: "Reports", icon: "reports" },
           { href: "/officer/profile", label: "My Profile", icon: "profile" },
