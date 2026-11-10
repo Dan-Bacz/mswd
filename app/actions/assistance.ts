@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/permissions";
 import {
@@ -29,6 +30,20 @@ const quantitySchema = z
   .string()
   .trim()
   .refine((value: string) => value === "" || /^\d{1,7}$/.test(value), "Enter a whole number.");
+
+function collectGisFormData(formData: FormData): Prisma.InputJsonObject {
+  const fields = new Set<string>();
+  for (const key of formData.keys()) {
+    if (key.startsWith("gis") || key.startsWith("family")) fields.add(key);
+  }
+
+  const values: Record<string, string | string[]> = {};
+  for (const key of fields) {
+    const entries = formData.getAll(key).map((value) => (typeof value === "string" ? value : value.name));
+    values[key] = entries.length > 1 ? entries : entries[0] ?? "";
+  }
+  return values as Prisma.InputJsonObject;
+}
 
 const assistanceSchema = z
   .object({
@@ -285,6 +300,7 @@ export async function saveAssistanceAction(
     followUpReason: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpReason : null,
     followUpNotes: parsed.data.outcome === "FOLLOW_UP" ? parsed.data.followUpNotes : null,
     internalRemarks: parsed.data.internalRemarks || null,
+    formData: collectGisFormData(formData),
     medicineCount: parsed.data.type === "MEDICAL_ASSISTANCE" ? parsed.data.medicineQuantity ? Number(parsed.data.medicineQuantity) : parsed.data.medicineCount ?? null : null,
     providerName: parsed.data.type === "MEDICAL_ASSISTANCE" ? parsed.data.doctorName || parsed.data.providerName || null : null,
     financialAmount: parsed.data.type === "FINANCIAL_ASSISTANCE" && parsed.data.financialAmount ? Number(parsed.data.financialAmount) : null,

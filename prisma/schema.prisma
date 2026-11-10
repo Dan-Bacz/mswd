@@ -252,6 +252,7 @@ model BeneficiaryAssistance {
   followUpReason       String?
   followUpNotes        String?
   internalRemarks      String?
+  formData             Json?
   medicineQuantity     Int?
   doctorName           String?
   providedById         String

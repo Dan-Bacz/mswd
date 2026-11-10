@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { saveAssistanceAction, type AssistanceActionState } from "@/app/actions/assistance";
+import { GisClientSectorForm } from "@/components/assistance/gis-client-sector-form";
 import {
   ASSISTANCE_OUTCOME_LABELS,
   ASSISTANCE_OUTCOME_VALUES,
@@ -269,6 +270,9 @@ export function AssistanceManagement({
     OTHER: "Describe the specific assistance or service provided.",
   };
   const selectedBeneficiary = beneficiaries.find((beneficiary) => beneficiary.id === selectedBeneficiaryId);
+  const savedGisData = editingRecord?.formData && typeof editingRecord.formData === "object" && !Array.isArray(editingRecord.formData)
+    ? editingRecord.formData as Record<string, unknown>
+    : undefined;
   const beneficiaryMatches = beneficiaries
     .filter((beneficiary) => {
       const query = beneficiarySearch.trim().toLocaleLowerCase();
@@ -482,6 +486,8 @@ export function AssistanceManagement({
               <input type="hidden" name="recordId" value={editId ?? ""} />
               <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-7">
                 {state.message && !state.ok && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{state.message}</div>}
+
+                <GisClientSectorForm beneficiary={selectedBeneficiary} savedData={savedGisData} />
 
                 <section className="rounded-xl border border-[#E4EAF3] bg-white p-4 sm:p-5">
                   <div className="mb-4">
