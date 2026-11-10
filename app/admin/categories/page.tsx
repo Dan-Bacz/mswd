@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { DeleteCategoryForm } from "@/components/admin/delete-category-form";
 import { CreateCategoryDialog } from "@/components/admin/create-category-dialog";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +42,6 @@ export default async function CategoriesPage() {
                       >
                         Open dashboard
                       </Link>
-                      <DeleteCategoryForm categoryId={category.id} categoryName={category.name} />
                     </td>
                   </tr>
                 ))}
