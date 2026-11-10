@@ -488,6 +488,7 @@ export async function createBeneficiaryAction(
   revalidatePath("/officer/beneficiaries");
   revalidatePath("/admin/dashboard");
   revalidatePath("/officer/dashboard");
+  revalidatePath(`/admin/categories/${parsed.data.categoryId}`);
   revalidatePath(`/officer/categories/${parsed.data.categoryId}`);
   return { ok: true, message: "Beneficiary saved successfully.", saved: true };
 }
@@ -502,7 +503,7 @@ export async function updateBeneficiaryAction(
 
   const existing = await db.beneficiary.findUnique({
     where: { id: beneficiaryId },
-    select: { id: true, assignedOfficerId: true },
+    select: { id: true, assignedOfficerId: true, categoryId: true, category: { select: { name: true } }, generalIntakeData: true, soloParentData: true },
   });
   if (!existing) return { ok: false, message: "Beneficiary record was not found." };
   if (user.role !== "ADMIN" && existing.assignedOfficerId !== user.id) {
@@ -568,6 +569,15 @@ export async function updateBeneficiaryAction(
     throw error;
   }
 
+  const formFieldEntries = Array.from(formData.entries())
+    .filter(([name, value]) => name.startsWith("formField_") && typeof value === "string")
+    .map(([name, value]) => [name.slice("formField_".length), String(value).trim()] as const);
+  const categoryName = existing.category.name.toLowerCase();
+  const currentFormData = categoryName.includes("solo parent") ? existing.soloParentData : existing.generalIntakeData;
+  const updatedFormData = formFieldEntries.length > 0
+    ? { ...((currentFormData && typeof currentFormData === "object" && !Array.isArray(currentFormData)) ? currentFormData : {}), ...Object.fromEntries(formFieldEntries) } as Prisma.InputJsonObject
+    : undefined;
+
   try {
     await db.$transaction(async (transaction) => {
       await transaction.beneficiary.update({
@@ -589,6 +599,7 @@ export async function updateBeneficiaryAction(
           barangay: parsed.data.barangay || null,
           province: parsed.data.province || null,
           remarks: parsed.data.remarks || null,
+          ...(updatedFormData ? (categoryName.includes("solo parent") ? { soloParentData: updatedFormData } : { generalIntakeData: updatedFormData }) : {}),
         },
       });
       if (photo) {

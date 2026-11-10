@@ -45,6 +45,7 @@ export function BeneficiaryProfile({
     assistanceCount: number;
     hasPhoto: boolean;
     generalIntakeData: Record<string, unknown> | null;
+    soloParentData: Record<string, unknown> | null;
   };
   canEdit: boolean;
   backHref: string;
@@ -65,6 +66,7 @@ export function BeneficiaryProfile({
       {canEdit ? (
         <form action={formAction} encType="multipart/form-data" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <input type="hidden" name="beneficiaryId" value={beneficiary.id} /><input type="hidden" name="categoryId" value={beneficiary.categoryId} />
+          {(beneficiary.generalIntakeData || beneficiary.soloParentData) && <SavedFormDataEditor data={beneficiary.soloParentData ?? beneficiary.generalIntakeData ?? {}} />}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium text-slate-700">First name<input name="firstName" required defaultValue={beneficiary.firstName} className={`${inputClass} mt-1.5`} /></label>
             <label className="text-sm font-medium text-slate-700">Middle name<input name="middleName" defaultValue={beneficiary.middleName ?? ""} className={`${inputClass} mt-1.5`} /></label>
@@ -84,9 +86,29 @@ export function BeneficiaryProfile({
           <div className="mt-5 flex flex-wrap items-center gap-4"><button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-800 disabled:opacity-60"><Save className="h-4 w-4" />{pending ? "Saving..." : "Save changes"}</button>{state.message && <p role={state.ok ? "status" : "alert"} className={state.ok ? "text-sm text-emerald-700" : "text-sm text-rose-700"}>{state.message}</p>}</div>
         </form>
       ) : <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Only the administrator or the officer assigned to this beneficiary can edit this profile.</p>}
+      {!canEdit && (beneficiary.generalIntakeData || beneficiary.soloParentData) && <SavedFormDataReadOnly data={beneficiary.soloParentData ?? beneficiary.generalIntakeData ?? {}} />}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Info label="Age" value={beneficiary.age === null ? "Not recorded" : String(beneficiary.age)} /><Info label="Municipality" value={beneficiary.municipality ?? "Not recorded"} /><Info label="Assigned officer" value={beneficiary.assignedOfficerName ?? "Unassigned"} /><Info label="Assistance records" value={String(beneficiary.assistanceCount)} /></section>
     </div>
   );
 }
 
 function Info({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">{label}</p><p className="mt-1 font-semibold text-slate-800">{value}</p></div>; }
+
+function displayFormValue(value: unknown) {
+  if (Array.isArray(value)) return value.map(String).join(", ");
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function SavedFormDataEditor({ data }: { data: Record<string, unknown> }) {
+  const entries = Object.entries(data).filter(([key]) => !["firstName", "middleName", "lastName", "sex", "dateOfBirth", "address"].includes(key));
+  if (!entries.length) return null;
+  return <section className="mb-6 rounded-xl border border-sky-200 bg-sky-50/40 p-4"><h2 className="text-base font-semibold text-slate-900">Saved category form</h2><p className="mt-1 text-xs text-slate-600">Update the saved form responses below. Changes are saved with the beneficiary profile.</p><div className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <label key={key} className="text-sm font-medium text-slate-700"><span>{key.replace(/^vawc/, "").replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase())}</span><textarea name={`formField_${key}`} defaultValue={displayFormValue(value)} rows={Array.isArray(value) || displayFormValue(value).length > 100 ? 3 : 1} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100" /></label>)}</div></section>;
+}
+
+function SavedFormDataReadOnly({ data }: { data: Record<string, unknown> }) {
+  const entries = Object.entries(data).filter(([key, value]) => value !== "" && !["firstName", "middleName", "lastName", "sex", "dateOfBirth", "address"].includes(key));
+  if (!entries.length) return null;
+  return <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="text-base font-semibold text-slate-900">Saved category form</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <div key={key}><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{key.replace(/^vawc/, "").replace(/([A-Z])/g, " $1")}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{displayFormValue(value)}</dd></div>)}</dl></section>;
+}
