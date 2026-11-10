@@ -3,9 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Check,
   ChevronDown,
   LoaderCircle,
   Plus,
@@ -191,12 +189,8 @@ export function BeneficiaryRegistry({
   officerMode?: boolean;
   initialSearch?: string;
 }) {
-  const router = useRouter();
   const [search, setSearch] = useState(initialSearch);
-  const [modalOpen, setModalOpen] = useState(false);
   const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false);
-  const modalTriggerRef = useRef<HTMLButtonElement>(null);
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
@@ -207,29 +201,15 @@ export function BeneficiaryRegistry({
       ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
       : selectedCategoryName.includes("vawc") || selectedCategoryName.includes("special protection")
         ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/vawc-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
-      : null;
+      : selectedCategoryId
+        ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId)}`}`
+        : null;
   const activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
     const searchable = `${beneficiary.fullName} ${beneficiary.beneficiaryNumber}`.toLowerCase();
     return searchable.includes(normalizedSearch);
   });
-
-  function closeModal() {
-    setModalOpen(false);
-  }
-
-  const handleSaved = useCallback(() => {
-    setModalOpen(false);
-    setToastVisible(true);
-    router.refresh();
-  }, [router]);
-
-  useEffect(() => {
-    if (!toastVisible) return;
-    const timeoutId = window.setTimeout(() => setToastVisible(false), 4500);
-    return () => window.clearTimeout(timeoutId);
-  }, [toastVisible]);
 
   useEffect(() => {
     if (!categoryFilterOpen) return;
@@ -274,10 +254,10 @@ export function BeneficiaryRegistry({
             Add {selectedCategory?.name ?? "beneficiary"}
           </Link>
         ) : (
-          <button ref={modalTriggerRef} type="button" onClick={() => setModalOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
+          <Link href={officerMode ? "/officer/beneficiaries" : "/admin/categories"} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add Beneficiary
-          </button>
+            Choose category to add
+          </Link>
         )}
       </header>
 
@@ -424,34 +404,12 @@ export function BeneficiaryRegistry({
             {!normalizedSearch && (dedicatedPageHref ? (
               <Link href={dedicatedPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add {selectedCategory?.name ?? "beneficiary"}</Link>
             ) : (
-              <button type="button" onClick={() => setModalOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add Beneficiary</button>
+              <Link href={officerMode ? "/officer/beneficiaries" : "/admin/categories"} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Choose category to add</Link>
             ))}
           </div>
         )}
       </section>
 
-      {modalOpen && (
-        <BeneficiaryModal
-          key="new-beneficiary"
-          categories={categories}
-          officers={officers}
-          selectedCategoryId={selectedCategoryId}
-          officerMode={officerMode}
-          onClose={closeModal}
-          onSaved={handleSaved}
-          triggerRef={modalTriggerRef}
-        />
-      )}
-
-      {toastVisible && (
-        <div role="status" className="fixed bottom-5 right-5 z-[70] flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-emerald-800 shadow-lg">
-          <Check className="h-4 w-4" aria-hidden="true" />
-          Beneficiary saved successfully.
-          <button type="button" onClick={() => setToastVisible(false)} aria-label="Dismiss notification" className="ml-2 rounded p-1 hover:bg-emerald-50">
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

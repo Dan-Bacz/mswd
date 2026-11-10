@@ -47,7 +47,7 @@ export default async function AdminCategoryDashboardPage({
       ? `/admin/beneficiaries/new/general-intake?categoryId=${encodeURIComponent(category.id)}`
       : categoryName.includes("vawc") || categoryName.includes("special protection")
         ? `/admin/beneficiaries/new/vawc-intake?categoryId=${encodeURIComponent(category.id)}`
-        : `/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`;
+        : `/admin/beneficiaries/new/general-intake?categoryId=${encodeURIComponent(category.id)}`;
 
   return (
     <div className="space-y-6">

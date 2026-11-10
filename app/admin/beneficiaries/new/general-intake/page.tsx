@@ -11,7 +11,7 @@ export default async function NewGeneralIntakeBeneficiaryPage({ searchParams }: 
   const categoryId = typeof params.categoryId === "string" ? params.categoryId : "";
   const category = await db.category.findUnique({ where: { id: categoryId }, select: { id: true, name: true } });
   const categoryName = category?.name.toLowerCase() ?? "";
-  if (!category || (!categoryName.includes("aics") && !categoryName.includes("disaster") && !categoryName.includes("children in need of special protection"))) notFound();
+  if (!category || categoryName.includes("solo parent") || categoryName.includes("vawc") || (categoryName.includes("special protection") && !categoryName.includes("children in need of special protection"))) notFound();
   const officers = await db.user.findMany({
     where: { role: { name: "OFFICER" }, status: "ACTIVE", userCategories: { some: { categoryId: category.id } } },
     orderBy: { name: "asc" },
