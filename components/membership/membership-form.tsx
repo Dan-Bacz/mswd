@@ -4,21 +4,239 @@ import Image from "next/image";
 import { useState } from "react";
 import { Award, Printer, ShieldCheck } from "lucide-react";
 
-type Member = { id: string; beneficiaryNumber: string; firstName: string; middleName: string | null; lastName: string; suffix: string | null; sex: string; age: number | null; address: string; barangay: string | null; municipality: string | null; province: string | null; categoryName: string; assignedOfficerName: string | null };
+type Member = {
+  id: string;
+  beneficiaryNumber: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  suffix: string | null;
+  sex: string;
+  age: number | null;
+  address: string;
+  barangay: string | null;
+  municipality: string | null;
+  province: string | null;
+  categoryName: string;
+  assignedOfficerName: string | null;
+};
 
-export function MembershipForm({ beneficiaries, officerMode }: { beneficiaries: Member[]; officerMode: boolean }) {
+export function MembershipForm({
+  beneficiaries,
+  officerMode,
+}: {
+  beneficiaries: Member[];
+  officerMode: boolean;
+}) {
   const first = beneficiaries[0];
   const [selectedId, setSelectedId] = useState(first?.id ?? "");
-  const name = (member: Member | undefined) => member ? [member.firstName, member.middleName, member.lastName, member.suffix].filter(Boolean).join(" ") : "";
-  return <main className="mx-auto max-w-6xl space-y-6 pb-10 print:max-w-none print:space-y-0">
-    <div className="flex items-start justify-between gap-4 print:hidden"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#A88724]">MSWD records</p><h1 className="mt-1 text-3xl font-bold text-[#102A4C]">Membership Form</h1><p className="mt-2 text-sm text-slate-600">Generate a formal proof of membership for a registered beneficiary and category.</p></div><button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-[#0B4599] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#073783]"><Printer className="h-4 w-4" />Print form</button></div>
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden"><label className="block max-w-2xl text-sm font-semibold text-slate-700">Select beneficiary<select id="membership-beneficiary" value={selectedId} onChange={(event) => setSelectedId(event.currentTarget.value)} className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100"><option value="" disabled>Select a beneficiary</option>{beneficiaries.map((beneficiary) => <option key={beneficiary.id} value={beneficiary.id}>{name(beneficiary)} — {beneficiary.beneficiaryNumber} — {beneficiary.categoryName}</option>)}</select></label><p className="mt-3 text-xs text-slate-500">{officerMode ? "Only beneficiaries assigned to your selected category are available." : "Only registered beneficiaries are available for certification."}</p></section>
-    <Certificate beneficiaries={beneficiaries} initialId={selectedId} name={name} />
-  </main>;
+  const name = (member: Member | undefined) =>
+    member
+      ? [member.firstName, member.middleName, member.lastName, member.suffix]
+          .filter(Boolean)
+          .join(" ")
+      : "";
+  return (
+    <main className="mx-auto max-w-6xl space-y-6 pb-10 print:max-w-none print:space-y-0">
+      <div className="flex items-start justify-between gap-4 print:hidden">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#A88724]">
+            MSWD records
+          </p>
+          <h1 className="mt-1 text-3xl font-bold text-[#102A4C]">
+            Membership Form
+          </h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Generate a formal proof of membership for a registered beneficiary
+            and category.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-2 rounded-lg bg-[#0B4599] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#073783]"
+        >
+          <Printer className="h-4 w-4" />
+          Print form
+        </button>
+      </div>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
+        <label className="block max-w-2xl text-sm font-semibold text-slate-700">
+          Select beneficiary
+          <select
+            id="membership-beneficiary"
+            value={selectedId}
+            onChange={(event) => setSelectedId(event.currentTarget.value)}
+            className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="" disabled>
+              Select a beneficiary
+            </option>
+            {beneficiaries.map((beneficiary) => (
+              <option key={beneficiary.id} value={beneficiary.id}>
+                {name(beneficiary)} — {beneficiary.beneficiaryNumber} —{" "}
+                {beneficiary.categoryName}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="mt-3 text-xs text-slate-500">
+          {officerMode
+            ? "Only beneficiaries assigned to your selected category are available."
+            : "Only registered beneficiaries are available for certification."}
+        </p>
+      </section>
+      <Certificate
+        beneficiaries={beneficiaries}
+        initialId={selectedId}
+        name={name}
+      />
+    </main>
+  );
 }
 
-function Certificate({ beneficiaries, initialId, name }: { beneficiaries: Member[]; initialId: string; name: (member: Member | undefined) => string }) {
-  return <div className="membership-certificate mx-auto max-w-[850px] border-[10px] border-double border-[#0B1C3A] bg-white p-2 text-[#142A46] shadow-xl print:max-w-none print:border-[8px] print:shadow-none"><div className="border border-[#C9A93F] p-6 sm:p-10"><header className="border-b-2 border-[#0B1C3A] pb-5 text-center"><div className="flex items-center justify-center gap-4"><Image src="/images/municipal-seal.png" alt="Municipal seal" width={78} height={78} className="h-16 w-16 object-contain" /><div><p className="text-xs font-semibold uppercase tracking-wide">Republic of the Philippines</p><p className="text-sm font-bold uppercase">Municipality of Mahayag</p><p className="text-xs font-semibold uppercase">Municipal Social Welfare and Development Office</p><p className="mt-1 text-[10px]">Mahayag, Zamboanga del Sur</p></div></div><div className="mt-6 flex items-center justify-center gap-3"><Award className="h-6 w-6 text-[#A88724]" /><h2 className="text-2xl font-black uppercase tracking-[0.14em] text-[#0B1C3A]">Certificate of Membership</h2><Award className="h-6 w-6 text-[#A88724]" /></div><p className="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#A88724]">Official proof of beneficiary registration</p></header><div className="mt-10 text-center"><p className="text-sm leading-7">This is to certify that</p><div className="mt-5 border-b-2 border-[#0B1C3A] pb-2 text-2xl font-bold uppercase tracking-wide" data-membership-name>{name(beneficiaries.find((member) => member.id === initialId))}</div><p className="mt-2 text-xs uppercase tracking-wide text-slate-500">Name of beneficiary</p><p className="mx-auto mt-7 max-w-2xl text-sm leading-7">is a registered beneficiary of the Municipal Social Welfare and Development Office under the following program or service category:</p><div className="mt-5 rounded-lg border border-[#C9A93F] bg-[#FFFDF3] px-5 py-4 text-xl font-bold text-[#0B4599]" data-membership-category>{beneficiaries.find((member) => member.id === initialId)?.categoryName ?? ""}</div></div><div className="mt-8 grid gap-4 text-sm sm:grid-cols-2"><Detail label="Client ID" value={beneficiaries.find((member) => member.id === initialId)?.beneficiaryNumber ?? ""} /><Detail label="Age" value={String(beneficiaries.find((member) => member.id === initialId)?.age ?? "Not recorded")} /><Detail label="Address" value={[beneficiaries.find((member) => member.id === initialId)?.address, beneficiaries.find((member) => member.id === initialId)?.barangay].filter(Boolean).join(", ")} /><Detail label="Date issued" value={new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })} /></div><p className="mt-9 text-center text-sm leading-7">This certification is issued upon the request of the beneficiary for whatever lawful purpose it may serve. This document is valid only when signed and sealed by the authorized MSWD officer.</p><div className="mt-16 grid gap-12 text-center sm:grid-cols-2"><div className="border-t border-[#0B1C3A] pt-2 text-xs font-semibold uppercase">Prepared / issued by<br /><span className="font-normal">MSWD Authorized Officer</span></div><div className="border-t border-[#0B1C3A] pt-2 text-xs font-semibold uppercase">Municipal Social Welfare and Development Officer</div></div><div className="mt-10 flex items-center justify-between border-t border-dashed border-slate-300 pt-4 text-[10px] text-slate-500"><span>Document reference: MSWD-MEMBERSHIP</span><span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" />Official record</span></div></div></div>;
+function Certificate({
+  beneficiaries,
+  initialId,
+  name,
+}: {
+  beneficiaries: Member[];
+  initialId: string;
+  name: (member: Member | undefined) => string;
+}) {
+  return (
+    <div className="membership-certificate mx-auto max-w-[850px] border-[10px] border-double border-[#0B1C3A] bg-white p-2 text-[#142A46] shadow-xl print:max-w-none print:border-[8px] print:shadow-none">
+      <div className="border border-[#C9A93F] p-6 sm:p-10">
+        <header className="border-b-2 border-[#0B1C3A] pb-5 text-center">
+          <div className="grid grid-cols-[64px_1fr_64px] items-center gap-4 sm:grid-cols-[78px_1fr_78px]">
+            <Image
+              src="/images/municipal-seal.png"
+              alt="Municipal seal"
+              width={78}
+              height={78}
+              className="h-16 w-16 object-contain"
+            />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide">
+                Republic of the Philippines
+              </p>
+              <p className="text-sm font-bold uppercase">
+                Municipality of Mahayag
+              </p>
+              <p className="text-xs font-semibold uppercase">
+                Municipal Social Welfare and Development Office
+              </p>
+              <p className="mt-1 text-[10px]">Mahayag, Zamboanga del Sur</p>
+            </div>
+            <Image
+              src="/images/logo.png"
+              alt="Municipal logo"
+              width={78}
+              height={78}
+              className="h-16 w-16 object-contain sm:h-[78px] sm:w-[78px]"
+            />
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <Award className="h-6 w-6 text-[#A88724]" />
+            <h2 className="text-2xl font-black uppercase tracking-[0.14em] text-[#0B1C3A]">
+              Certificate of Membership
+            </h2>
+            <Award className="h-6 w-6 text-[#A88724]" />
+          </div>
+          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#A88724]">
+            Official proof of beneficiary registration
+          </p>
+        </header>
+        <div className="mt-10 text-center">
+          <p className="text-sm leading-7">This is to certify that</p>
+          <div
+            className="mt-5 border-b-2 border-[#0B1C3A] pb-2 text-2xl font-bold uppercase tracking-wide"
+            data-membership-name
+          >
+            {name(beneficiaries.find((member) => member.id === initialId))}
+          </div>
+          <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
+            Name of beneficiary
+          </p>
+          <p className="mx-auto mt-7 max-w-2xl text-sm leading-7">
+            is a registered beneficiary of the Municipal Social Welfare and
+            Development Office under the following program or service category:
+          </p>
+          <div
+            className="mt-5 rounded-lg border border-[#C9A93F] bg-[#FFFDF3] px-5 py-4 text-xl font-bold text-[#0B4599]"
+            data-membership-category
+          >
+            {beneficiaries.find((member) => member.id === initialId)
+              ?.categoryName ?? ""}
+          </div>
+        </div>
+        <div className="mt-8 grid gap-4 text-sm sm:grid-cols-2">
+          <Detail
+            label="Client ID"
+            value={
+              beneficiaries.find((member) => member.id === initialId)
+                ?.beneficiaryNumber ?? ""
+            }
+          />
+          <Detail
+            label="Age"
+            value={String(
+              beneficiaries.find((member) => member.id === initialId)?.age ??
+                "Not recorded",
+            )}
+          />
+          <Detail
+            label="Address"
+            value={[
+              beneficiaries.find((member) => member.id === initialId)?.address,
+              beneficiaries.find((member) => member.id === initialId)?.barangay,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          />
+          <Detail
+            label="Date issued"
+            value={new Date().toLocaleDateString("en-PH", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          />
+        </div>
+        <p className="mt-9 text-center text-sm leading-7">
+          This certification is issued upon the request of the beneficiary for
+          whatever lawful purpose it may serve. This document is valid only when
+          signed and sealed by the authorized MSWD officer.
+        </p>
+        <div className="mt-16 grid gap-12 text-center sm:grid-cols-2">
+          <div className="border-t border-[#0B1C3A] pt-2 text-xs font-semibold uppercase">
+            Prepared / issued by
+            <br />
+            <span className="font-normal">MSWD Authorized Officer</span>
+          </div>
+          <div className="border-t border-[#0B1C3A] pt-2 text-xs font-semibold uppercase">
+            Municipal Social Welfare and Development Officer
+          </div>
+        </div>
+        <div className="mt-10 flex items-center justify-between border-t border-dashed border-slate-300 pt-4 text-[10px] text-slate-500">
+          <span>Document reference: MSWD-MEMBERSHIP</span>
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="h-3 w-3" />
+            Official record
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function Detail({ label, value }: { label: string; value: string }) { return <div className="border-b border-slate-200 pb-2"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 font-medium">{value || "Not recorded"}</p></div>; }
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-b border-slate-200 pb-2">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+        {label}
+      </p>
+      <p className="mt-1 font-medium">{value || "Not recorded"}</p>
+    </div>
+  );
+}
