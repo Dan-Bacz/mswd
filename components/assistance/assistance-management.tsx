@@ -294,14 +294,13 @@ export function AssistanceManagement({
           <h1 className="text-3xl font-bold text-[#0B1A3E]">Beneficiary Assistance</h1>
           <p className="mt-2 max-w-3xl text-sm text-[#6480A9]">{subtitle}</p>
         </div>
-        <button
-          type="button"
-          onClick={openCreateForm}
+        <Link
+          href={isAdmin ? "/admin/assistance/new" : "/officer/assistance/new"}
           className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#FFD21F] px-5 text-sm font-bold text-[#073783] shadow-sm transition hover:bg-[#ffe05a] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           Record Assistance
-        </button>
+        </Link>
       </header>
 
       {notice && (
