@@ -1,0 +1,2 @@
+-- This migration was intentionally left empty because the assistance form
+-- uses the existing BeneficiaryAssistance columns and requires no schema change.

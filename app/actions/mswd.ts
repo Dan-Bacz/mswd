@@ -340,7 +340,7 @@ export async function createBeneficiaryAction(
   const nameIdentityKey = buildBeneficiaryNameIdentityKey(parsed.data);
 
   const duplicate = await db.beneficiary.findFirst({
-    where: { nameIdentityKey },
+    where: { categoryId: parsed.data.categoryId, nameIdentityKey },
     include: { category: { select: { name: true } } },
     orderBy: { createdAt: "asc" },
   });
@@ -457,7 +457,10 @@ export async function createBeneficiaryAction(
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         const existing = await db.beneficiary.findFirst({
-          where: { OR: [...(identityKey ? [{ identityKey }] : []), { nameIdentityKey }] },
+          where: {
+            categoryId: parsed.data.categoryId,
+            OR: [...(identityKey ? [{ identityKey }] : []), { nameIdentityKey }],
+          },
           include: { category: { select: { name: true } } },
         });
 
@@ -550,14 +553,14 @@ export async function updateBeneficiaryAction(
   });
   const nameIdentityKey = buildBeneficiaryNameIdentityKey(parsed.data);
   const duplicateByName = await db.beneficiary.findFirst({
-    where: { nameIdentityKey, id: { not: beneficiaryId } },
+    where: { categoryId: parsed.data.categoryId, nameIdentityKey, id: { not: beneficiaryId } },
     select: { beneficiaryNumber: true },
   });
   if (duplicateByName) {
     return { ok: false, message: "This client or beneficiary is already registered in the system.", fieldErrors: { firstName: `Existing Client ID: ${duplicateByName.beneficiaryNumber}.` } };
   }
   if (identityKey) {
-    const duplicate = await db.beneficiary.findFirst({ where: { identityKey, id: { not: beneficiaryId } }, select: { beneficiaryNumber: true } });
+    const duplicate = await db.beneficiary.findFirst({ where: { categoryId: parsed.data.categoryId, identityKey, id: { not: beneficiaryId } }, select: { beneficiaryNumber: true } });
     if (duplicate) return { ok: false, message: "This client or beneficiary is already registered in the system.", fieldErrors: { firstName: `Existing Client ID: ${duplicate.beneficiaryNumber}.` } };
   }
 
