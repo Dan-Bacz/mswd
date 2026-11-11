@@ -19,6 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/permissions";
 import { BeneficiaryDistributionChart } from "@/components/admin/dashboard-charts";
+import { AdminDashboardAnalytics } from "@/components/admin/admin-dashboard-analytics";
 
 const chartPalette = ["#0645AD", "#E31837", "#FFD21F", "#58A5E8", "#8B9CB4", "#168653"];
 
@@ -150,16 +151,13 @@ export default async function AdminDashboardPage({
     { label: "Open reports", href: "/admin/reports", icon: FileText },
     { label: "Manage users", href: "/admin/officers", icon: ShieldCheck },
   ];
-  const metrics = [
-    { label: "Total beneficiaries", value: beneficiaries, icon: Users, color: "#0645AD", tint: "#EEF4FF" },
-    { label: "Assistance records", value: assistanceRecords, icon: HandHeart, color: "#E31837", tint: "#FFF0F2" },
-  ];
+  const periodLabel = period === "week" ? "This week" : period === "month" ? "This month" : "All time";
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-5">
       <h1 className="sr-only">Administrator dashboard</h1>
 
-      <section className="relative isolate overflow-hidden rounded-xl border border-[#D9E5F5] bg-[#EAF2FC] px-5 py-5 sm:px-7 sm:py-6">
+      <section className="relative isolate overflow-hidden rounded-[26px] border border-[#D9E5F5] bg-white px-5 py-5 shadow-[0_22px_48px_-32px_rgba(7,28,58,0.5)] sm:px-7 sm:py-6">
         <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-52 overflow-hidden sm:block" aria-hidden="true">
           <span className="absolute -right-5 top-0 h-full w-14 -skew-x-[25deg] bg-[#0645AD]/10" />
           <span className="absolute right-12 top-0 h-full w-8 -skew-x-[25deg] bg-[#E31837]/15" />
@@ -183,21 +181,9 @@ export default async function AdminDashboardPage({
         </div>
       </section>
 
-      <section aria-label="System summary" className="grid gap-3 sm:grid-cols-2">
-        {metrics.map(({ label, value, icon: Icon, color, tint }) => (
-          <div key={label} className="flex min-h-[112px] items-center justify-between rounded-lg border border-[#D9E5F5] border-t-2 bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)]" style={{ borderTopColor: color }}>
-            <div>
-              <p className="text-xs font-medium text-[#6480A9]">{label}</p>
-              <p className="mt-2 text-3xl font-bold leading-none text-[#173B70]">{value.toLocaleString()}</p>
-            </div>
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg" style={{ backgroundColor: tint, color }}>
-              <Icon className="h-5 w-5" aria-hidden="true" />
-            </span>
-          </div>
-        ))}
-      </section>
+      <AdminDashboardAnalytics beneficiaries={beneficiaries} assistanceRecords={assistanceRecords} categories={categoryStats} periodLabel={periodLabel} />
 
-      <section className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+      <section className="dashboard-panel rounded-2xl border border-[#D9E5F5] bg-white p-4 shadow-[0_20px_42px_-30px_rgba(7,28,58,0.45)] sm:p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-[#173B70]">Programs &amp; Services</h2>
@@ -225,7 +211,7 @@ export default async function AdminDashboardPage({
                 <Link
                   key={category.id}
                   href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
-                  className="group flex min-h-[112px] items-start gap-3 rounded-md border border-[#D9E5F5] border-l-4 p-4 transition hover:bg-[#F8FAFE] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
+                  className="group flex min-h-[112px] items-start gap-3 rounded-xl border border-[#D9E5F5] border-l-4 p-4 transition hover:-translate-y-0.5 hover:bg-[#F8FAFE] hover:shadow-[0_14px_28px_-20px_rgba(7,28,58,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0645AD]"
                   aria-label={`View ${category.name} beneficiaries`}
                   style={{ borderTopColor: appearance.color }}
                 >
@@ -254,7 +240,7 @@ export default async function AdminDashboardPage({
       </section>
 
       <section className="grid gap-4">
-        <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+        <div className="dashboard-panel rounded-2xl border border-[#D9E5F5] bg-white p-4 shadow-[0_20px_42px_-30px_rgba(7,28,58,0.45)] sm:p-5">
           <div className="mb-3">
             <h2 className="text-base font-bold text-[#173B70]">Beneficiary Distribution</h2>
             <p className="mt-1 text-xs text-[#6480A9]">Registered beneficiaries by program category{period === "week" ? " this week" : period === "month" ? " this month" : ""}</p>
@@ -265,7 +251,7 @@ export default async function AdminDashboardPage({
 
       <section className="grid min-w-0 gap-4 xl:grid-cols-2">
         <div className="space-y-4">
-          <div className="rounded-lg border border-[#D9E5F5] bg-white p-4 shadow-[0_2px_8px_rgba(6,59,145,0.04)] sm:p-5">
+          <div className="dashboard-panel rounded-2xl border border-[#D9E5F5] bg-white p-4 shadow-[0_20px_42px_-30px_rgba(7,28,58,0.45)] sm:p-5">
             <h2 className="text-base font-bold text-[#173B70]">Quick Actions</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
               {quickActions.map(({ label, href, icon: Icon }) => (
