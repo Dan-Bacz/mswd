@@ -14,6 +14,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { loginAction } from "@/app/actions/auth";
+import { LoginSplash } from "@/components/auth/login-splash";
 
 const initialState = { ok: true, error: "" };
 
@@ -22,7 +23,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <main className="grid min-h-screen gap-px bg-[#071329] px-3 py-3 text-[#142d4e] sm:px-5 sm:py-5 lg:grid-cols-[1.08fr_0.92fr] lg:p-8">
+    <>
+      <LoginSplash />
+      <main className="grid min-h-screen gap-px bg-[#071329] px-3 py-3 text-[#142d4e] sm:px-5 sm:py-5 lg:grid-cols-[1.08fr_0.92fr] lg:p-8">
       <section
         aria-label="MSWD information"
         className="relative isolate flex min-h-[300px] flex-col justify-between overflow-hidden rounded-t-[1.75rem] bg-[#0b2e59] bg-cover bg-center px-6 py-7 text-white sm:min-h-[350px] sm:px-10 sm:py-9 lg:min-h-[calc(100vh-4rem)] lg:rounded-l-[1.75rem] lg:rounded-tr-none lg:px-14 lg:py-12"
@@ -174,6 +177,7 @@ export default function LoginPage() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+    </>
   );
 }
