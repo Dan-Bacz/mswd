@@ -67,7 +67,7 @@ export function SidebarNavigation({
 
       <aside
         id="dashboard-sidebar"
-        className={`fixed inset-y-0 left-0 z-[65] flex h-dvh w-[min(84vw,280px)] flex-col border-r border-[#174c86] bg-[linear-gradient(180deg,#082b59_0%,#073783_48%,#062d69_100%)] text-white shadow-2xl transition-[width,transform] duration-200 ease-out lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 lg:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-[65] flex h-dvh w-[min(84vw,280px)] flex-col border-r border-[#16345A] bg-[#071C3A] text-white shadow-2xl transition-[width,transform] duration-200 ease-out lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 lg:shadow-none ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         } ${collapsed ? "lg:w-[80px]" : "lg:w-[280px]"}`}
       >

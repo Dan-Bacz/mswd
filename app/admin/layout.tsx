@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="app-shell flex min-h-screen">
       <Sidebar role="ADMIN" />
       <div className="app-content min-w-0 flex-1">
-        <header className="relative overflow-visible border-b border-[#0B3478] bg-gradient-to-r from-[#0B4599] via-[#0D4A9F] to-[#1556AA] px-4 py-4 text-white shadow-[0_6px_22px_rgba(7,55,131,0.18)] after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[#FFD21F]/80 after:to-transparent sm:px-6 lg:px-8">
+        <header className="relative overflow-visible border-b border-[#16345A] bg-[#071C3A] px-4 py-4 text-white shadow-[0_6px_22px_rgba(7,28,58,0.28)] after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[#FFD21F]/80 after:to-transparent sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-[#FFD21F]" />
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
             <span className="absolute -right-12 -top-24 h-56 w-56 rounded-full bg-[#FFD21F]/10 blur-3xl" />
