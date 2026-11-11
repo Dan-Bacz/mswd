@@ -3,9 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, LoaderCircle, Save, ShieldCheck } from "lucide-react";
-import { saveAssistanceAction, type AssistanceActionState } from "@/app/actions/assistance";
-import { ASSISTANCE_OUTCOME_LABELS, ASSISTANCE_OUTCOME_VALUES, ASSISTANCE_TYPE_LABELS, ASSISTANCE_TYPE_OPTIONS, type AssistanceType } from "@/lib/assistance";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  LoaderCircle,
+  Save,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  saveAssistanceAction,
+  type AssistanceActionState,
+} from "@/app/actions/assistance";
+import {
+  ASSISTANCE_OUTCOME_LABELS,
+  ASSISTANCE_OUTCOME_VALUES,
+  ASSISTANCE_TYPE_LABELS,
+  ASSISTANCE_TYPE_OPTIONS,
+  type AssistanceType,
+} from "@/lib/assistance";
 
 type Beneficiary = {
   id: string;
@@ -25,42 +40,543 @@ type Beneficiary = {
 };
 
 type Outcome = (typeof ASSISTANCE_OUTCOME_VALUES)[number];
-const initialState: AssistanceActionState = { ok: false, message: "", resetKey: 0 };
-const inputClass = "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-[#172B4D] outline-none transition focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100";
+const initialState: AssistanceActionState = {
+  ok: false,
+  message: "",
+  resetKey: 0,
+};
+const inputClass =
+  "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-[#172B4D] outline-none transition focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100";
 
-function fullName(beneficiary: Beneficiary) { return [beneficiary.firstName, beneficiary.middleName, beneficiary.lastName, beneficiary.suffix].filter(Boolean).join(" "); }
-function today() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date()); }
-function dateValue(value: Date | null) { return value ? value.toISOString().slice(0, 10) : ""; }
-function FieldError({ message }: { message?: string }) { return message ? <p className="mt-1 text-xs font-semibold text-rose-700">{message}</p> : null; }
+function fullName(beneficiary: Beneficiary) {
+  return [
+    beneficiary.firstName,
+    beneficiary.middleName,
+    beneficiary.lastName,
+    beneficiary.suffix,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+function today() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(
+    new Date(),
+  );
+}
+function dateValue(value: Date | null) {
+  return value ? value.toISOString().slice(0, 10) : "";
+}
+function FieldError({ message }: { message?: string }) {
+  return message ? (
+    <p className="mt-1 text-xs font-semibold text-rose-700">{message}</p>
+  ) : null;
+}
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="text-[10px] font-bold uppercase tracking-wide text-[#6480A9]">
+      {label}
+      <input
+        value={value}
+        readOnly
+        className="mt-1 w-full border-b border-[#9CB6DA] bg-transparent px-0 py-1 text-sm font-semibold normal-case tracking-normal text-[#173B70] outline-none"
+      />
+    </label>
+  );
+}
 
-export function AssistanceRecordForm({ beneficiaries, backHref }: { beneficiaries: Beneficiary[]; backHref: string }) {
-  const [state, formAction, pending] = useActionState(saveAssistanceAction, initialState);
+export function AssistanceRecordForm({
+  beneficiaries,
+  backHref,
+}: {
+  beneficiaries: Beneficiary[];
+  backHref: string;
+}) {
+  const [state, formAction, pending] = useActionState(
+    saveAssistanceAction,
+    initialState,
+  );
   const [selectedId, setSelectedId] = useState("");
   const [type, setType] = useState<AssistanceType | "">("");
   const [outcome, setOutcome] = useState<Outcome>("PROVIDED");
-  const selected = beneficiaries.find((beneficiary) => beneficiary.id === selectedId);
+  const selected = beneficiaries.find(
+    (beneficiary) => beneficiary.id === selectedId,
+  );
 
-  useEffect(() => { if (state.ok && state.savedId) window.location.assign(backHref); }, [state, backHref]);
+  useEffect(() => {
+    if (state.ok && state.savedId) window.location.assign(backHref);
+  }, [state, backHref]);
 
   return (
     <main className="mx-auto max-w-6xl space-y-5 pb-12">
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden"><Link href={backHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#405B80] hover:text-[#0B4599]"><ArrowLeft className="h-4 w-4" />Back to assistance records</Link><span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#6480A9]"><ShieldCheck className="h-4 w-4 text-emerald-600" />Authorized office record</span></div>
-      <form action={formAction} className="overflow-hidden border-[10px] border-double border-[#0B1C3A] bg-white p-1 text-[#142A46] shadow-xl print:border-[8px] print:shadow-none">
-        <input type="hidden" name="recordId" value="" /><input type="hidden" name="beneficiaryId" value={selectedId} /><input type="hidden" name="printProof" value="false" />
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <Link
+          href={backHref}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#405B80] hover:text-[#0B4599]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to assistance records
+        </Link>
+        <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#6480A9]">
+          <ShieldCheck className="h-4 w-4 text-emerald-600" />
+          Authorized office record
+        </span>
+      </div>
+      <form
+        action={formAction}
+        className="overflow-hidden border-[10px] border-double border-[#0B1C3A] bg-white p-1 text-[#142A46] shadow-xl print:border-[8px] print:shadow-none"
+      >
+        <input type="hidden" name="recordId" value="" />
+        <input type="hidden" name="beneficiaryId" value={selectedId} />
+        <input type="hidden" name="printProof" value="false" />
         <div className="border border-[#C9A93F] p-4 sm:p-7">
-          <header className="grid grid-cols-[64px_1fr_64px] items-center gap-3 border-b-2 border-[#0B1C3A] pb-4 sm:grid-cols-[78px_1fr_78px]"><Image src="/images/municipal-seal.png" alt="Municipal seal" width={78} height={78} className="h-14 w-14 object-contain sm:h-[74px] sm:w-[74px]" /><div className="text-center"><p className="text-[10px] font-semibold uppercase tracking-wide">Republic of the Philippines</p><p className="text-sm font-bold uppercase">Municipality of Mahayag</p><p className="text-[10px] font-semibold uppercase">Municipal Social Welfare and Development Office</p><p className="mt-1 text-[10px]">Mahayag, Zamboanga del Sur</p></div><Image src="/images/logo.png" alt="Municipal logo" width={78} height={78} className="h-14 w-14 object-contain sm:h-[74px] sm:w-[74px]" /></header>
-          <div className="mt-5 text-center"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#A88724]">Official beneficiary service record</p><h1 className="mt-1 text-2xl font-black uppercase tracking-wide text-[#0B1C3A] sm:text-3xl">Assistance Record</h1><p className="mt-1 text-xs text-slate-500">Municipal Social Welfare and Development Office</p></div>
+          <header className="grid grid-cols-[64px_1fr_64px] items-center gap-3 border-b-2 border-[#0B1C3A] pb-4 sm:grid-cols-[78px_1fr_78px]">
+            <Image
+              src="/images/municipal-seal.png"
+              alt="Municipal seal"
+              width={78}
+              height={78}
+              className="h-14 w-14 object-contain sm:h-[74px] sm:w-[74px]"
+            />
+            <div className="text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-wide">
+                Republic of the Philippines
+              </p>
+              <p className="text-sm font-bold uppercase">
+                Municipality of Mahayag
+              </p>
+              <p className="text-[10px] font-semibold uppercase">
+                Municipal Social Welfare and Development Office
+              </p>
+              <p className="mt-1 text-[10px]">Mahayag, Zamboanga del Sur</p>
+            </div>
+            <Image
+              src="/images/logo.png"
+              alt="Municipal logo"
+              width={78}
+              height={78}
+              className="h-14 w-14 object-contain sm:h-[74px] sm:w-[74px]"
+            />
+          </header>
+          <div className="mt-5 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#A88724]">
+              Official beneficiary service record
+            </p>
+            <h1 className="mt-1 text-2xl font-black uppercase tracking-wide text-[#0B1C3A] sm:text-3xl">
+              Assistance Record
+            </h1>
+            <p className="mt-1 text-xs text-slate-500">
+              Municipal Social Welfare and Development Office
+            </p>
+          </div>
 
-          {!state.ok && state.message && <div role="alert" className="mt-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{state.message}</div>}
-          {state.ok && state.message && <div role="status" className="mt-5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><CheckCircle2 className="h-4 w-4" />{state.message}</div>}
+          {!state.ok && state.message && (
+            <div
+              role="alert"
+              className="mt-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+            >
+              {state.message}
+            </div>
+          )}
+          {state.ok && state.message && (
+            <div
+              role="status"
+              className="mt-5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {state.message}
+            </div>
+          )}
 
-          <section className="mt-6 border border-[#0B1C3A]" aria-labelledby="client-heading"><h2 id="client-heading" className="border-b border-[#0B1C3A] bg-[#EAF2FC] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#0B1C3A]">I. Client identification</h2><div className="grid gap-4 p-4 sm:grid-cols-2"><label className="text-xs font-bold text-[#405B80] sm:col-span-2">Beneficiary / Client <span className="text-rose-600">*</span><select required value={selectedId} onChange={(event) => setSelectedId(event.currentTarget.value)} className={inputClass}><option value="">Select an existing beneficiary</option>{beneficiaries.map((beneficiary) => <option key={beneficiary.id} value={beneficiary.id}>{fullName(beneficiary)} · {beneficiary.beneficiaryNumber}</option>)}</select><FieldError message={state.fieldErrors?.beneficiaryId} /></label><label className="text-xs font-bold text-[#405B80]">Client ID <input name="clientId" required readOnly value={selected?.beneficiaryNumber ?? ""} className={`${inputClass} bg-slate-50 font-mono`} /><FieldError message={state.fieldErrors?.clientId} /></label><label className="text-xs font-bold text-[#405B80]">Beneficiary category <input value={selected?.category.name ?? ""} readOnly className={`${inputClass} bg-slate-50`} /></label>{selected && <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-[#405B80] sm:col-span-2"><p className="font-bold text-[#0B1C3A]">{fullName(selected)}</p><p className="mt-1">{[selected.barangay, selected.municipality].filter(Boolean).join(", ") || selected.address}{selected.contactNumber ? ` · ${selected.contactNumber}` : ""}</p></div>}</div></section>
+          <section
+            className="mt-6 border border-[#0B1C3A]"
+            aria-labelledby="client-heading"
+          >
+            <h2
+              id="client-heading"
+              className="border-b border-[#0B1C3A] bg-[#EAF2FC] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#0B1C3A]"
+            >
+              I. Client identification
+            </h2>
+            <div className="grid gap-4 p-4 sm:grid-cols-2">
+              <label className="text-xs font-bold text-[#405B80] sm:col-span-2">
+                Beneficiary / Client <span className="text-rose-600">*</span>
+                <select
+                  required
+                  value={selectedId}
+                  onChange={(event) => setSelectedId(event.currentTarget.value)}
+                  className={inputClass}
+                >
+                  <option value="">Select an existing beneficiary</option>
+                  {beneficiaries.map((beneficiary) => (
+                    <option key={beneficiary.id} value={beneficiary.id}>
+                      {fullName(beneficiary)} · {beneficiary.beneficiaryNumber}
+                    </option>
+                  ))}
+                </select>
+                <FieldError message={state.fieldErrors?.beneficiaryId} />
+              </label>
+              <label className="text-xs font-bold text-[#405B80]">
+                Client ID{" "}
+                <input
+                  name="clientId"
+                  required
+                  readOnly
+                  value={selected?.beneficiaryNumber ?? ""}
+                  className={`${inputClass} bg-slate-50 font-mono`}
+                />
+                <FieldError message={state.fieldErrors?.clientId} />
+              </label>
+              <label className="text-xs font-bold text-[#405B80]">
+                Beneficiary category{" "}
+                <input
+                  value={selected?.category.name ?? ""}
+                  readOnly
+                  className={`${inputClass} bg-slate-50`}
+                />
+              </label>
+              {selected && (
+                <div className="hidden">
+                  <p className="font-bold text-[#0B1C3A]">
+                    {fullName(selected)}
+                  </p>
+                  <p className="mt-1">
+                    {[selected.barangay, selected.municipality]
+                      .filter(Boolean)
+                      .join(", ") || selected.address}
+                    {selected.contactNumber
+                      ? ` · ${selected.contactNumber}`
+                      : ""}
+                  </p>
+                </div>
+              )}
+              {selected && (
+                <div className="grid gap-3 rounded-lg border border-blue-100 bg-blue-50 p-3 sm:col-span-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <ReadOnlyField label="Last name" value={selected.lastName} />
+                  <ReadOnlyField label="First name" value={selected.firstName} />
+                  <ReadOnlyField label="Middle name" value={selected.middleName ?? "Not recorded"} />
+                  <ReadOnlyField label="Barangay" value={selected.barangay ?? "Not recorded"} />
+                  <p className="text-xs text-[#405B80] sm:col-span-2 lg:col-span-4">
+                    {selected.address}
+                    {selected.contactNumber ? ` · ${selected.contactNumber}` : ""}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
 
-          <section className="mt-5 border border-[#0B1C3A]" aria-labelledby="visit-heading"><h2 id="visit-heading" className="border-b border-[#0B1C3A] bg-[#EAF2FC] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#0B1C3A]">II. Office visit and assistance requested</h2><div className="grid gap-4 p-4 sm:grid-cols-2"><label className="text-xs font-bold text-[#405B80]">Date of visit <span className="text-rose-600">*</span><input name="visitDate" type="date" required defaultValue={today()} className={inputClass} /><FieldError message={state.fieldErrors?.visitDate} /></label><label className="text-xs font-bold text-[#405B80]">Assistance type <span className="text-rose-600">*</span><select name="type" required value={type} onChange={(event) => setType(event.currentTarget.value as AssistanceType)} className={inputClass}><option value="" disabled>Select assistance type</option>{ASSISTANCE_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><FieldError message={state.fieldErrors?.type} /></label>{type === "OTHER" && <label className="text-xs font-bold text-[#405B80] sm:col-span-2">Specify other assistance <input name="otherType" required maxLength={100} className={inputClass} /><FieldError message={state.fieldErrors?.otherType} /></label>}<label className="text-xs font-bold text-[#405B80] sm:col-span-2">Purpose or reason for assistance <span className="text-rose-600">*</span><textarea name="purpose" rows={3} required maxLength={1000} className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.purpose} /></label><label className="text-xs font-bold text-[#405B80] sm:col-span-2">Description of requested assistance <span className="text-rose-600">*</span><textarea name="requestedDescription" rows={3} required maxLength={2000} className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.requestedDescription} /></label></div></section>
+          <section
+            className="mt-5 border border-[#0B1C3A]"
+            aria-labelledby="visit-heading"
+          >
+            <h2
+              id="visit-heading"
+              className="border-b border-[#0B1C3A] bg-[#EAF2FC] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#0B1C3A]"
+            >
+              II. Office visit and assistance requested
+            </h2>
+            <div className="grid gap-4 p-4 sm:grid-cols-2">
+              <label className="text-xs font-bold text-[#405B80]">
+                Date of visit <span className="text-rose-600">*</span>
+                <input type="hidden" name="visitDate" value={today()} />
+                <input
+                  type="date"
+                  required
+                  readOnly
+                  value={today()}
+                  className={`${inputClass} bg-slate-50`}
+                />
+                <span className="mt-1 block text-[10px] font-normal text-slate-500">
+                  Automatically set to the date this record is completed.
+                </span>
+                <FieldError message={state.fieldErrors?.visitDate} />
+              </label>
+              <label className="text-xs font-bold text-[#405B80]">
+                Assistance type <span className="text-rose-600">*</span>
+                <select
+                  name="type"
+                  required
+                  value={type}
+                  onChange={(event) =>
+                    setType(event.currentTarget.value as AssistanceType)
+                  }
+                  className={inputClass}
+                >
+                  <option value="" disabled>
+                    Select assistance type
+                  </option>
+                  {ASSISTANCE_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <FieldError message={state.fieldErrors?.type} />
+              </label>
+              {type === "OTHER" && (
+                <label className="text-xs font-bold text-[#405B80] sm:col-span-2">
+                  Specify other assistance{" "}
+                  <input
+                    name="otherType"
+                    required
+                    maxLength={100}
+                    className={inputClass}
+                  />
+                  <FieldError message={state.fieldErrors?.otherType} />
+                </label>
+              )}
+              <label className="text-xs font-bold text-[#405B80] sm:col-span-2">
+                Purpose or reason for assistance{" "}
+                <span className="text-rose-600">*</span>
+                <textarea
+                  name="purpose"
+                  rows={3}
+                  required
+                  maxLength={1000}
+                  className={`${inputClass} resize-y`}
+                />
+                <FieldError message={state.fieldErrors?.purpose} />
+              </label>
+              <label className="text-xs font-bold text-[#405B80] sm:col-span-2">
+                Description of requested assistance{" "}
+                <span className="text-rose-600">*</span>
+                <textarea
+                  name="requestedDescription"
+                  rows={3}
+                  required
+                  maxLength={2000}
+                  className={`${inputClass} resize-y`}
+                />
+                <FieldError message={state.fieldErrors?.requestedDescription} />
+              </label>
+            </div>
+          </section>
 
-          <section className="mt-5 border border-[#0B1C3A]" aria-labelledby="outcome-heading"><h2 id="outcome-heading" className="border-b border-[#0B1C3A] bg-[#EAF2FC] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#0B1C3A]">III. Assistance outcome and details</h2><div className="p-4"><label className="block max-w-md text-xs font-bold text-[#405B80]">Outcome <select name="outcome" value={outcome} onChange={(event) => setOutcome(event.currentTarget.value as Outcome)} className={inputClass}>{ASSISTANCE_OUTCOME_VALUES.map((value) => <option key={value} value={value}>{ASSISTANCE_OUTCOME_LABELS[value]}</option>)}</select></label>{outcome === "PROVIDED" && <div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="text-xs font-bold text-[#405B80]">Actual date assistance was provided <span className="text-rose-600">*</span><input name="providedAt" type="date" required defaultValue={today()} className={inputClass} /><FieldError message={state.fieldErrors?.providedAt} /></label><label className="text-xs font-bold text-[#405B80] sm:col-span-2">Assistance or service delivered <span className="text-rose-600">*</span><textarea name="providedDescription" rows={3} required maxLength={2000} placeholder={type === "MEDICAL_ASSISTANCE" ? "List medicines or medical service provided." : type === "FINANCIAL_ASSISTANCE" ? "Describe the financial assistance released." : "Describe the assistance or service provided."} className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.providedDescription} /></label>{type === "MEDICAL_ASSISTANCE" && <><label className="text-xs font-bold text-[#405B80]">Number of medicines provided<input name="medicineQuantity" type="number" min="0" step="1" className={inputClass} /><FieldError message={state.fieldErrors?.medicineQuantity} /></label><label className="text-xs font-bold text-[#405B80]">Doctor / pharmacist<input name="doctorName" className={inputClass} /><FieldError message={state.fieldErrors?.doctorName} /></label></>}{type === "FINANCIAL_ASSISTANCE" && <><label className="text-xs font-bold text-[#405B80]">Financial amount (₱) <span className="text-rose-600">*</span><input name="financialAmount" type="number" min="0.01" step="0.01" required className={inputClass} /><FieldError message={state.fieldErrors?.financialAmount} /></label><label className="text-xs font-bold text-[#405B80]">Financial assistance type<select name="financialType" required className={inputClass}><option value="">Select type</option><option>Cash grant</option><option>Medical expense</option><option>Burial expense</option><option>Transportation</option><option>Other</option></select><FieldError message={state.fieldErrors?.financialType} /></label><label className="text-xs font-bold text-[#405B80] sm:col-span-2">Transaction details<input name="transactionDetails" placeholder="Reference, receipt, or release details" className={inputClass} /></label></>}</div>}{outcome === "NOT_PROVIDED" && <label className="mt-4 block text-xs font-bold text-[#405B80]">Reason assistance was not provided <span className="text-rose-600">*</span><textarea name="notProvidedReason" rows={3} required className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.notProvidedReason} /></label>}{outcome === "REFERRED" && <label className="mt-4 block text-xs font-bold text-[#405B80]">Referral details <span className="text-rose-600">*</span><textarea name="referralDetails" rows={3} required className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.referralDetails} /></label>}{outcome === "FOLLOW_UP" && <div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="text-xs font-bold text-[#405B80]">Reason follow-up is needed <span className="text-rose-600">*</span><textarea name="followUpReason" rows={3} required className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.followUpReason} /></label><label className="text-xs font-bold text-[#405B80]">Follow-up details or next steps <span className="text-rose-600">*</span><textarea name="followUpNotes" rows={3} required className={`${inputClass} resize-y`} /><FieldError message={state.fieldErrors?.followUpNotes} /></label></div>}<label className="mt-4 block text-xs font-bold text-[#405B80]">Internal remarks <span className="font-normal text-slate-500">(optional)</span><textarea name="internalRemarks" rows={3} maxLength={2000} className={`${inputClass} resize-y`} /></label></div></section>
+          <section
+            className="mt-5 border border-[#0B1C3A]"
+            aria-labelledby="outcome-heading"
+          >
+            <h2
+              id="outcome-heading"
+              className="border-b border-[#0B1C3A] bg-[#EAF2FC] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[#0B1C3A]"
+            >
+              III. Assistance outcome and details
+            </h2>
+            <div className="p-4">
+              <label className="block max-w-md text-xs font-bold text-[#405B80]">
+                Outcome{" "}
+                <select
+                  name="outcome"
+                  value={outcome}
+                  onChange={(event) =>
+                    setOutcome(event.currentTarget.value as Outcome)
+                  }
+                  className={inputClass}
+                >
+                  {ASSISTANCE_OUTCOME_VALUES.map((value) => (
+                    <option key={value} value={value}>
+                      {ASSISTANCE_OUTCOME_LABELS[value]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {outcome === "PROVIDED" && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-bold text-[#405B80]">
+                    Actual date assistance was provided{" "}
+                    <span className="text-rose-600">*</span>
+                    <input type="hidden" name="providedAt" value={today()} />
+                    <input
+                      type="date"
+                      required
+                      readOnly
+                      value={today()}
+                      className={`${inputClass} bg-slate-50`}
+                    />
+                    <span className="mt-1 block text-[10px] font-normal text-slate-500">
+                      Fixed to the date this assistance record is filled out.
+                    </span>
+                    <FieldError message={state.fieldErrors?.providedAt} />
+                  </label>
+                  <label className="text-xs font-bold text-[#405B80] sm:col-span-2">
+                    Assistance or service delivered{" "}
+                    <span className="text-rose-600">*</span>
+                    <textarea
+                      name="providedDescription"
+                      rows={3}
+                      required
+                      maxLength={2000}
+                      placeholder={
+                        type === "MEDICAL_ASSISTANCE"
+                          ? "List medicines or medical service provided."
+                          : type === "FINANCIAL_ASSISTANCE"
+                            ? "Describe the financial assistance released."
+                            : "Describe the assistance or service provided."
+                      }
+                      className={`${inputClass} resize-y`}
+                    />
+                    <FieldError
+                      message={state.fieldErrors?.providedDescription}
+                    />
+                  </label>
+                  {type === "MEDICAL_ASSISTANCE" && (
+                    <>
+                      <label className="text-xs font-bold text-[#405B80]">
+                        Number of medicines provided
+                        <input
+                          name="medicineQuantity"
+                          type="number"
+                          min="0"
+                          step="1"
+                          className={inputClass}
+                        />
+                        <FieldError
+                          message={state.fieldErrors?.medicineQuantity}
+                        />
+                      </label>
+                      <label className="text-xs font-bold text-[#405B80]">
+                        Doctor / pharmacist
+                        <input name="doctorName" className={inputClass} />
+                        <FieldError message={state.fieldErrors?.doctorName} />
+                      </label>
+                    </>
+                  )}
+                  {type === "FINANCIAL_ASSISTANCE" && (
+                    <>
+                      <label className="text-xs font-bold text-[#405B80]">
+                        Financial amount (₱){" "}
+                        <span className="text-rose-600">*</span>
+                        <input
+                          name="financialAmount"
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          required
+                          className={inputClass}
+                        />
+                        <FieldError
+                          message={state.fieldErrors?.financialAmount}
+                        />
+                      </label>
+                      <label className="text-xs font-bold text-[#405B80]">
+                        Financial assistance type
+                        <select
+                          name="financialType"
+                          required
+                          className={inputClass}
+                        >
+                          <option value="">Select type</option>
+                          <option>Cash grant</option>
+                          <option>Medical expense</option>
+                          <option>Burial expense</option>
+                          <option>Transportation</option>
+                          <option>Other</option>
+                        </select>
+                        <FieldError
+                          message={state.fieldErrors?.financialType}
+                        />
+                      </label>
+                      <label className="text-xs font-bold text-[#405B80] sm:col-span-2">
+                        Transaction details
+                        <input
+                          name="transactionDetails"
+                          placeholder="Reference, receipt, or release details"
+                          className={inputClass}
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
+              )}
+              {outcome === "NOT_PROVIDED" && (
+                <label className="mt-4 block text-xs font-bold text-[#405B80]">
+                  Reason assistance was not provided{" "}
+                  <span className="text-rose-600">*</span>
+                  <textarea
+                    name="notProvidedReason"
+                    rows={3}
+                    required
+                    className={`${inputClass} resize-y`}
+                  />
+                  <FieldError message={state.fieldErrors?.notProvidedReason} />
+                </label>
+              )}
+              {outcome === "REFERRED" && (
+                <label className="mt-4 block text-xs font-bold text-[#405B80]">
+                  Referral details <span className="text-rose-600">*</span>
+                  <textarea
+                    name="referralDetails"
+                    rows={3}
+                    required
+                    className={`${inputClass} resize-y`}
+                  />
+                  <FieldError message={state.fieldErrors?.referralDetails} />
+                </label>
+              )}
+              {outcome === "FOLLOW_UP" && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-bold text-[#405B80]">
+                    Reason follow-up is needed{" "}
+                    <span className="text-rose-600">*</span>
+                    <textarea
+                      name="followUpReason"
+                      rows={3}
+                      required
+                      className={`${inputClass} resize-y`}
+                    />
+                    <FieldError message={state.fieldErrors?.followUpReason} />
+                  </label>
+                  <label className="text-xs font-bold text-[#405B80]">
+                    Follow-up details or next steps{" "}
+                    <span className="text-rose-600">*</span>
+                    <textarea
+                      name="followUpNotes"
+                      rows={3}
+                      required
+                      className={`${inputClass} resize-y`}
+                    />
+                    <FieldError message={state.fieldErrors?.followUpNotes} />
+                  </label>
+                </div>
+              )}
+              <label className="mt-4 block text-xs font-bold text-[#405B80]">
+                Internal remarks{" "}
+                <span className="font-normal text-slate-500">(optional)</span>
+                <textarea
+                  name="internalRemarks"
+                  rows={3}
+                  maxLength={2000}
+                  className={`${inputClass} resize-y`}
+                />
+              </label>
+            </div>
+          </section>
 
-          <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-[#0B1C3A] pt-5"><p className="text-[10px] text-slate-500">This record is maintained by the Municipal Social Welfare and Development Office.</p><div className="flex gap-3"><Link href={backHref} className="inline-flex h-11 items-center rounded-lg border border-slate-300 px-5 text-sm font-semibold text-[#405B80] hover:bg-slate-50">Cancel</Link><button type="submit" disabled={pending} className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#0B4599] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#073783] disabled:opacity-60">{pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{pending ? "Saving record..." : "Save assistance record"}</button></div></footer>
+          <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-[#0B1C3A] pt-5">
+            <p className="text-[10px] text-slate-500">
+              This record is maintained by the Municipal Social Welfare and
+              Development Office.
+            </p>
+            <div className="flex gap-3">
+              <Link
+                href={backHref}
+                className="inline-flex h-11 items-center rounded-lg border border-slate-300 px-5 text-sm font-semibold text-[#405B80] hover:bg-slate-50"
+              >
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                disabled={pending}
+                className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#0B4599] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#073783] disabled:opacity-60"
+              >
+                {pending ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {pending ? "Saving record..." : "Save assistance record"}
+              </button>
+            </div>
+          </footer>
         </div>
       </form>
     </main>
