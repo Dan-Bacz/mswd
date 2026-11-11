@@ -24,7 +24,7 @@ export default async function OfficerSelectCategoryPage() {
         </header>
 
         <section className="mx-auto w-full max-w-4xl flex-1 py-12 sm:py-16">
-          <div className="max-w-2xl"><span className="inline-flex items-center gap-2 rounded-full border border-[#C9A93F]/40 bg-[#FFF8DF] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#806516]"><Sparkles className="h-3.5 w-3.5" /> Secure workspace selection</span><h1 className="mt-5 text-4xl font-black tracking-tight text-[#071C3A] sm:text-5xl">Good day, {user.name.split(" ")[0]}.</h1><p className="mt-4 max-w-xl text-base leading-relaxed text-[#6480A9] sm:text-lg">Choose the MSWD category dashboard you want to work with for this login session.</p></div>
+          <div className="max-w-2xl"><span className="inline-flex items-center gap-2 rounded-full border border-[#C9A93F]/40 bg-[#FFF8DF] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[#806516]"><Sparkles className="h-3.5 w-3.5" /> Secure workspace selection</span><h1 className="mt-5 text-4xl font-black tracking-tight text-[#071C3A] sm:text-5xl">Select a category workspace</h1><p className="mt-4 max-w-xl text-base leading-relaxed text-[#6480A9] sm:text-lg">Choose the MSWD category dashboard you want to work with for this login session.</p></div>
 
           <div className="mt-8 flex items-center gap-3 rounded-2xl border border-[#DCE7F5] bg-white px-4 py-3 text-sm text-[#405B80] shadow-[0_12px_28px_-22px_rgba(9,44,92,0.45)]"><ShieldCheck className="h-5 w-5 shrink-0 text-[#A88724]" /><span>Your access is limited to the categories assigned to your officer account. Sign out and log in again to switch workspaces.</span></div>
 
