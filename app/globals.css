@@ -142,6 +142,43 @@ button {
   display: none;
 }
 
+.dashboard-3d-card {
+  transform: perspective(900px) translateZ(0);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  box-shadow: 0 18px 28px -22px rgba(8, 35, 75, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-3d-card:hover {
+  transform: perspective(900px) translateY(-5px) rotateX(1deg) rotateY(-1deg);
+  box-shadow: 0 25px 40px -24px rgba(8, 35, 75, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dashboard-3d-blue { border-color: #c9def6; background: linear-gradient(145deg, #f8fbff 0%, #eaf3ff 100%); }
+.dashboard-3d-violet { border-color: #ddd6fe; background: linear-gradient(145deg, #fcfbff 0%, #f3efff 100%); }
+.dashboard-3d-green { border-color: #bdebd8; background: linear-gradient(145deg, #fbfffd 0%, #e9faf2 100%); }
+.dashboard-3d-gold { border-color: #ead89b; background: linear-gradient(145deg, #fffdf7 0%, #fff8df 100%); }
+.dashboard-3d-blue .dashboard-orb { background: #b8d8ff; }
+.dashboard-3d-violet .dashboard-orb { background: #d7c9ff; }
+.dashboard-3d-green .dashboard-orb { background: #b8efd7; }
+.dashboard-3d-gold .dashboard-orb { background: #f4dfa0; }
+
+.dashboard-panel {
+  transform: perspective(1200px) translateZ(0);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.dashboard-panel:hover {
+  transform: perspective(1200px) translateY(-2px);
+  box-shadow: 0 24px 48px -30px rgba(9, 44, 92, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-3d-card,
+  .dashboard-panel { transition: none; }
+  .dashboard-3d-card:hover,
+  .dashboard-panel:hover { transform: none; }
+}
+
 @media print {
   @page {
     size: A4;

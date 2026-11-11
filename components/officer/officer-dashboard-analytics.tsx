@@ -1,0 +1,33 @@
+"use client";
+
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Activity, Banknote, ClipboardCheck, Users } from "lucide-react";
+
+export type OfficerDashboardTrend = { label: string; beneficiaries: number; assistance: number };
+export type OfficerDashboardType = { label: string; value: number };
+
+export function OfficerDashboardAnalytics({ beneficiaryCount, assistanceCount, financialTotal, providedCount, trend, assistanceTypes, recentActivity }: {
+  beneficiaryCount: number;
+  assistanceCount: number;
+  financialTotal: number;
+  providedCount: number;
+  trend: OfficerDashboardTrend[];
+  assistanceTypes: OfficerDashboardType[];
+  recentActivity: { id: string; title: string; detail: string; date: string }[];
+}) {
+  const cards = [
+    { label: "My beneficiaries", value: beneficiaryCount.toLocaleString(), hint: "Active records in this workspace", icon: Users, tone: "blue" },
+    { label: "Assistance records", value: assistanceCount.toLocaleString(), hint: "Transactions handled in this category", icon: ClipboardCheck, tone: "violet" },
+    { label: "Provided services", value: providedCount.toLocaleString(), hint: "Records marked as provided", icon: Activity, tone: "green" },
+    { label: "Financial assistance", value: `₱${financialTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, hint: "Total released in this workspace", icon: Banknote, tone: "gold" },
+  ] as const;
+
+  return <section className="space-y-5" aria-label="Officer analytics">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(({ label, value, hint, icon: Icon, tone }) => <article key={label} className={`dashboard-3d-card dashboard-3d-${tone} group relative overflow-hidden rounded-2xl border p-5`}><span className="dashboard-orb absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-60" /><div className="relative flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{label}</p><p className="mt-3 text-3xl font-black tracking-tight text-[#0B1C3A]">{value}</p><p className="mt-2 text-xs text-slate-500">{hint}</p></div><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/80 text-[#0B4599] shadow-[0_8px_18px_-10px_rgba(7,55,131,0.8)]"><Icon className="h-5 w-5" /></span></div></article>)}</div>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.85fr)]">
+      <article className="dashboard-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_20px_45px_-30px_rgba(9,44,92,0.45)] sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B4599]">Activity pulse</p><h2 className="mt-1 text-lg font-bold text-[#0B1C3A]">Last 7 days</h2></div><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-[#0B4599]">Live category view</span></div><div className="mt-5 h-[270px] min-w-0"><ResponsiveContainer width="100%" height="100%"><AreaChart data={trend} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}><defs><linearGradient id="officerBeneficiaries" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0B68C5" stopOpacity={0.35} /><stop offset="100%" stopColor="#0B68C5" stopOpacity={0.02} /></linearGradient><linearGradient id="officerAssistance" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#C9A93F" stopOpacity={0.34} /><stop offset="100%" stopColor="#C9A93F" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#E6EDF7" /><XAxis dataKey="label" tick={{ fontSize: 11, fill: "#6480A9" }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#6480A9" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #DCE7F5", boxShadow: "0 12px 24px rgba(9,44,92,.12)" }} /><Area type="monotone" dataKey="beneficiaries" name="New beneficiaries" stroke="#0B68C5" strokeWidth={3} fill="url(#officerBeneficiaries)" /><Area type="monotone" dataKey="assistance" name="Assistance records" stroke="#C9A93F" strokeWidth={3} fill="url(#officerAssistance)" /></AreaChart></ResponsiveContainer></div><div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-slate-500"><span><i className="mr-2 inline-block h-2 w-2 rounded-full bg-[#0B68C5]" />New beneficiaries</span><span><i className="mr-2 inline-block h-2 w-2 rounded-full bg-[#C9A93F]" />Assistance records</span></div></article>
+      <article className="dashboard-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_20px_45px_-30px_rgba(9,44,92,0.45)] sm:p-6"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B4599]">Service mix</p><h2 className="mt-1 text-lg font-bold text-[#0B1C3A]">Assistance by type</h2></div><div className="mt-5 h-[270px] min-w-0"><ResponsiveContainer width="100%" height="100%"><BarChart data={assistanceTypes} layout="vertical" margin={{ top: 4, right: 8, left: 5, bottom: 0 }}><CartesianGrid horizontal={false} stroke="#E6EDF7" /><XAxis type="number" allowDecimals={false} hide /><YAxis type="category" dataKey="label" width={105} tick={{ fontSize: 10, fill: "#405B80" }} axisLine={false} tickLine={false} /><Tooltip cursor={{ fill: "#F5F8FC" }} contentStyle={{ borderRadius: 12, border: "1px solid #DCE7F5" }} /><Bar dataKey="value" name="Records" fill="#0B68C5" radius={[0, 8, 8, 0]} barSize={20} /></BarChart></ResponsiveContainer></div></article>
+    </div>
+    <article className="dashboard-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_20px_45px_-30px_rgba(9,44,92,0.45)] sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B4599]">Recent activity</p><h2 className="mt-1 text-lg font-bold text-[#0B1C3A]">Latest category records</h2></div><span className="text-xs text-slate-500">Actual database activity</span></div><div className="mt-4 divide-y divide-slate-100">{recentActivity.length ? recentActivity.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-[#173B70]">{item.title}</p><p className="mt-0.5 text-xs text-slate-500">{item.detail}</p></div><time className="shrink-0 text-xs font-medium text-slate-400">{item.date}</time></div>) : <p className="py-8 text-center text-sm text-slate-500">No activity recorded yet.</p>}</div></article>
+  </section>;
+}
