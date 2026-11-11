@@ -8,8 +8,8 @@ export function LoginSplash() {
   const [mounted, setMounted] = useState(true);
 
   useEffect(() => {
-    const hideTimer = window.setTimeout(() => setVisible(false), 1100);
-    const removeTimer = window.setTimeout(() => setMounted(false), 1550);
+    const hideTimer = window.setTimeout(() => setVisible(false), 500);
+    const removeTimer = window.setTimeout(() => setMounted(false), 850);
 
     return () => {
       window.clearTimeout(hideTimer);
@@ -35,6 +35,7 @@ export function LoginSplash() {
             width={240}
             height={240}
             priority
+            unoptimized
             className="login-splash-logo"
           />
         </div>
