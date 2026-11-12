@@ -25,6 +25,7 @@ export default async function BeneficiariesPage({
     }),
   ]);
   const filterCategories = categories.filter((category) => shouldShowBeneficiaryCategory(category.name));
+  const activeCategories = filterCategories.map(({ id, name }) => ({ id, name }));
   const selectedCategory =
     categories.find((category) => category.id === requestedCategoryId) ??
     filterCategories.find((category) => category.name === requestedCategory);
@@ -36,7 +37,7 @@ export default async function BeneficiariesPage({
 
   return (
     <BeneficiaryRegistry
-      categories={categories.map(({ id, name }) => ({ id, name }))}
+      categories={activeCategories}
       filterCategories={filterCategories.map(({ id, name }) => ({ id, name }))}
       officers={officers.map((officer) => ({
         id: officer.id,

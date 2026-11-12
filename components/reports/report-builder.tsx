@@ -22,8 +22,27 @@ type AssistanceReportRow = {
   otherType: string;
   visitDate: string;
   outcome: keyof typeof ASSISTANCE_OUTCOME_LABELS;
+  purpose: string;
+  requestedDescription: string;
+  providedDescription: string;
+  medicineCount: number | null;
+  medicineQuantity: number | null;
+  providerName: string;
+  doctorName: string;
+  financialAmount: number | null;
+  financialType: string;
+  transactionDetails: string;
+  providedAt: string;
+  notProvidedReason: string;
+  referralDetails: string;
+  followUpReason: string;
+  followUpNotes: string;
+  internalRemarks: string;
+  staffId: string;
+  staffName: string;
   beneficiaryNumber: string;
   beneficiaryName: string;
+  categoryName: string;
 };
 
 type Period = "day" | "week" | "month" | "year";
@@ -137,6 +156,19 @@ function isPeriod(value: string): value is Period {
   return value === "day" || value === "week" || value === "month" || value === "year";
 }
 
+function assistanceDetail(row: AssistanceReportRow) {
+  const details = [
+    row.financialAmount === null ? "" : `Amount: ₱${row.financialAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+    row.medicineCount === null && row.medicineQuantity === null ? "" : `Quantity: ${row.medicineCount ?? row.medicineQuantity}`,
+    row.providerName ? `Provider: ${row.providerName}` : "",
+    row.doctorName ? `Doctor: ${row.doctorName}` : "",
+    row.financialType ? `Type: ${row.financialType}` : "",
+    row.transactionDetails,
+    row.providedDescription || row.requestedDescription,
+  ].filter(Boolean);
+  return details.join(" · ") || "No additional details recorded";
+}
+
 export function ReportBuilder({
   dateRange,
   beneficiaries,
@@ -151,14 +183,31 @@ export function ReportBuilder({
   generatedAt: string;
 }) {
   const [period, setPeriod] = useState<Period>("month");
+  const [assistanceType, setAssistanceType] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [staffFilter, setStaffFilter] = useState("ALL");
+  const reportCategories = useMemo(() => [...new Set(assistance.map((row) => row.categoryName))].sort(), [assistance]);
+  const reportStaff = useMemo(() => [...new Set(assistance.map((row) => row.staffName))].sort(), [assistance]);
   const membershipSummary = useMemo(
     () => groupBeneficiaries(beneficiaries, period),
     [beneficiaries, period],
   );
+  const filteredAssistance = useMemo(() => {
+    const normalized = search.trim().toLowerCase();
+    return assistance.filter((row) => {
+      const matchesType = assistanceType === "ALL" || row.type === assistanceType;
+      const matchesCategory = categoryFilter === "ALL" || row.categoryName === categoryFilter;
+      const matchesStaff = staffFilter === "ALL" || row.staffName === staffFilter;
+      const searchable = [row.beneficiaryName, row.beneficiaryNumber, row.categoryName, row.staffName, row.referenceNumber, row.otherType, row.providerName, row.doctorName, row.providedDescription].join(" ").toLowerCase();
+      return matchesType && matchesCategory && matchesStaff && (!normalized || searchable.includes(normalized));
+    });
+  }, [assistance, assistanceType, categoryFilter, search, staffFilter]);
   const assistanceSummary = useMemo(
-    () => groupAssistance(assistance, period),
-    [assistance, period],
+    () => groupAssistance(filteredAssistance, period),
+    [filteredAssistance, period],
   );
+  const selectedAssistanceTotal = filteredAssistance.reduce((total, row) => total + (row.financialAmount ?? 0), 0);
   const qualifier = officerName ? ` - ${officerName}` : "";
   const filenameRange = `${dateRange.startDate}_to_${dateRange.endDate}`;
 
@@ -188,15 +237,21 @@ export function ReportBuilder({
       ...assistanceSummary.map((row) => [row.label, row.typeLabel, row.count]),
       [],
       ["Assistance record details"],
-      ["Reference", "Visit date", "Assistance type", "Other type", "Beneficiary ID", "Beneficiary", "Outcome"],
-      ...assistance.map((row) => [
+      ["Reference", "Visit date", "Assistance type", "Other type", "Beneficiary ID", "Beneficiary", "Category", "Assigned staff", "Outcome", "Financial amount", "Medicine quantity", "Provider / doctor", "Details"],
+      ...filteredAssistance.map((row) => [
         row.referenceNumber,
         row.visitDate,
         ASSISTANCE_TYPE_LABELS[row.type],
         row.otherType,
         row.beneficiaryNumber,
         row.beneficiaryName,
+        row.categoryName,
+        row.staffName,
         ASSISTANCE_OUTCOME_LABELS[row.outcome],
+        row.financialAmount ?? "",
+        row.medicineCount ?? row.medicineQuantity ?? "",
+        row.providerName || row.doctorName,
+        row.providedDescription || row.requestedDescription,
       ]),
     ]);
   }
@@ -247,6 +302,22 @@ export function ReportBuilder({
           </select>
         </label>
       </form>
+
+      <section className="print:hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Type of assistance navigation">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-2 text-sm font-bold text-slate-800">Type of Assistance</span>
+          <button type="button" onClick={() => setAssistanceType("ALL")} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${assistanceType === "ALL" ? "bg-[#0B1A3E] text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>All types</button>
+          {Object.entries(ASSISTANCE_TYPE_LABELS).map(([value, label]) => (
+            <button key={value} type="button" onClick={() => setAssistanceType(value)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${assistanceType === value ? "bg-[#0B1A3E] text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>{label}</button>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <label className="grid gap-1 text-sm font-medium text-slate-700">Search records<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Beneficiary, staff, reference..." className="h-10 w-full min-w-64 rounded-lg border border-slate-300 px-3 text-sm" /></label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.currentTarget.value)} className="h-10 rounded-lg border border-slate-300 px-3 text-sm"><option value="ALL">All categories</option>{reportCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-10 rounded-lg border border-slate-300 px-3 text-sm"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff} value={staff}>{staff}</option>)}</select></label>
+          <div className="ml-auto flex flex-wrap gap-2 text-sm"><span className="rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800">{filteredAssistance.length} transactions</span><span className="rounded-lg bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">₱{selectedAssistanceTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })} total amount</span></div>
+        </div>
+      </section>
 
       <div className="report-print-document space-y-8">
         <div className="hidden print:block">
@@ -305,7 +376,7 @@ export function ReportBuilder({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 id="assistance-report-heading" className="text-xl font-bold text-slate-900">Assistance activity report</h2>
-              <p className="text-sm text-slate-600">{assistance.length.toLocaleString()} assistance applications/records in selected date range</p>
+              <p className="text-sm text-slate-600">{filteredAssistance.length.toLocaleString()} assistance records in selected date range</p>
             </div>
             <button type="button" onClick={exportAssistance} className="print:hidden rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               Export assistance CSV
@@ -334,19 +405,23 @@ export function ReportBuilder({
               <thead className="bg-slate-50 text-xs uppercase text-slate-600">
                 <tr>
                   <th className="px-4 py-3">Reference</th><th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Assistance type</th><th className="px-4 py-3">Beneficiary</th>
-                  <th className="px-4 py-3">Outcome</th>
+                  <th className="px-4 py-3">Assistance type</th><th className="px-4 py-3">Beneficiary / category</th>
+                  <th className="px-4 py-3">Assigned staff</th><th className="px-4 py-3">Details</th>
+                  <th className="px-4 py-3">Amount</th><th className="px-4 py-3">Outcome</th>
                 </tr>
               </thead>
               <tbody>
-                {assistance.length ? assistance.map((row) => (
+                {filteredAssistance.length ? filteredAssistance.map((row) => (
                   <tr key={row.referenceNumber} className="border-t border-slate-100">
                     <td className="px-4 py-3">{row.referenceNumber}</td><td className="px-4 py-3">{displayDate(row.visitDate)}</td>
                     <td className="px-4 py-3">{row.type === "OTHER" && row.otherType ? row.otherType : ASSISTANCE_TYPE_LABELS[row.type]}</td>
-                    <td className="px-4 py-3">{row.beneficiaryName} ({row.beneficiaryNumber})</td>
+                    <td className="px-4 py-3"><span className="font-semibold">{row.beneficiaryName}</span><span className="block text-xs text-slate-500">{row.beneficiaryNumber} · {row.categoryName}</span></td>
+                    <td className="px-4 py-3">{row.staffName}</td>
+                    <td className="max-w-72 px-4 py-3 text-xs text-slate-600">{assistanceDetail(row)}</td>
+                    <td className="px-4 py-3">{row.financialAmount === null ? "—" : `₱${row.financialAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}</td>
                     <td className="px-4 py-3">{ASSISTANCE_OUTCOME_LABELS[row.outcome]}</td>
                   </tr>
-                )) : <EmptyRow columns={5} />}
+                )) : <EmptyRow columns={8} />}
               </tbody>
             </table>
           </div>

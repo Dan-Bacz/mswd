@@ -26,7 +26,10 @@ export function shouldShowBeneficiaryCategory(name: string) {
     normalizedName === "juvenile" ||
     normalizedName.startsWith("eccd") ||
     normalizedName === "women" ||
-    normalizedName.includes("maifip")
+    normalizedName.includes("maifip") ||
+    normalizedName === "pwd" ||
+    normalizedName.includes("person with disability") ||
+    normalizedName.includes("persons with disability")
   );
 }
 
