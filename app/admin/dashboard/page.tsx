@@ -104,8 +104,9 @@ export default async function AdminDashboardPage({
   const params = await Promise.resolve(searchParams ?? {});
   const period: DashboardPeriod = params.period === "week" || params.period === "month" ? params.period : "all";
   const dateRange = getDashboardRange(period);
-  const [allCategories, recentActivity, systemSettings, beneficiaries, assistanceRecords] = await Promise.all([
-    db.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, description: true } }),
+  const allCategories = await db.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, description: true } });
+  const excludedCategoryIds = allCategories.filter((category) => category.name.toLowerCase().includes("disab") || category.name.trim().toLowerCase() === "pwd").map((category) => category.id);
+  const [recentActivity, systemSettings, beneficiaries, assistanceRecords] = await Promise.all([
     db.auditLog.findMany({
       where: dateRange ? { createdAt: dateRange } : undefined,
       include: { user: { select: { name: true } } },
@@ -113,8 +114,8 @@ export default async function AdminDashboardPage({
       take: 5,
     }),
     db.systemSetting.findMany({ select: { key: true, value: true } }),
-    db.beneficiary.count({ where: dateRange ? { registrationDate: dateRange } : undefined }),
-    db.beneficiaryAssistance.count({ where: dateRange ? { visitDate: dateRange } : undefined }),
+    db.beneficiary.count({ where: { ...(dateRange ? { registrationDate: dateRange } : {}), ...(excludedCategoryIds.length ? { categoryId: { notIn: excludedCategoryIds } } : {}) } }),
+    db.beneficiaryAssistance.count({ where: { ...(dateRange ? { visitDate: dateRange } : {}), ...(excludedCategoryIds.length ? { beneficiary: { categoryId: { notIn: excludedCategoryIds } } } : {}) } }),
   ]);
   const categories = allCategories.filter((category) => !isHiddenDashboardCategory(category.name));
   const categoryCounts = await Promise.all(

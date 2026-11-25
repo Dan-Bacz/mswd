@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { isPwdCategory } from "@/lib/utils";
 
 export type ReportDateRange = {
   startDate: string;
@@ -28,16 +29,35 @@ export async function getReportData(
   dateRange: ReportDateRange,
   officerId?: string,
   categoryId?: string,
+  categoryIds?: string[],
 ) {
   const start = new Date(`${dateRange.startDate}T00:00:00.000Z`);
   const endExclusive = new Date(`${dateRange.endDate}T00:00:00.000Z`);
   endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
+  const pwdCategories = await db.category.findMany({ select: { id: true, name: true } });
+  const excludedCategoryIds = pwdCategories.filter((category) => isPwdCategory(category.name)).map((category) => category.id);
+  const assistanceTypes = await db.beneficiaryAssistance.findMany({
+    where: {
+      beneficiary: {
+        categoryId: {
+          ...(categoryIds ? { in: categoryIds } : categoryId ? { equals: categoryId } : {}),
+          ...(excludedCategoryIds.length ? { notIn: excludedCategoryIds } : {}),
+        },
+      },
+    },
+    distinct: ["type"],
+    select: { type: true },
+    orderBy: { type: "asc" },
+  });
 
   const [beneficiaries, assistance] = await Promise.all([
     db.beneficiary.findMany({
       where: {
-        ...(officerId ? { assignedOfficerId: officerId } : {}),
-        ...(categoryId ? { categoryId } : {}),
+        ...(officerId && !categoryIds ? { assignedOfficerId: officerId } : {}),
+        categoryId: {
+          ...(categoryIds ? { in: categoryIds } : categoryId ? { equals: categoryId } : {}),
+          ...(excludedCategoryIds.length ? { notIn: excludedCategoryIds } : {}),
+        },
         registrationDate: { gte: start, lt: endExclusive },
       },
       select: {
@@ -55,8 +75,13 @@ export async function getReportData(
     }),
     db.beneficiaryAssistance.findMany({
       where: {
-        ...(officerId ? { providedById: officerId } : {}),
-        ...(categoryId ? { beneficiary: { categoryId } } : {}),
+        ...(officerId && !categoryIds ? { providedById: officerId } : {}),
+        beneficiary: {
+          categoryId: {
+            ...(categoryIds ? { in: categoryIds } : categoryId ? { equals: categoryId } : {}),
+            ...(excludedCategoryIds.length ? { notIn: excludedCategoryIds } : {}),
+          },
+        },
         visitDate: { gte: start, lt: endExclusive },
       },
       select: {
@@ -70,6 +95,7 @@ export async function getReportData(
         providedDescription: true,
         medicineCount: true,
         medicineQuantity: true,
+        itemQuantity: true,
         providerName: true,
         doctorName: true,
         financialAmount: true,
@@ -81,6 +107,7 @@ export async function getReportData(
         followUpReason: true,
         followUpNotes: true,
         internalRemarks: true,
+        createdAt: true,
         providedBy: { select: { id: true, name: true } },
         beneficiary: {
           select: {
@@ -98,6 +125,7 @@ export async function getReportData(
   ]);
 
   return {
+    assistanceTypes: assistanceTypes.map((record) => record.type),
     beneficiaries: beneficiaries.map((beneficiary) => ({
       beneficiaryNumber: beneficiary.beneficiaryNumber,
       fullName: [
@@ -124,6 +152,7 @@ export async function getReportData(
       providedDescription: record.providedDescription ?? "",
       medicineCount: record.medicineCount,
       medicineQuantity: record.medicineQuantity,
+      itemQuantity: record.itemQuantity,
       providerName: record.providerName ?? "",
       doctorName: record.doctorName ?? "",
       financialAmount: record.financialAmount === null ? null : Number(record.financialAmount),

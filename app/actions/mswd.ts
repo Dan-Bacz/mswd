@@ -10,6 +10,7 @@ import { beneficiarySchema, soloParentApplicationSchema } from "@/lib/validation
 import { MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
 import { buildBeneficiaryIdentityKey, buildBeneficiaryNameIdentityKey, buildFullName, capitalizePersonName } from "@/lib/identity";
+import { isPwdCategory } from "@/lib/utils";
 
 function generateSequence(prefix: string) {
   const now = new Date();
@@ -205,6 +206,13 @@ export async function createBeneficiaryAction(
       ok: false,
       message: "Selected category was not found. Refresh the page and try again.",
       fieldErrors: { categoryId: "Select a valid beneficiary category." },
+    };
+  }
+  if (isPwdCategory(category.name)) {
+    return {
+      ok: false,
+      message: "The PWD category is no longer available for beneficiary registration.",
+      fieldErrors: { categoryId: "Select an available beneficiary category." },
     };
   }
 

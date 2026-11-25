@@ -30,7 +30,7 @@ export const ASSISTANCE_OUTCOME_LABELS: Record<AssistanceOutcome, string> = {
 
 export const ASSISTANCE_TYPE_LABELS: Record<AssistanceType, string> = {
   FINANCIAL_ASSISTANCE: "Financial Assistance",
-  MEDICAL_ASSISTANCE: "Medical Assistance",
+  MEDICAL_ASSISTANCE: "Medical / Medicine Assistance",
   FOOD_ASSISTANCE: "Food Assistance",
   BURIAL_FUNERAL_ASSISTANCE: "Burial/Funeral Assistance",
   TRANSPORTATION_ASSISTANCE: "Transportation Assistance",

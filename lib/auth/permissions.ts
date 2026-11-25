@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getSelectedOfficerCategory, getSession } from "@/lib/auth/session";
+import { isPwdCategory } from "@/lib/utils";
 
 export type CurrentUser = {
   id: string;
@@ -25,7 +26,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       email: true,
       status: true,
       role: { select: { name: true } },
-      userCategories: { select: { categoryId: true } },
+      userCategories: { select: { categoryId: true, category: { select: { name: true } } } },
     },
   });
 
@@ -38,7 +39,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     name: account.name,
     email: account.email,
     role: account.role.name as "ADMIN" | "OFFICER",
-    categoryIds: account.userCategories.map((item) => item.categoryId),
+    categoryIds: account.userCategories
+      .filter((item) => !isPwdCategory(item.category.name))
+      .map((item) => item.categoryId),
   };
 }
 

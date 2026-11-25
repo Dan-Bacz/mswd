@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, FolderTree, LogOut, ShieldCheck, Sparkles } f
 import { logoutAction, selectOfficerCategoryAction } from "@/app/actions/auth";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/permissions";
-import { shouldShowBeneficiaryCategory } from "@/lib/utils";
+import { isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export default async function OfficerSelectCategoryPage() {
     orderBy: { name: "asc" },
     select: { id: true, name: true, description: true },
   });
-  const categories = assignedCategories.filter((category) => shouldShowBeneficiaryCategory(category.name));
+  const categories = assignedCategories.filter((category) => !isPwdCategory(category.name));
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#F5F8FC] px-4 py-8 text-[#071C3A] sm:px-8 lg:px-12">

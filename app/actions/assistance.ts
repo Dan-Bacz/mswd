@@ -54,6 +54,7 @@ const assistanceSchema = z
     financialType: z.string().trim().max(100).optional(),
     transactionDetails: z.string().trim().max(1000).optional(),
     medicineQuantity: quantitySchema,
+    itemQuantity: quantitySchema,
     doctorName: z.string().trim().max(150),
     printProof: z.string().trim(),
   })
@@ -88,6 +89,14 @@ const assistanceSchema = z
         code: "custom",
         path: ["medicineQuantity"],
         message: "Medicine quantity is only applicable to medical assistance.",
+      });
+    }
+
+    if (value.itemQuantity && value.type === "MEDICAL_ASSISTANCE") {
+      context.addIssue({
+        code: "custom",
+        path: ["itemQuantity"],
+        message: "Use medicine quantity for medical assistance.",
       });
     }
 
@@ -200,6 +209,7 @@ export async function saveAssistanceAction(
     financialType: String(formData.get("financialType") ?? ""),
     transactionDetails: String(formData.get("transactionDetails") ?? ""),
     medicineQuantity: String(formData.get("medicineQuantity") ?? ""),
+    itemQuantity: String(formData.get("itemQuantity") ?? ""),
     doctorName: String(formData.get("doctorName") ?? ""),
     printProof: String(formData.get("printProof") ?? ""),
   });
@@ -287,12 +297,16 @@ export async function saveAssistanceAction(
     internalRemarks: parsed.data.internalRemarks || null,
     medicineCount: parsed.data.type === "MEDICAL_ASSISTANCE" ? parsed.data.medicineQuantity ? Number(parsed.data.medicineQuantity) : parsed.data.medicineCount ?? null : null,
     providerName: parsed.data.type === "MEDICAL_ASSISTANCE" ? parsed.data.doctorName || parsed.data.providerName || null : null,
-    financialAmount: parsed.data.type === "FINANCIAL_ASSISTANCE" && parsed.data.financialAmount ? Number(parsed.data.financialAmount) : null,
+    financialAmount: supportsFinancialAmount(parsed.data.type) && parsed.data.financialAmount ? Number(parsed.data.financialAmount) : null,
     financialType: parsed.data.type === "FINANCIAL_ASSISTANCE" ? parsed.data.financialType || null : null,
     transactionDetails: parsed.data.type === "FINANCIAL_ASSISTANCE" ? parsed.data.transactionDetails || null : null,
     medicineQuantity:
       parsed.data.type === "MEDICAL_ASSISTANCE" && parsed.data.medicineQuantity
         ? Number(parsed.data.medicineQuantity)
+        : null,
+    itemQuantity:
+      parsed.data.outcome === "PROVIDED" && parsed.data.type !== "MEDICAL_ASSISTANCE" && parsed.data.itemQuantity
+        ? Number(parsed.data.itemQuantity)
         : null,
     doctorName:
       parsed.data.type === "MEDICAL_ASSISTANCE" && parsed.data.doctorName

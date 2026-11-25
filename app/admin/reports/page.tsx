@@ -19,6 +19,7 @@ export default async function ReportsPage({
       dateRange={dateRange}
       beneficiaries={data.beneficiaries}
       assistance={data.assistance}
+      assistanceTypes={data.assistanceTypes}
       generatedAt={new Intl.DateTimeFormat("en-PH", {
         dateStyle: "medium",
         timeStyle: "short",

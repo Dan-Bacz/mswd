@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { CreateCategoryDialog } from "@/components/admin/create-category-dialog";
+import { isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
-  const categories = await db.category.findMany({
+  const allCategories = await db.category.findMany({
     orderBy: { name: "asc" },
   });
+  const categories = allCategories.filter((category) => !isPwdCategory(category.name));
 
   return (
     <div className="space-y-6">

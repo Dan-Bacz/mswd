@@ -35,9 +35,9 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
   let sections = adminSections;
   if (role === "OFFICER") {
     const selectedCategoryId = currentUser ? await getSelectedOfficerCategoryId(currentUser) : null;
-    const assignedCategories = currentUser && selectedCategoryId
+    const assignedCategories = currentUser
       ? await db.category.findMany({
-          where: { id: selectedCategoryId },
+          where: { id: { in: currentUser.categoryIds } },
           orderBy: { name: "asc" },
           select: { id: true, name: true },
         })
@@ -46,7 +46,8 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
     sections = [
       {
         items: [
-          { href: assignedCategories[0] ? `/officer/categories/${assignedCategories[0].id}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
+          { href: assignedCategories.find((category) => category.id === selectedCategoryId) ? `/officer/categories/${selectedCategoryId}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
+          ...assignedCategories.map((category) => ({ href: `/officer/categories/${category.id}`, label: category.name, icon: "categories" as const })),
           { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
           { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },

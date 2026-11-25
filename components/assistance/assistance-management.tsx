@@ -652,6 +652,13 @@ export function AssistanceManagement({
                         <textarea name="providedDescription" rows={2} maxLength={2000} required defaultValue={editingRecord?.providedDescription ?? ""} aria-invalid={Boolean(state.fieldErrors?.providedDescription)} className={`${inputClass} mt-1.5 resize-y`} placeholder={assistanceType === "MEDICAL_ASSISTANCE" ? "List medicines or medical service provided." : assistanceType === "FINANCIAL_ASSISTANCE" ? "Describe the financial assistance released." : assistanceDetailsPlaceholder[assistanceType] ?? "Describe the specific assistance or service provided."} />
                         <FieldError message={state.fieldErrors?.providedDescription} />
                       </label>
+                      {assistanceType !== "MEDICAL_ASSISTANCE" && (
+                        <label className="block text-xs font-semibold text-[#405B80]">
+                          Items or goods quantity (if applicable)
+                          <input name="itemQuantity" type="number" min="0" step="1" defaultValue={editingRecord?.itemQuantity ?? ""} className={`${inputClass} mt-1.5`} />
+                          <FieldError message={state.fieldErrors?.itemQuantity} />
+                        </label>
+                      )}
                       {assistanceType === "MEDICAL_ASSISTANCE" && (
                         <>
                           <label className="block text-xs font-semibold text-[#405B80]">Number of medicines provided
@@ -761,6 +768,7 @@ export function AssistanceManagement({
                 {selectedRecord.financialAmount !== null && <Detail label="Financial amount" value={formatPeso(Number(selectedRecord.financialAmount))} />}
                 {selectedRecord.financialType && <Detail label="Financial assistance type" value={selectedRecord.financialType} />}
                 {selectedRecord.medicineQuantity !== null && <Detail label="Medicine quantity" value={String(selectedRecord.medicineQuantity)} />}
+                {selectedRecord.itemQuantity !== null && <Detail label="Items or goods quantity" value={String(selectedRecord.itemQuantity)} />}
                 {selectedRecord.doctorName && <Detail label="Doctor / pharmacist" value={selectedRecord.doctorName} />}
                 {selectedRecord.notProvidedReason && <Detail label="Reason not provided" value={selectedRecord.notProvidedReason} />}
                 {selectedRecord.referralDetails && <Detail label="Referral details" value={selectedRecord.referralDetails} />}
@@ -824,6 +832,7 @@ function AssistanceProof({ record }: { record: AssistanceRecord }) {
         <PrintDetail label="Outcome" value={ASSISTANCE_OUTCOME_LABELS[record.outcome]} />
         <PrintDetail label="Purpose or reason" value={record.purpose} />
         {provided && <PrintDetail label="Assistance or service delivered" value={record.providedDescription ?? "No delivery details were recorded for this legacy entry."} />}
+        {provided && record.itemQuantity !== null && <PrintDetail label="Items or goods quantity" value={String(record.itemQuantity)} />}
         {provided && <PrintDetail label="Date assistance was provided" value={formatDate(record.providedAt)} />}
         {record.notProvidedReason && <PrintDetail label="Reason assistance was not provided" value={record.notProvidedReason} />}
         {record.referralDetails && <PrintDetail label="Referral details" value={record.referralDetails} />}

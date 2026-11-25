@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import * as XLSX from "xlsx";
+import { Dialog } from "@/components/ui/dialog";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowUpRight, CalendarRange, ClipboardList, FileDown, Sparkles, UsersRound, WalletCards } from "lucide-react";
 import {
@@ -29,6 +31,7 @@ type AssistanceReportRow = {
   providedDescription: string;
   medicineCount: number | null;
   medicineQuantity: number | null;
+  itemQuantity: number | null;
   providerName: string;
   doctorName: string;
   financialAmount: number | null;
@@ -146,6 +149,14 @@ function downloadCsv(filename: string, rows: (string | number)[][]) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function downloadExcel(filename: string, sheets: { name: string; rows: (string | number)[][] }[]) {
+  const workbook = XLSX.utils.book_new();
+  for (const sheet of sheets) {
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(sheet.rows), sheet.name);
+  }
+  XLSX.writeFile(workbook, filename);
+}
+
 function displayDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
@@ -160,13 +171,22 @@ function isPeriod(value: string): value is Period {
 
 function assistanceDetail(row: AssistanceReportRow) {
   const details = [
+    row.purpose ? `Purpose: ${row.purpose}` : "",
     row.financialAmount === null ? "" : `Amount: ₱${row.financialAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
-    row.medicineCount === null && row.medicineQuantity === null ? "" : `Quantity: ${row.medicineCount ?? row.medicineQuantity}`,
+    row.financialType ? `Financial type: ${row.financialType}` : "",
+    row.medicineCount === null && row.medicineQuantity === null ? "" : `Medicine quantity: ${row.medicineQuantity ?? row.medicineCount}`,
+    row.itemQuantity === null ? "" : `Items / goods quantity: ${row.itemQuantity}`,
     row.providerName ? `Provider: ${row.providerName}` : "",
     row.doctorName ? `Doctor: ${row.doctorName}` : "",
-    row.financialType ? `Type: ${row.financialType}` : "",
-    row.transactionDetails,
-    row.providedDescription || row.requestedDescription,
+    row.providedAt ? `Date provided: ${row.providedAt}` : "",
+    row.providedDescription ? `Provided: ${row.providedDescription}` : "",
+    row.requestedDescription ? `Requested: ${row.requestedDescription}` : "",
+    row.transactionDetails ? `Transaction: ${row.transactionDetails}` : "",
+    row.referralDetails ? `Referral: ${row.referralDetails}` : "",
+    row.notProvidedReason ? `Not provided: ${row.notProvidedReason}` : "",
+    row.followUpReason ? `Follow-up reason: ${row.followUpReason}` : "",
+    row.followUpNotes ? `Follow-up notes: ${row.followUpNotes}` : "",
+    row.internalRemarks ? `Remarks: ${row.internalRemarks}` : "",
   ].filter(Boolean);
   return details.join(" · ") || "No additional details recorded";
 }
@@ -175,17 +195,20 @@ export function ReportBuilder({
   dateRange,
   beneficiaries,
   assistance,
+  assistanceTypes,
   officerName,
   generatedAt,
 }: {
   dateRange: ReportDateRange;
   beneficiaries: BeneficiaryReportRow[];
   assistance: AssistanceReportRow[];
+  assistanceTypes: (keyof typeof ASSISTANCE_TYPE_LABELS)[];
   officerName?: string;
   generatedAt: string;
 }) {
   const [period, setPeriod] = useState<Period>("month");
   const [assistanceType, setAssistanceType] = useState("ALL");
+  const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [staffFilter, setStaffFilter] = useState("ALL");
@@ -213,6 +236,21 @@ export function ReportBuilder({
   const providedCount = filteredAssistance.filter((row) => row.outcome === "PROVIDED").length;
   const uniqueBeneficiaryCount = new Set(filteredAssistance.map((row) => row.beneficiaryNumber)).size;
   const selectedTypeLabel = assistanceType === "ALL" ? "All assistance types" : ASSISTANCE_TYPE_LABELS[assistanceType as keyof typeof ASSISTANCE_TYPE_LABELS];
+  const medicineQuantityTotal = filteredAssistance.reduce((total, row) => total + (row.medicineQuantity ?? row.medicineCount ?? 0), 0);
+  const itemQuantityTotal = filteredAssistance.reduce((total, row) => total + (row.itemQuantity ?? 0), 0);
+  const assistanceBreakdown = useMemo(() => {
+    const groups = new Map<string, { transactions: number; quantity: number }>();
+    for (const row of filteredAssistance) {
+      const description = row.providedDescription || row.requestedDescription || row.otherType || "Description not recorded";
+      const group = groups.get(description) ?? { transactions: 0, quantity: 0 };
+      group.transactions += 1;
+      group.quantity += row.type === "MEDICAL_ASSISTANCE"
+        ? row.medicineQuantity ?? row.medicineCount ?? 0
+        : row.itemQuantity ?? 0;
+      groups.set(description, group);
+    }
+    return [...groups.entries()].sort((left, right) => right[1].transactions - left[1].transactions);
+  }, [filteredAssistance]);
   const typeAnalytics = useMemo(() => Object.entries(ASSISTANCE_TYPE_LABELS).map(([type, label]) => ({
     type,
     label: label.replace(" Assistance", ""),
@@ -231,6 +269,35 @@ export function ReportBuilder({
   }, [filteredAssistance, period]);
   const qualifier = officerName ? ` - ${officerName}` : "";
   const filenameRange = `${dateRange.startDate}_to_${dateRange.endDate}`;
+  const assistanceDetails = filteredAssistance.map((row) => [
+    row.referenceNumber,
+    row.visitDate,
+    row.providedAt,
+    ASSISTANCE_TYPE_LABELS[row.type],
+    row.otherType,
+    row.beneficiaryNumber,
+    row.beneficiaryName,
+    row.categoryName,
+    row.staffName,
+    ASSISTANCE_OUTCOME_LABELS[row.outcome],
+    row.purpose,
+    row.requestedDescription,
+    row.providedDescription,
+    row.financialAmount ?? "",
+    row.financialType,
+    row.medicineCount ?? "",
+    row.medicineQuantity ?? "",
+    row.itemQuantity ?? "",
+    row.providerName,
+    row.doctorName,
+    row.transactionDetails,
+    row.notProvidedReason,
+    row.referralDetails,
+    row.followUpReason,
+    row.followUpNotes,
+    row.internalRemarks,
+  ]);
+  const assistanceDetailHeaders = ["Reference", "Visit date", "Date provided", "Assistance type", "Other type", "Beneficiary ID", "Beneficiary", "Category", "Assigned staff", "Outcome", "Purpose", "Requested details", "Provided details", "Financial amount", "Financial type", "Medicine count", "Medicine quantity", "Items / goods quantity", "Provider", "Doctor", "Transaction details", "Not provided reason", "Referral details", "Follow-up reason", "Follow-up notes", "Internal remarks"];
 
   function exportBeneficiaries() {
     downloadCsv(`beneficiary-memberships-${filenameRange}.csv`, [
@@ -254,26 +321,52 @@ export function ReportBuilder({
   function exportAssistance() {
     downloadCsv(`assistance-report-${filenameRange}.csv`, [
       [`Assistance summary by ${periodLabels[period]}`],
+      ["Selected assistance type", selectedTypeLabel],
+      ["Reporting period", `${dateRange.startDate} to ${dateRange.endDate}`],
+      ["Unique beneficiaries assisted", uniqueBeneficiaryCount],
+      ["Total assistance transactions", filteredAssistance.length],
+      ["Financial assistance distributed", selectedAssistanceTotal],
+      ["Medicine quantity distributed", medicineQuantityTotal],
+      ["Items / goods quantity distributed", itemQuantityTotal],
+      [],
+      ["Description breakdown", "Transactions", "Medicine quantity"],
+      ...assistanceBreakdown.map(([description, totals]) => [description, totals.transactions, totals.quantity]),
+      [],
       [periodLabels[period], "Assistance type", "Applications / records"],
       ...assistanceSummary.map((row) => [row.label, row.typeLabel, row.count]),
       [],
       ["Assistance record details"],
-      ["Reference", "Visit date", "Assistance type", "Other type", "Beneficiary ID", "Beneficiary", "Category", "Assigned staff", "Outcome", "Financial amount", "Medicine quantity", "Provider / doctor", "Details"],
-      ...filteredAssistance.map((row) => [
-        row.referenceNumber,
-        row.visitDate,
-        ASSISTANCE_TYPE_LABELS[row.type],
-        row.otherType,
-        row.beneficiaryNumber,
-        row.beneficiaryName,
-        row.categoryName,
-        row.staffName,
-        ASSISTANCE_OUTCOME_LABELS[row.outcome],
-        row.financialAmount ?? "",
-        row.medicineCount ?? row.medicineQuantity ?? "",
-        row.providerName || row.doctorName,
-        row.providedDescription || row.requestedDescription,
-      ]),
+      assistanceDetailHeaders,
+      ...assistanceDetails,
+    ]);
+  }
+
+  function exportAssistanceExcel() {
+    downloadExcel(`assistance-report-${filenameRange}.xlsx`, [
+      {
+        name: "Summary",
+        rows: [
+          ["Assistance report summary"],
+          ["Assistance type", selectedTypeLabel],
+          ["Reporting period", `${dateRange.startDate} to ${dateRange.endDate}`],
+          ["Unique beneficiaries assisted", uniqueBeneficiaryCount],
+          ["Total assistance transactions", filteredAssistance.length],
+          ["Financial assistance distributed", selectedAssistanceTotal],
+          ["Medicine quantity distributed", medicineQuantityTotal],
+          ["Items / goods quantity distributed", itemQuantityTotal],
+          [],
+          [periodLabels[period], "Assistance type", "Transactions"],
+          ...assistanceSummary.map((row) => [row.label, row.typeLabel, row.count]),
+        ],
+      },
+      {
+        name: "Description Breakdown",
+        rows: [["Description", "Transactions", "Medicine quantity"], ...assistanceBreakdown.map(([description, totals]) => [description, totals.transactions, totals.quantity])],
+      },
+      {
+        name: "Assistance Records",
+        rows: [assistanceDetailHeaders, ...assistanceDetails],
+      },
     ]);
   }
 
@@ -282,9 +375,46 @@ export function ReportBuilder({
       <header className="relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-transparent px-6 py-7 text-[#071C3A] shadow-[0_28px_70px_-35px_rgba(7,28,58,0.12)] sm:px-8 sm:py-8">
         <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[#0B68C5]/30 blur-3xl" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div><p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#A88724]"><Sparkles className="h-3.5 w-3.5" /> MSWD intelligence center</p><h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Reports &amp; analytics</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">A clear operational view of beneficiary reach and assistance delivery{officerName ? " for your assigned workspace" : " across the municipal office"}.</p></div>
-          <button type="button" onClick={() => window.print()} className="print:hidden inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#0B1A3E] bg-[#0B1A3E] px-4 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#172B4D]"><FileDown className="h-4 w-4" /> Print / Save PDF</button>
+          <div>
+            <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#A88724]"><Sparkles className="h-3.5 w-3.5" /> MSWD intelligence center</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Reports &amp; analytics</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">A clear operational view of beneficiary reach and assistance delivery{officerName ? " for your assigned workspace" : " across the municipal office"}.</p>
+          </div>
+          <div className="flex flex-col gap-3 items-end">
+            <button
+              type="button"
+              className="print:hidden inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-[#0B68C5] bg-white px-6 text-base font-bold text-[#0B68C5] shadow-md hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              onClick={() => setTypeModalOpen(true)}
+              aria-label="Select Type of Assistance"
+            >
+              <ClipboardList className="h-5 w-5" />
+              {assistanceType === "ALL" ? "All Types of Assistance" : ASSISTANCE_TYPE_LABELS[assistanceType as keyof typeof ASSISTANCE_TYPE_LABELS]}
+            </button>
+            <button type="button" onClick={() => window.print()} className="print:hidden inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#0B1A3E] bg-[#0B1A3E] px-4 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#172B4D]">
+              <FileDown className="h-4 w-4" /> Print / Save PDF
+            </button>
+          </div>
         </div>
+        <Dialog open={typeModalOpen} onOpenChange={setTypeModalOpen}>
+          <Dialog.Title>Select Type of Assistance</Dialog.Title>
+          <div className="grid gap-2 mt-4">
+            <button
+              className={`rounded-lg px-4 py-3 text-left font-semibold ${assistanceType === "ALL" ? "bg-blue-100 text-blue-900" : "hover:bg-slate-100"}`}
+              onClick={() => { setAssistanceType("ALL"); setTypeModalOpen(false); }}
+            >
+              All Types of Assistance
+            </button>
+            {assistanceTypes.map((value) => (
+              <button
+                key={value}
+                className={`rounded-lg px-4 py-3 text-left font-semibold ${assistanceType === value ? "bg-blue-100 text-blue-900" : "hover:bg-slate-100"}`}
+                onClick={() => { setAssistanceType(value); setTypeModalOpen(false); }}
+              >
+                {ASSISTANCE_TYPE_LABELS[value]}
+              </button>
+            ))}
+          </div>
+        </Dialog>
         <div className="relative mt-7 grid gap-3 border-t border-slate-200 pt-5 text-xs text-slate-500 sm:grid-cols-3"><span className="inline-flex items-center gap-2"><CalendarRange className="h-4 w-4 text-[#A88724]" /> {dateRange.startDate} – {dateRange.endDate}</span><span className="inline-flex items-center gap-2"><ClipboardList className="h-4 w-4 text-[#A88724]" /> {selectedTypeLabel}</span><span className="inline-flex items-center gap-2 sm:justify-end"><ArrowUpRight className="h-4 w-4 text-[#A88724]" /> Live database report</span></div>
       </header>
 
@@ -319,7 +449,6 @@ export function ReportBuilder({
 
       <section className="print:hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_20px_45px_-35px_rgba(9,44,92,0.7)]" aria-label="Report filters">
         <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.8fr)_minmax(220px,1fr)]">
-          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Type of Assistance<select value={assistanceType} onChange={(event) => setAssistanceType(event.currentTarget.value)} className="h-12 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-semibold normal-case tracking-normal text-[#0B1A3E] outline-none focus:border-[#0B68C5] focus:ring-4 focus:ring-blue-100"><option value="ALL">All assistance types</option>{Object.entries(ASSISTANCE_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
           <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Search reports<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Beneficiary, staff, reference, provider..." className="h-12 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100" /></label>
         </div>
         <div className="mt-3 flex flex-wrap items-end gap-3">
@@ -330,11 +459,24 @@ export function ReportBuilder({
         </div>
       </section>
 
-      <section className="print:hidden grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Report summary">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Report summary">
         <ReportKpi icon={<ClipboardList />} label="Assistance records" value={filteredAssistance.length.toLocaleString()} note={selectedTypeLabel} tone="blue" />
         <ReportKpi icon={<UsersRound />} label="Beneficiaries served" value={uniqueBeneficiaryCount.toLocaleString()} note="Unique clients in view" tone="violet" />
         <ReportKpi icon={<WalletCards />} label="Financial assistance" value={`₱${selectedAssistanceTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`} note="Recorded monetary amount" tone="gold" />
         <ReportKpi icon={<ArrowUpRight />} label="Provided" value={providedCount.toLocaleString()} note="Successful assistance outcomes" tone="green" />
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5" aria-label="Assistance type summary">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><h2 className="text-base font-bold text-[#0B1A3E]">{selectedTypeLabel} summary</h2><p className="mt-1 text-xs text-slate-500">Reporting period: {dateRange.startDate} to {dateRange.endDate}</p></div>
+            <div className="text-sm font-semibold text-[#173B70]">{(assistanceType === "MEDICAL_ASSISTANCE" || assistanceType === "ALL") && <p>Medicine quantity recorded: {medicineQuantityTotal.toLocaleString()}</p>}{(assistanceType !== "MEDICAL_ASSISTANCE") && <p>Items / goods quantity recorded: {itemQuantityTotal.toLocaleString()}</p>}</div>
+        </div>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[440px] text-left text-sm">
+            <thead className="border-b border-slate-200 text-xs uppercase text-slate-500"><tr><th className="py-2 pr-4">Medicine / item / service description</th><th className="py-2 pr-4 text-right">Transactions</th><th className="py-2 text-right">Quantity</th></tr></thead>
+            <tbody>{assistanceBreakdown.length ? assistanceBreakdown.map(([description, totals]) => <tr key={description} className="border-b border-slate-100 last:border-0"><td className="py-2 pr-4">{description}</td><td className="py-2 pr-4 text-right">{totals.transactions}</td><td className="py-2 text-right">{totals.quantity || "—"}</td></tr>) : <tr><td className="py-4 text-center text-slate-500" colSpan={3}>No assistance records for this selection.</td></tr>}</tbody>
+          </table>
+        </div>
       </section>
 
       <section className="print:hidden grid gap-5 xl:grid-cols-[1.45fr_0.95fr]" aria-label="Report analytics">
@@ -346,6 +488,7 @@ export function ReportBuilder({
         <div className="hidden print:block">
           <h1 className="text-2xl font-bold">Mahayag MSWD Reports{qualifier}</h1>
           <p className="mt-1 text-sm">Reporting period: {dateRange.startDate} to {dateRange.endDate}</p>
+          <p className="text-sm">Assistance type: {selectedTypeLabel} · {uniqueBeneficiaryCount} unique beneficiaries · {filteredAssistance.length} transactions · ₱{selectedAssistanceTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })} recorded financial assistance</p>
           <p className="text-sm">Generated: {generatedAt}</p>
         </div>
 
@@ -401,9 +544,14 @@ export function ReportBuilder({
               <h2 id="assistance-report-heading" className="text-xl font-bold text-slate-900">Assistance activity report</h2>
               <p className="text-sm text-slate-600">{filteredAssistance.length.toLocaleString()} assistance records in selected date range</p>
             </div>
-            <button type="button" onClick={exportAssistance} className="print:hidden rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-              Export assistance CSV
-            </button>
+            <div className="print:hidden flex flex-wrap gap-2">
+              <button type="button" onClick={exportAssistance} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Export assistance CSV
+              </button>
+              <button type="button" onClick={exportAssistanceExcel} className="rounded-lg border border-emerald-700 bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+                Export assistance Excel
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full min-w-[600px] text-left text-sm">
@@ -427,7 +575,7 @@ export function ReportBuilder({
             <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase text-slate-600">
                 <tr>
-                  <th className="px-4 py-3">Reference</th><th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Reference</th><th className="px-4 py-3">Date visited / provided</th>
                   <th className="px-4 py-3">Assistance type</th><th className="px-4 py-3">Beneficiary / category</th>
                   <th className="px-4 py-3">Assigned staff</th><th className="px-4 py-3">Details</th>
                   <th className="px-4 py-3">Amount</th><th className="px-4 py-3">Outcome</th>
@@ -436,7 +584,7 @@ export function ReportBuilder({
               <tbody>
                 {filteredAssistance.length ? filteredAssistance.map((row) => (
                   <tr key={row.referenceNumber} className="border-t border-slate-100">
-                    <td className="px-4 py-3">{row.referenceNumber}</td><td className="px-4 py-3">{displayDate(row.visitDate)}</td>
+                    <td className="px-4 py-3">{row.referenceNumber}</td><td className="px-4 py-3">{displayDate(row.providedAt || row.visitDate)}</td>
                     <td className="px-4 py-3">{row.type === "OTHER" && row.otherType ? row.otherType : ASSISTANCE_TYPE_LABELS[row.type]}</td>
                     <td className="px-4 py-3"><span className="font-semibold">{row.beneficiaryName}</span><span className="block text-xs text-slate-500">{row.beneficiaryNumber} · {row.categoryName}</span></td>
                     <td className="px-4 py-3">{row.staffName}</td>

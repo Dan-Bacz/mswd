@@ -27,7 +27,7 @@ export default async function BeneficiariesPage({
   const filterCategories = categories.filter((category) => shouldShowBeneficiaryCategory(category.name));
   const activeCategories = filterCategories.map(({ id, name }) => ({ id, name }));
   const selectedCategory =
-    categories.find((category) => category.id === requestedCategoryId) ??
+    filterCategories.find((category) => category.id === requestedCategoryId) ??
     filterCategories.find((category) => category.name === requestedCategory);
   const beneficiaries = await db.beneficiary.findMany({
     where: selectedCategory ? { categoryId: selectedCategory.id } : undefined,

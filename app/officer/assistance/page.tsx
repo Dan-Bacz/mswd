@@ -5,16 +5,16 @@ import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
 export const dynamic = "force-dynamic";
 
 export default async function OfficerAssistancePage() {
-  const { categoryId } = await requireSelectedOfficerCategory();
+  const { user } = await requireSelectedOfficerCategory();
 
   const [beneficiaries, records] = await Promise.all([
     db.beneficiary.findMany({
-      where: { categoryId },
+      where: { categoryId: { in: user.categoryIds } },
       include: { category: true },
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
     db.beneficiaryAssistance.findMany({
-      where: { beneficiary: { categoryId } },
+      where: { beneficiary: { categoryId: { in: user.categoryIds } } },
       include: {
         beneficiary: { include: { category: true } },
         providedBy: { select: { name: true } },

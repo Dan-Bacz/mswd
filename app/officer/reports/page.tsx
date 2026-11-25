@@ -1,5 +1,5 @@
 import { ReportBuilder } from "@/components/reports/report-builder";
-import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 import { getReportData, getReportDateRange } from "@/lib/reporting";
 
 export const dynamic = "force-dynamic";
@@ -9,16 +9,17 @@ export default async function OfficerReportsPage({
 }: {
   searchParams?: Promise<{ startDate?: string; endDate?: string }>;
 }) {
-  const { user, categoryId } = await requireSelectedOfficerCategory();
+  const user = await requireRole("OFFICER");
   const params = await searchParams;
   const dateRange = getReportDateRange(params?.startDate, params?.endDate);
-  const data = await getReportData(dateRange, user.id, categoryId);
+  const data = await getReportData(dateRange, user.id, undefined, user.categoryIds);
 
   return (
     <ReportBuilder
       dateRange={dateRange}
       beneficiaries={data.beneficiaries}
       assistance={data.assistance}
+      assistanceTypes={data.assistanceTypes}
       officerName={user.name}
       generatedAt={new Intl.DateTimeFormat("en-PH", {
         dateStyle: "medium",

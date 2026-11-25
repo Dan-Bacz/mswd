@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, ChevronRight, Sparkles } from "lucide-react";
 import { db } from "@/lib/db";
 import { BeneficiaryRegistry } from "@/components/admin/beneficiary-registry";
 import { OfficerDashboardAnalytics, type OfficerDashboardTrend } from "@/components/officer/officer-dashboard-analytics";
-import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +14,8 @@ export default async function OfficerCategoryDashboardPage({
   params: Promise<{ categoryId: string }>;
 }) {
   const { categoryId } = await params;
-  const { user, categoryId: selectedCategoryId } = await requireSelectedOfficerCategory();
-  if (categoryId !== selectedCategoryId) redirect(`/officer/categories/${selectedCategoryId}`);
+  const user = await requireRole("OFFICER");
+  if (!user.categoryIds.includes(categoryId)) notFound();
 
   const category = await db.category.findUnique({ where: { id: categoryId } });
 
@@ -27,7 +27,7 @@ export default async function OfficerCategoryDashboardPage({
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const trendStart = new Date(todayStart);
   trendStart.setDate(trendStart.getDate() - 6);
-  const scope = { categoryId, assignedOfficerId: user.id };
+  const scope = { categoryId };
   const assistanceScope = { beneficiary: scope };
   const [beneficiaryCount, assistanceCount, beneficiaries, assistance, recentAssistance, recentBeneficiaries] = await Promise.all([
     db.beneficiary.count({ where: scope }),

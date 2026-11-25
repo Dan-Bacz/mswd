@@ -17,6 +17,7 @@ import { createSession, clearSession, setSelectedOfficerCategory } from "@/lib/a
 import { requireAdmin, requireAuth, requireRole } from "@/lib/auth/permissions";
 import { categorySchema, loginSchema, officerProfileSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 import { buildFullName } from "@/lib/identity";
+import { isPwdCategory } from "@/lib/utils";
 import {
   VERIFICATION_SESSION_TTL_MS,
   createVerificationToken,
@@ -474,6 +475,9 @@ export async function createCategoryAction(
       message: parsed.error.issues[0]?.message ?? "Please enter a valid category.",
     };
   }
+  if (isPwdCategory(parsed.data.name)) {
+    return { ok: false, message: "The PWD category is no longer available." };
+  }
 
   try {
     await db.category.create({
@@ -610,6 +614,9 @@ export async function createOfficerAction(
   });
   if (categories.length !== categoryIds.length) {
     return { ok: false, message: "One or more selected categories are no longer available. Refresh and try again.", resetKey: _previousState.resetKey };
+  }
+  if (categories.some((category) => isPwdCategory(category.name))) {
+    return { ok: false, message: "The PWD category is no longer available for staff assignments.", resetKey: _previousState.resetKey };
   }
 
   const email = parsed.data.email.toLowerCase();
@@ -879,6 +886,9 @@ export async function assignOfficerCategoriesAction(formData: FormData) {
 
   if (categories.length !== categoryIds.length) {
     throw new Error("One or more selected categories were not found.");
+  }
+  if (categories.some((category) => isPwdCategory(category.name))) {
+    throw new Error("The PWD category is no longer available for staff assignments.");
   }
 
   const existingIds = new Set(existing.map((item) => item.categoryId));

@@ -4,6 +4,7 @@ import { ArrowLeft, HandHeart, Plus, ShieldCheck, UserRound, Users } from "lucid
 import { db } from "@/lib/db";
 import { MetricCard } from "@/components/ui/metric-card";
 import { setCategoryOfficersAction } from "@/app/actions/auth";
+import { isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function AdminCategoryDashboardPage({
   const { categoryId } = await params;
   const category = await db.category.findUnique({ where: { id: categoryId } });
 
-  if (!category) {
+  if (!category || isPwdCategory(category.name)) {
     notFound();
   }
 

@@ -15,7 +15,7 @@ export default async function OfficerLayout({ children }: { children: ReactNode 
     return <div className="app-shell min-h-screen">{children}</div>;
   }
   const assignedCategories = await db.category.findMany({
-    where: { id: selectedCategoryId },
+    where: { id: { in: user.categoryIds } },
     orderBy: { name: "asc" },
     select: { name: true },
   });

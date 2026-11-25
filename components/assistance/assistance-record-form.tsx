@@ -418,6 +418,13 @@ export function AssistanceRecordForm({
                       message={state.fieldErrors?.providedDescription}
                     />
                   </label>
+                  {type !== "MEDICAL_ASSISTANCE" && (
+                    <label className="text-xs font-bold text-[#405B80]">
+                      Items or goods quantity (if applicable)
+                      <input name="itemQuantity" type="number" min="0" step="1" className={inputClass} />
+                      <FieldError message={state.fieldErrors?.itemQuantity} />
+                    </label>
+                  )}
                   {type === "MEDICAL_ASSISTANCE" && (
                     <>
                       <label className="text-xs font-bold text-[#405B80]">

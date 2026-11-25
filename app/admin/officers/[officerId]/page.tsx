@@ -7,6 +7,7 @@ import { ApproveOfficerForm } from "@/components/admin/approve-officer-form";
 import { ResendApprovalEmailButton } from "@/components/admin/resend-approval-email-button";
 import { DeleteOfficerForm } from "@/components/admin/delete-officer-form";
 import { assignOfficerCategoriesAction } from "@/app/actions/auth";
+import { isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -45,11 +46,12 @@ export default async function OfficerManagePage({
     notFound();
   }
 
-  const [categories, beneficiaryCount, assistanceCount] = await Promise.all([
+  const [allCategories, beneficiaryCount, assistanceCount] = await Promise.all([
     db.category.findMany({ orderBy: { name: "asc" } }),
     db.beneficiary.count({ where: { assignedOfficerId: officer.id } }),
     db.beneficiaryAssistance.count({ where: { providedById: officer.id } }),
   ]);
+  const categories = allCategories.filter((category) => !isPwdCategory(category.name));
 
   const assignedCategoryIds = new Set(officer.userCategories.map((item) => item.categoryId));
 

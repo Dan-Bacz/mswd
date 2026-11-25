@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { CreateOfficerDialog } from "@/components/admin/create-officer-dialog";
+import { isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,8 @@ export default async function OfficersPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
+  const allCategories = await db.category.findMany({ orderBy: { name: "asc" } });
+  const categories = allCategories.filter((category) => !isPwdCategory(category.name));
 
   return (
     <div className="space-y-6">

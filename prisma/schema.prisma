@@ -256,6 +256,7 @@ model BeneficiaryAssistance {
   followUpNotes        String?
   internalRemarks      String?
   medicineQuantity     Int?
+  itemQuantity         Int?
   doctorName           String?
   providedById         String
   createdAt            DateTime          @default(now())

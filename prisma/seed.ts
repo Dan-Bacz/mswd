@@ -14,7 +14,6 @@ async function main() {
   const categories = [
     "Women Especially in Difficult Circumstances",
     "Children in Need of Special Protection",
-    "Person with Disabilities (PWD)",
     "Senior Citizens",
     "Solo Parents",
     "CICL/CAR",

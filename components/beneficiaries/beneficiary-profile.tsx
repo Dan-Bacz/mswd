@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { ArrowLeft, CalendarDays, ClipboardList, MapPin, Save, ShieldCheck, UserCircle2 } from "lucide-react";
 import { updateBeneficiaryAction, type BeneficiaryActionState } from "@/app/actions/mswd";
 import { MAHAYAG_BARANGAYS } from "@/lib/locations";
 import { VawcIntakeProfile } from "@/components/beneficiaries/vawc-intake-profile";
+import { GeneralIntakeOfficialFields } from "@/components/beneficiaries/general-intake-page-form";
+import { SoloParentOfficialFields } from "@/components/beneficiaries/solo-parent-official-fields";
 
 const initialState: BeneficiaryActionState = { ok: true, message: "" };
 const inputClass = "h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100";
@@ -19,8 +21,10 @@ type BeneficiaryProfileData = {
   id: string; beneficiaryNumber: string; firstName: string; middleName: string | null; lastName: string; suffix: string | null; sex: string; dateOfBirth: string | null; age: number | null; civilStatus: string | null; contactNumber: string | null; email: string | null; address: string; barangay: string | null; municipality: string | null; province: string | null; categoryId: string; categoryName: string; assignedOfficerName: string | null; status: string; remarks: string | null; assistanceCount: number; hasPhoto: boolean; generalIntakeData: Record<string, unknown> | null; soloParentData: Record<string, unknown> | null;
 };
 
-export function BeneficiaryProfile({ beneficiary, canEdit, backHref }: { beneficiary: BeneficiaryProfileData; canEdit: boolean; backHref: string }) {
+export function BeneficiaryProfile({ beneficiary, canEdit: canEditProfile, backHref }: { beneficiary: BeneficiaryProfileData; canEdit: boolean; backHref: string }) {
   const [state, formAction, pending] = useActionState(updateBeneficiaryAction, initialState);
+  const [editing, setEditing] = useState(false);
+  const canEdit = canEditProfile && editing;
   const name = fullName(beneficiary);
   const dateOfBirth = beneficiary.dateOfBirth ? beneficiary.dateOfBirth.slice(0, 10) : "";
   const categoryFormData = beneficiary.soloParentData ?? beneficiary.generalIntakeData;
@@ -28,6 +32,7 @@ export function BeneficiaryProfile({ beneficiary, canEdit, backHref }: { benefic
   const isVawc = categoryName.includes("vawc") || (categoryName.includes("special protection") && !categoryName.includes("children in need of special protection"));
   return <div className="mx-auto max-w-6xl space-y-6 pb-8">
     <Link href={backHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#0B4599] transition hover:text-[#073783]"><ArrowLeft className="h-4 w-4" />Back to beneficiaries</Link>
+    {canEditProfile && <button type="button" onClick={() => setEditing((current) => !current)} className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#0B4599] bg-white px-4 text-sm font-semibold text-[#0B4599] hover:bg-blue-50">{editing ? "Cancel edit" : "Edit beneficiary"}</button>}
     <header className="relative overflow-hidden rounded-2xl bg-[#071C3A] text-white shadow-lg"><div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(30,111,190,0.38),transparent_45%)]" /><div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-7"><div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/20 bg-white/10 shadow-inner">{beneficiary.hasPhoto ? <Image src={`/api/beneficiaries/${beneficiary.id}/photo`} alt={`${name} profile photo`} fill unoptimized className="object-cover" /> : <UserCircle2 className="h-16 w-16 text-blue-100/60" />}</div><div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-200">MSWD beneficiary profile</p><h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{name}</h1><div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-blue-100"><span className="rounded-md bg-white/10 px-2.5 py-1 font-semibold">Client ID: {beneficiary.beneficiaryNumber}</span><span className="text-blue-200">{beneficiary.categoryName}</span></div></div><div className="self-start rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-emerald-100"><ShieldCheck className="mr-1 inline h-4 w-4" />{beneficiary.status}</div></div><div className="relative grid border-t border-white/10 bg-black/10 sm:grid-cols-3"><HeaderMeta icon={<MapPin />} label="Registered location" value={[beneficiary.barangay, beneficiary.municipality].filter(Boolean).join(", ") || "Not recorded"} /><HeaderMeta icon={<CalendarDays />} label="Date of birth" value={dateOfBirth || "Not recorded"} /><HeaderMeta icon={<ClipboardList />} label="Assigned officer" value={beneficiary.assignedOfficerName ?? "Unassigned"} /></div></header>
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Info label="Age" value={beneficiary.age === null ? "Not recorded" : String(beneficiary.age)} /><Info label="Civil status" value={beneficiary.civilStatus ?? "Not recorded"} /><Info label="Assistance records" value={String(beneficiary.assistanceCount)} /><Info label="Province" value={beneficiary.province ?? "Not recorded"} /></div>
     {isVawc && beneficiary.generalIntakeData && <VawcIntakeProfile data={beneficiary.generalIntakeData} />}
@@ -45,4 +50,48 @@ function displayFormValue(value: unknown) { if (Array.isArray(value)) return val
 function formLabel(key: string) { return key.replace(/^vawc/, "").replace(/([A-Z])/g, " $1").replace(/^./, (character) => character.toUpperCase()); }
 function formEntries(data: Record<string, unknown>) { return Object.entries(data).filter(([key]) => !["firstName", "middleName", "lastName", "sex", "dateOfBirth", "address"].includes(key)); }
 function SavedFormDataEditor({ data }: { data: Record<string, unknown> }) { const entries = formEntries(data); if (!entries.length) return null; return <section className="rounded-xl border border-[#C9DDF5] bg-[#F5F9FF] p-4 sm:p-5"><div className="flex items-start gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#0B4599]" /><div><h3 className="font-bold text-[#173B70]">Saved category form responses</h3><p className="mt-1 text-xs text-slate-600">Edit the information saved from the category intake form.</p></div></div><div className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <label key={key} className="text-sm font-medium text-slate-700">{formLabel(key)}<textarea name={`formField_${key}`} defaultValue={displayFormValue(value)} rows={Array.isArray(value) || displayFormValue(value).length > 100 ? 3 : 1} className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100" /></label>)}</div></section>; }
-function SavedFormDataReadOnly({ data }: { data: Record<string, unknown> }) { const entries = formEntries(data).filter(([, value]) => value !== ""); if (!entries.length) return null; return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-3 border-b border-slate-200 pb-3"><ClipboardList className="h-5 w-5 text-[#0B4599]" /><h2 className="font-bold text-[#173B70]">Saved category form</h2></div><dl className="mt-4 grid gap-4 sm:grid-cols-2">{entries.map(([key, value]) => <div key={key}><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{formLabel(key)}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{displayFormValue(value)}</dd></div>)}</dl></section>; }
+function SavedFormDataReadOnly({ data }: { data: Record<string, unknown> }) {
+  const entries = formEntries(data).filter(([, value]) => value !== "");
+  if (!entries.length || entries.some(([key]) => key.startsWith("vawc"))) return null;
+  const soloParent = entries.some(([key]) => key.startsWith("soloParent") || key.startsWith("familyMember"));
+  const category = { id: "saved-record", name: soloParent ? "Solo Parents" : "General Intake" };
+  return (
+    <section className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-100 p-3 sm:p-5">
+      <div className="mx-auto mb-3 max-w-[920px] border-b border-slate-300 pb-3"><p className="text-xs font-semibold uppercase tracking-wide text-[#0B4599]">Read-only official registration form</p><p className="mt-1 text-sm text-slate-600">Submitted values are shown in the original form layout.</p></div>
+      <SavedOfficialIntakeForm data={data} category={category} soloParent={soloParent} />
+    </section>
+  );
+}
+
+function SavedOfficialIntakeForm({ data, category, soloParent }: { data: Record<string, unknown>; category: { id: string; name: string }; soloParent: boolean }) {
+  const fieldsetRef = useRef<HTMLFieldSetElement>(null);
+  useEffect(() => {
+    const root = fieldsetRef.current;
+    if (!root) return;
+    const occurrences = new Map<string, number>();
+    for (const control of root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("[name]")) {
+      const values = data[control.name];
+      if (control instanceof HTMLInputElement && (control.type === "checkbox" || control.type === "radio")) {
+        control.checked = Array.isArray(values)
+          ? values.map(String).includes(control.value)
+          : displayFormValue(values) === control.value;
+        continue;
+      }
+      if (Array.isArray(values)) {
+        const index = occurrences.get(control.name) ?? 0;
+        occurrences.set(control.name, index + 1);
+        control.value = displayFormValue(values[index]);
+      } else {
+        control.value = displayFormValue(values);
+      }
+    }
+  }, [data]);
+
+  return (
+    <fieldset ref={fieldsetRef} disabled className="mx-auto w-full max-w-[920px] bg-white disabled:opacity-100">
+      {soloParent
+        ? <SoloParentOfficialFields category={category} officers={[]} officerMode fieldErrors={{}} />
+        : <GeneralIntakeOfficialFields category={category} officers={[]} officerMode fieldErrors={{}} />}
+    </fieldset>
+  );
+}

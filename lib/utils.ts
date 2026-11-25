@@ -28,9 +28,14 @@ export function shouldShowBeneficiaryCategory(name: string) {
     normalizedName === "women" ||
     normalizedName.includes("maifip") ||
     normalizedName === "pwd" ||
-    normalizedName.includes("person with disability") ||
-    normalizedName.includes("persons with disability")
+    normalizedName.includes("person with disabilit") ||
+    normalizedName.includes("persons with disabilit")
   );
+}
+
+export function isPwdCategory(name: string) {
+  const normalizedName = name.trim().toLowerCase();
+  return normalizedName === "pwd" || normalizedName.includes("person with disabilit");
 }
 
 export function formatDate(value: Date | string) {
