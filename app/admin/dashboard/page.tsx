@@ -167,7 +167,7 @@ export default async function AdminDashboardPage({
         <div className="relative flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white bg-white p-1.5 shadow-sm">
-              <Image src="/images/logo.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
+              <Image src="/images/new mswd.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="text-sm font-semibold capitalize text-[#0645AD]">{greeting}, {user.name.split(" ")[0]}!</p>

@@ -41,7 +41,7 @@ export default function LoginPage() {
         <div className="flex items-center gap-4">
           <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/60 bg-white p-1.5 shadow-xl shadow-[#09264a]/35 sm:h-[88px] sm:w-[88px]">
             <Image
-              src="/images/logo.png"
+              src="/images/new mswd.png"
               width={400}
               height={400}
               alt="DSWD logo"
@@ -85,7 +85,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[470px] rounded-3xl border border-white bg-white/90 p-6 shadow-[0_24px_70px_-32px_rgba(7,31,67,0.28)] ring-1 ring-[#0b4599]/[0.04] sm:p-9">
           <div className="mb-7 flex items-center gap-3 lg:hidden">
             <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-[#d6e5f5] bg-white p-0.5">
-              <Image src="/images/logo.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
+              <Image src="/images/new mswd.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0569b3]">DSWD</p>

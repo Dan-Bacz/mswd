@@ -150,7 +150,7 @@ export function AssistanceRecordForm({
               <p className="mt-1 text-[10px]">Mahayag, Zamboanga del Sur</p>
             </div>
             <Image
-              src="/images/logo.png"
+              src="/images/new mswd.png"
               alt="Municipal logo"
               width={78}
               height={78}

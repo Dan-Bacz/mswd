@@ -30,7 +30,7 @@ export function LoginSplash() {
       <div className="login-splash-content">
         <div className="login-splash-logo-wrap">
           <Image
-            src="/images/logo.png"
+            src="/images/new mswd.png"
             alt="Mahayag MSWD logo"
             width={240}
             height={240}

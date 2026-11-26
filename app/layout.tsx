@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "MSWD Management Information System",
   description: "Municipal Social Welfare and Development system",
   icons: {
-    icon: "/images/logo.png",
+    icon: "/images/new mswd.png",
   },
 };
 

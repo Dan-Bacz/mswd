@@ -32,7 +32,7 @@ export default function OfficerRegistrationPage() {
 
           <div className="relative z-10">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-2 shadow-xl shadow-black/10">
-              <Image src="/images/logo.png" width={400} height={400} alt="Mahayag MSWD logo" className="h-full w-full object-contain" />
+              <Image src="/images/new mswd.png" width={400} height={400} alt="Mahayag MSWD logo" className="h-full w-full object-contain" />
             </div>
             <p className="mt-10 text-xs font-bold uppercase tracking-[0.28em] text-[#FFD21F]">Mahayag • Zamboanga del Sur</p>
             <h1 className="mt-4 max-w-md text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
@@ -56,7 +56,7 @@ export default function OfficerRegistrationPage() {
         <section className="px-6 py-8 sm:px-10 sm:py-10 lg:flex lg:flex-col lg:justify-center lg:px-12 xl:px-16">
           <div className="mb-7 flex items-center gap-3 lg:hidden">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md ring-1 ring-slate-200">
-              <Image src="/images/logo.png" width={400} height={400} alt="Mahayag MSWD logo" className="h-full w-full object-contain" />
+              <Image src="/images/new mswd.png" width={400} height={400} alt="Mahayag MSWD logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0B4599]">Mahayag MSWD</p>

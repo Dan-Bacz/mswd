@@ -75,7 +75,7 @@ export function SidebarNavigation({
           <span aria-hidden="true" className="absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-[#d3a82c]/70 to-transparent" />
           <div className={`flex min-w-0 items-center gap-3 ${collapsed ? "lg:justify-center" : ""}`}>
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/60 bg-white p-1 shadow-[0_8px_20px_rgba(0,0,0,0.2)]">
-              <Image src="/images/logo.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
+              <Image src="/images/new mswd.png" width={400} height={400} alt="DSWD logo" className="h-full w-full object-contain" />
             </div>
             <div className={collapsed ? "lg:hidden" : "min-w-0"}>
               <h1 className="text-sm font-bold tracking-wide text-white">MSWD Management System</h1>
