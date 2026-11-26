@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { isPwdCategory } from "@/lib/utils";
+import { ASSISTANCE_TYPE_VALUES } from "@/lib/assistance";
 
 export type ReportDateRange = {
   startDate: string;
@@ -36,20 +37,6 @@ export async function getReportData(
   endExclusive.setUTCDate(endExclusive.getUTCDate() + 1);
   const pwdCategories = await db.category.findMany({ select: { id: true, name: true } });
   const excludedCategoryIds = pwdCategories.filter((category) => isPwdCategory(category.name)).map((category) => category.id);
-  const assistanceTypes = await db.beneficiaryAssistance.findMany({
-    where: {
-      beneficiary: {
-        categoryId: {
-          ...(categoryIds ? { in: categoryIds } : categoryId ? { equals: categoryId } : {}),
-          ...(excludedCategoryIds.length ? { notIn: excludedCategoryIds } : {}),
-        },
-      },
-    },
-    distinct: ["type"],
-    select: { type: true },
-    orderBy: { type: "asc" },
-  });
-
   const [beneficiaries, assistance] = await Promise.all([
     db.beneficiary.findMany({
       where: {
@@ -125,7 +112,7 @@ export async function getReportData(
   ]);
 
   return {
-    assistanceTypes: assistanceTypes.map((record) => record.type),
+    assistanceTypes: [...ASSISTANCE_TYPE_VALUES],
     beneficiaries: beneficiaries.map((beneficiary) => ({
       beneficiaryNumber: beneficiary.beneficiaryNumber,
       fullName: [
