@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { Dialog } from "@/components/ui/dialog";
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowUpRight, CalendarRange, ClipboardList, FileDown, Sparkles, UsersRound, WalletCards } from "lucide-react";
 import {
   ASSISTANCE_OUTCOME_LABELS,
@@ -201,6 +200,7 @@ export function ReportBuilder({
   officerName,
   generatedAt,
   categoryOptions,
+  officerMode = false,
 }: {
   dateRange: ReportDateRange;
   beneficiaries: BeneficiaryReportRow[];
@@ -210,6 +210,7 @@ export function ReportBuilder({
   officerName?: string;
   generatedAt: string;
   categoryOptions?: string[];
+  officerMode?: boolean;
 }) {
   const [period, setPeriod] = useState<Period>("month");
   const [reportMode, setReportMode] = useState<ReportMode>("programs");
@@ -273,22 +274,6 @@ export function ReportBuilder({
     }
     return [...groups.entries()].sort((left, right) => right[1].transactions - left[1].transactions);
   }, [filteredAssistance]);
-  const typeAnalytics = useMemo(() => Object.entries(ASSISTANCE_TYPE_LABELS).map(([type, label]) => ({
-    type,
-    label: label.replace(" Assistance", ""),
-    count: assistance.filter((row) => row.type === type).length,
-  })).filter((row) => row.count > 0).sort((left, right) => right.count - left.count), [assistance]);
-  const periodAnalytics = useMemo(() => {
-    const groups = new Map<string, { label: string; records: number; amount: number }>();
-    for (const row of filteredAssistance) {
-      const key = getPeriodKey(row.visitDate, period);
-      const group = groups.get(key) ?? { label: formatPeriod(key, period), records: 0, amount: 0 };
-      group.records += 1;
-      group.amount += row.financialAmount ?? 0;
-      groups.set(key, group);
-    }
-    return [...groups.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([, value]) => value);
-  }, [filteredAssistance, period]);
   const qualifier = officerName ? ` - ${officerName}` : "";
   const filenameRange = `${dateRange.startDate}_to_${dateRange.endDate}`;
   const assistanceDetails = filteredAssistance.map((row) => [
@@ -448,12 +433,14 @@ export function ReportBuilder({
         <div className="relative mt-7 grid gap-3 border-t border-slate-200 pt-5 text-xs text-slate-500 sm:grid-cols-3"><span className="inline-flex items-center gap-2"><CalendarRange className="h-4 w-4 text-[#A88724]" /> {dateRange.startDate} – {dateRange.endDate}</span><span className="inline-flex items-center gap-2"><ClipboardList className="h-4 w-4 text-[#A88724]" /> {selectedTypeLabel}</span><span className="inline-flex items-center gap-2 sm:justify-end"><ArrowUpRight className="h-4 w-4 text-[#A88724]" /> Live database report</span></div>
       </header>
 
-      <nav className="print:hidden grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_-30px_rgba(9,44,92,0.7)] sm:grid-cols-3" aria-label="Report sections">
+      <nav className={`print:hidden grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_-30px_rgba(9,44,92,0.7)] ${officerMode ? "sm:grid-cols-2" : "sm:grid-cols-3"}`} aria-label="Report sections">
         {([
           ["programs", "Programs and Services", "Beneficiary registrations by category or program"],
           ["assistance", "Type of Assistance", "Assistance transactions and outcomes"],
           ["staff", "Staff", "Beneficiaries and assistance handled by staff"],
-        ] as const).map(([value, label, description]) => (
+        ] as const)
+          .filter(([value]) => !officerMode || value !== "staff")
+          .map(([value, label, description]) => (
           <button key={value} type="button" onClick={() => setReportMode(value)} className={`rounded-xl px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${reportMode === value ? "bg-[#0b4599] text-white shadow-md" : "text-[#0b1a3e] hover:bg-blue-50"}`} aria-pressed={reportMode === value}>
             <span className="block text-sm font-bold">{label}</span>
             <span className={`mt-1 block text-xs ${reportMode === value ? "text-blue-100" : "text-slate-500"}`}>{description}</span>
@@ -462,7 +449,7 @@ export function ReportBuilder({
       </nav>
 
       <form method="get" className="print:hidden flex flex-wrap items-end gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(9,44,92,0.7)]">
-        <div className="w-full border-b border-slate-100 pb-3"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Report controls</p><p className="mt-1 text-sm text-slate-500">Choose a reporting window and the time grouping used in the charts.</p></div>
+        <div className="w-full border-b border-slate-100 pb-3"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Report controls</p><p className="mt-1 text-sm text-slate-500">Choose a reporting window and the time grouping used in the summaries.</p></div>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           <span className="text-xs font-bold uppercase tracking-wide text-slate-500">From</span>
           <input className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 outline-none transition focus:border-[#0b68c5] focus:bg-white focus:ring-4 focus:ring-blue-100" type="date" name="startDate" defaultValue={dateRange.startDate} />
@@ -496,7 +483,7 @@ export function ReportBuilder({
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(240px,1.5fr)_minmax(170px,0.7fr)_minmax(170px,0.7fr)]">
           <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Search reports<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder={reportMode === "programs" ? "Beneficiary, ID, category, barangay..." : "Beneficiary, staff, reference, provider..."} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100" /></label>
           <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All categories</option>{reportCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name}</option>)}</select></label>
+          {!officerMode && <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name}</option>)}</select></label>}
           <div className="ml-auto flex flex-wrap gap-2 text-sm"><span className="rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800">{filteredAssistance.length} transactions</span><span className="rounded-lg bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">₱{selectedAssistanceTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })} total amount</span></div>
         </div>
       </section>
@@ -519,11 +506,6 @@ export function ReportBuilder({
             <tbody>{assistanceBreakdown.length ? assistanceBreakdown.map(([description, totals]) => <tr key={description} className="border-b border-slate-100 last:border-0"><td className="py-2 pr-4">{description}</td><td className="py-2 pr-4 text-right">{totals.transactions}</td><td className="py-2 text-right">{totals.quantity || "—"}</td></tr>) : <tr><td className="py-4 text-center text-slate-500" colSpan={3}>No assistance records for this selection.</td></tr>}</tbody>
           </table>
         </div>
-      </section>
-
-      <section className="print:hidden grid gap-5 xl:grid-cols-[1.45fr_0.95fr]" aria-label="Report analytics">
-        <div className="dashboard-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_22px_50px_-35px_rgba(9,44,92,0.7)] sm:p-6"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B4599]">Activity trend</p><h2 className="mt-1 text-xl font-bold text-[#0B1A3E]">Assistance delivery over time</h2></div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Grouped by {periodLabels[period]}</span></div><div className="mt-5 h-[265px] min-w-0"><ResponsiveContainer width="100%" height="100%"><BarChart data={periodAnalytics} margin={{ top: 12, right: 8, left: -20, bottom: 0 }}><CartesianGrid vertical={false} stroke="#E8EEF7" /><XAxis dataKey="label" tick={{ fontSize: 10, fill: "#6480A9" }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#6480A9" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #DCE7F5", boxShadow: "0 18px 35px rgba(9,44,92,.14)" }} /><Bar dataKey="records" name="Assistance records" fill="#0B68C5" radius={[8, 8, 2, 2]} barSize={28} /></BarChart></ResponsiveContainer></div></div>
-        <div className="dashboard-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_22px_50px_-35px_rgba(9,44,92,0.7)] sm:p-6"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B4599]">Service mix</p><h2 className="mt-1 text-xl font-bold text-[#0B1A3E]">Records by assistance type</h2></div><div className="mt-5 h-[265px] min-w-0"><ResponsiveContainer width="100%" height="100%"><BarChart data={typeAnalytics} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 0 }}><CartesianGrid horizontal={false} stroke="#E8EEF7" /><XAxis type="number" allowDecimals={false} hide /><YAxis type="category" dataKey="label" width={105} tick={{ fontSize: 10, fill: "#405B80" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #DCE7F5" }} /><Bar dataKey="count" name="Records" radius={[0, 8, 8, 0]} barSize={20}>{typeAnalytics.map((entry, index) => <Cell key={entry.type} fill={index % 2 ? "#C9A93F" : "#0B68C5"} />)}</Bar></BarChart></ResponsiveContainer></div></div>
       </section>
 
       <div className="report-print-document space-y-10">

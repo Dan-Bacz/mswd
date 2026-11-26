@@ -67,7 +67,7 @@ export default async function OfficerDashboardPage() {
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-[#0B1A3E]">Assigned categories</h2>
-            <p className="mt-1 text-sm text-[#6480A9]">Select a category to open its dashboard.</p>
+            <p className="mt-1 text-sm text-[#6480A9]">Select a category to view its beneficiaries, or use My Categories in the sidebar to add new ones.</p>
           </div>
           <span className="rounded-full bg-[#eef6ff] px-3 py-1.5 text-xs font-bold text-[#0b4599]">
             {categories.length} {categories.length === 1 ? "category" : "categories"}
@@ -79,7 +79,7 @@ export default async function OfficerDashboardPage() {
             {categories.map((category, index) => (
               <Link
                 key={category.id}
-                href={`/officer/categories/${category.id}`}
+                href={`/officer/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
                 className="group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border border-[#DCE7F5] bg-white p-5 shadow-[0_18px_45px_-28px_rgba(7,28,58,0.65)] transition duration-200 hover:-translate-y-1 hover:border-[#0B68C5] hover:shadow-[0_24px_48px_-26px_rgba(7,28,58,0.55)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/35"
               >
                 <span className="absolute right-0 top-0 h-24 w-24 rounded-full bg-[#0B68C5]/10 blur-2xl transition group-hover:bg-[#0B68C5]/20" />
@@ -93,7 +93,7 @@ export default async function OfficerDashboardPage() {
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A88724]">Program {String(index + 1).padStart(2, "0")}</p>
                   <h3 className="mt-1 text-lg font-bold text-[#071C3A]">{category.name}</h3>
                   <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-[#6480A9]">
-                    {category.description || "Open your assigned category dashboard."}
+                    {category.description || "View beneficiaries in this category."}
                   </p>
                 </div>
                 <div className="relative mt-auto flex items-center gap-4 pt-4 text-xs font-semibold text-[#405B80]">

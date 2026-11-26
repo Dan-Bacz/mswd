@@ -38,6 +38,17 @@ export function isPwdCategory(name: string) {
   return normalizedName === "pwd" || normalizedName.includes("person with disabilit");
 }
 
+export function beneficiaryIntakeHref(categoryName: string, categoryId: string, area: "admin" | "officer" = "officer") {
+  const name = categoryName.trim().toLowerCase();
+  const base = `/${area}/beneficiaries/new`;
+  const query = `?categoryId=${encodeURIComponent(categoryId)}`;
+  if (name.includes("solo parent")) return `${base}/solo-parent${query}`;
+  if (name.includes("vawc") || (name.includes("special protection") && !name.includes("children in need of special protection"))) {
+    return `${base}/vawc-intake${query}`;
+  }
+  return `${base}/general-intake${query}`;
+}
+
 export function formatDate(value: Date | string) {
   return new Intl.DateTimeFormat("en-PH", {
     month: "short",

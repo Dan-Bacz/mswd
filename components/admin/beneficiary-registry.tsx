@@ -18,6 +18,7 @@ import {
 } from "@/app/actions/mswd";
 import { MAHAYAG_BARANGAYS, MAHAYAG_MUNICIPALITY } from "@/lib/locations";
 import { calculateAge } from "@/lib/age";
+import { beneficiaryIntakeHref } from "@/lib/utils";
 
 export type RegistryCategory = { id: string; name: string };
 export type RegistryOfficer = { id: string; name: string; categoryIds: string[] };
@@ -201,19 +202,11 @@ export function BeneficiaryRegistry({
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
   const registryBase = officerMode ? "/officer/beneficiaries" : "/admin/beneficiaries";
+  const area = officerMode ? "officer" : "admin";
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
-  const selectedCategoryName = selectedCategory?.name.toLowerCase() ?? "";
-  const selectedCategoryQuery = selectedCategoryId ? `?categoryId=${encodeURIComponent(selectedCategoryId)}` : "";
-  const intakeBase = `${officerMode ? "/officer" : "/admin"}/beneficiaries/new`;
-  const dedicatedPageHref = selectedCategoryName.includes("solo parent")
-    ? `${intakeBase}/solo-parent${selectedCategoryQuery}`
-      : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster") || selectedCategoryName.includes("children in need of special protection")
-      ? `${intakeBase}/general-intake${selectedCategoryQuery}`
-      : selectedCategoryName.includes("vawc") || selectedCategoryName.includes("special protection")
-        ? `${intakeBase}/vawc-intake${selectedCategoryQuery}`
-      : selectedCategoryId
-        ? `${intakeBase}/general-intake${selectedCategoryQuery}`
-        : null;
+  const dedicatedPageHref = selectedCategoryId
+    ? beneficiaryIntakeHref(selectedCategory?.name ?? "", selectedCategoryId, area)
+    : null;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
     const searchable = `${beneficiary.fullName} ${beneficiary.beneficiaryNumber}`.toLowerCase();
@@ -221,12 +214,7 @@ export function BeneficiaryRegistry({
   });
 
   function categoryAddHref(category: RegistryCategory) {
-    const name = category.name.toLowerCase();
-    const base = officerMode ? "/officer" : "/admin";
-    const query = `?categoryId=${encodeURIComponent(category.id)}`;
-    if (name.includes("solo parent")) return `${base}/beneficiaries/new/solo-parent${query}`;
-    if (name.includes("vawc") || (name.includes("special protection") && !name.includes("children in need of special protection"))) return `${base}/beneficiaries/new/vawc-intake${query}`;
-    return `${base}/beneficiaries/new/general-intake${query}`;
+    return beneficiaryIntakeHref(category.name, category.id, officerMode ? "officer" : "admin");
   }
 
   useEffect(() => {

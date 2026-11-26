@@ -24,6 +24,7 @@ export default async function OfficerReportsPage({
     <ReportBuilder
       dateRange={dateRange}
       categoryOptions={assignedCategories.map((category) => category.name)}
+      officerMode
       beneficiaries={data.beneficiaries}
       assistance={data.assistance}
       assistanceTypes={data.assistanceTypes}

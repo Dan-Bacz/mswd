@@ -500,7 +500,7 @@ export async function createBeneficiaryAction(
   revalidatePath("/admin/dashboard");
   revalidatePath("/officer/dashboard");
   revalidatePath(`/admin/categories/${parsed.data.categoryId}`);
-  revalidatePath(`/officer/categories/${parsed.data.categoryId}`);
+  revalidatePath(`/officer/beneficiaries`);
   return { ok: true, message: "Beneficiary saved successfully.", saved: true };
 }
 

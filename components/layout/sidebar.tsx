@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/permissions";
+import { beneficiaryIntakeHref } from "@/lib/utils";
 import type { NavSection } from "@/components/layout/nav-links";
 import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
 
@@ -20,9 +22,12 @@ const adminSections: NavSection[] = [
 ];
 
 export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
-  const settings = await db.systemSetting.findMany({
-    select: { key: true, value: true },
-  });
+  const [settings, currentUser] = await Promise.all([
+    db.systemSetting.findMany({
+      select: { key: true, value: true },
+    }),
+    role === "OFFICER" ? getCurrentUser() : Promise.resolve(null),
+  ]);
 
   const municipality =
     settings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
@@ -30,17 +35,45 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
 
   let sections = adminSections;
   if (role === "OFFICER") {
+    const assignedCategories = currentUser
+      ? await db.category.findMany({
+          where: { id: { in: currentUser.categoryIds } },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        })
+      : [];
+
     sections = [
       {
         items: [
           { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
-          { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
+          { href: "/officer/beneficiaries", label: "Beneficiaries", icon: "beneficiaries" },
           { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
           { href: "/officer/reports", label: "Reports", icon: "reports" },
           { href: "/officer/notifications", label: "Notifications", icon: "notifications" },
           { href: "/officer/profile", label: "My Profile", icon: "profile" },
         ],
+      },
+      {
+        title: "My Categories",
+        items: assignedCategories.map((category) => ({
+          href: `/officer/beneficiaries?categoryId=${encodeURIComponent(category.id)}`,
+          label: category.name,
+          icon: "categories" as const,
+          children: [
+            {
+              href: `/officer/beneficiaries?categoryId=${encodeURIComponent(category.id)}`,
+              label: "View beneficiaries",
+              icon: "view" as const,
+            },
+            {
+              href: beneficiaryIntakeHref(category.name, category.id, "officer"),
+              label: "Add beneficiary",
+              icon: "add" as const,
+            },
+          ],
+        })),
       },
     ];
   }
