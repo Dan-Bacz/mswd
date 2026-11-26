@@ -118,7 +118,7 @@ function Certificate({
                 className="h-[62px] w-[62px] object-contain sm:h-[78px] sm:w-[78px]"
               />
               <Image
-                src="/images/new mswd.png"
+                      src="/images/bagong pilipinas.png"
                 alt="Bagong Pilipinas logo"
                 width={78}
                 height={78}
