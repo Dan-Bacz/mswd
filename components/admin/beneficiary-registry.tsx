@@ -260,7 +260,7 @@ export function BeneficiaryRegistry({
         {dedicatedPageHref ? (
           <Link href={dedicatedPageHref} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Add {selectedCategory?.name ?? "beneficiary"}
+            Add beneficiaries
           </Link>
         ) : (
           <button type="button" onClick={() => setCategoryPickerOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-lg bg-[#0B1A3E] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30 sm:self-auto">
@@ -411,7 +411,7 @@ export function BeneficiaryRegistry({
                 : "There are no records for this view yet. Add a beneficiary to get started."}
             </p>
             {!normalizedSearch && (dedicatedPageHref ? (
-              <Link href={dedicatedPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add {selectedCategory?.name ?? "beneficiary"}</Link>
+              <Link href={dedicatedPageHref} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Add beneficiaries</Link>
             ) : (
               <button type="button" onClick={() => setCategoryPickerOpen(true)} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#0B1A3E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#172B4D] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#C9A93F]/30"><Plus className="h-4 w-4" aria-hidden="true" />Choose category to add</button>
             ))}
