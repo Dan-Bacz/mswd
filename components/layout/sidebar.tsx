@@ -48,7 +48,6 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
       {
         items: [
           { href: selectedCategory ? `/officer/categories/${selectedCategory.id}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
-          ...(selectedCategory ? [{ href: `/officer/categories/${selectedCategory.id}`, label: selectedCategory.name, icon: "categories" as const }] : []),
           { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
           { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
