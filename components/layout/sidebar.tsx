@@ -42,12 +42,13 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
           select: { id: true, name: true },
         })
       : [];
+    const selectedCategory = assignedCategories.find((category) => category.id === selectedCategoryId);
 
     sections = [
       {
         items: [
-          { href: assignedCategories.find((category) => category.id === selectedCategoryId) ? `/officer/categories/${selectedCategoryId}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
-          ...assignedCategories.map((category) => ({ href: `/officer/categories/${category.id}`, label: category.name, icon: "categories" as const })),
+          { href: selectedCategory ? `/officer/categories/${selectedCategory.id}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
+          ...(selectedCategory ? [{ href: `/officer/categories/${selectedCategory.id}`, label: selectedCategory.name, icon: "categories" as const }] : []),
           { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
           { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
