@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { CreateCategoryDialog } from "@/components/admin/create-category-dialog";
-import { isPwdCategory } from "@/lib/utils";
+import { conciseDescription, isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export default async function CategoriesPage() {
                 {categories.map((category) => (
                   <tr key={category.id}>
                     <td className="px-4 py-3 font-medium text-slate-900">{category.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{category.description ?? "—"}</td>
+                    <td className="max-w-md px-4 py-3 text-slate-600">{conciseDescription(category.description, "No description provided.")}</td>
                     <td className="space-y-2 px-4 py-3">
                       <Link
                         href={`/admin/categories/${category.id}`}

@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { BeneficiaryProfile } from "@/components/beneficiaries/beneficiary-profile";
-import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function OfficerBeneficiaryProfilePage({ params }: { params: Promise<{ beneficiaryId: string }> }) {
-  const { user } = await requireSelectedOfficerCategory();
+  const user = await requireRole("OFFICER");
   const { beneficiaryId } = await params;
   const beneficiary = await db.beneficiary.findUnique({
     where: { id: beneficiaryId },

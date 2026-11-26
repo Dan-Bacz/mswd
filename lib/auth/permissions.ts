@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { getSelectedOfficerCategory, getSession } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { isPwdCategory } from "@/lib/utils";
 
 export type CurrentUser = {
@@ -79,17 +79,17 @@ export async function requireRole(role: "ADMIN" | "OFFICER") {
   return user;
 }
 
-export async function getSelectedOfficerCategoryId(user: CurrentUser) {
-  if (user.role !== "OFFICER") return null;
-  const selectedCategoryId = await getSelectedOfficerCategory();
-  return selectedCategoryId && user.categoryIds.includes(selectedCategoryId) ? selectedCategoryId : null;
+export function resolveOfficerCategoryId(user: CurrentUser, requestedCategoryId?: string | null) {
+  if (requestedCategoryId && user.categoryIds.includes(requestedCategoryId)) {
+    return requestedCategoryId;
+  }
+  return user.categoryIds.length === 1 ? user.categoryIds[0] : null;
 }
 
-export async function requireSelectedOfficerCategory() {
-  const user = await requireRole("OFFICER");
-  const categoryId = await getSelectedOfficerCategoryId(user);
-  if (!categoryId) redirect("/officer/select-category");
-  return { user, categoryId };
+export async function requireOfficerCategory(user: CurrentUser, requestedCategoryId?: string | null) {
+  const categoryId = resolveOfficerCategoryId(user, requestedCategoryId);
+  if (!categoryId) redirect("/officer/dashboard");
+  return categoryId;
 }
 
 export async function canAccessCategory(user: CurrentUser, categoryId: string) {

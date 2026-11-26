@@ -20,6 +20,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/permissions";
 import { BeneficiaryDistributionChart } from "@/components/admin/dashboard-charts";
 import { AdminDashboardAnalytics } from "@/components/admin/admin-dashboard-analytics";
+import { conciseDescription, isPwdCategory } from "@/lib/utils";
 
 const chartPalette = ["#0645AD", "#E31837", "#FFD21F", "#58A5E8", "#8B9CB4", "#168653"];
 
@@ -49,8 +50,7 @@ function categoryAppearance(name: string, index: number): { icon: LucideIcon; co
 }
 
 function isHiddenDashboardCategory(name: string) {
-  const normalized = name.toLowerCase();
-  return normalized === "women" || normalized.includes("eccd") || normalized.includes("maifip") || normalized.includes("juvenile");
+  return isPwdCategory(name);
 }
 
 function formatDate(value: Date) {
@@ -222,7 +222,7 @@ export default async function AdminDashboardPage({
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-[#173B70]">{category.name}</span>
                     <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-[#6480A9]">
-                      {category.description || "View beneficiaries enrolled in this program."}
+                      {conciseDescription(category.description, "View beneficiaries enrolled in this program.")}
                     </span>
                     <span className="mt-2 block text-[11px] font-medium text-[#405B80]">
                       {(categoryCountMap.get(category.id) ?? 0).toLocaleString()} beneficiaries

@@ -114,12 +114,14 @@ export function AssistanceManagement({
   officers,
   isAdmin,
   subtitle,
+  initialCategoryId,
 }: {
   beneficiaries: BeneficiaryOption[];
   records: AssistanceRecord[];
   officers: OfficerOption[];
   isAdmin: boolean;
   subtitle: string;
+  initialCategoryId?: string;
 }) {
   const [state, formAction, pending] = useActionState(saveAssistanceAction, initialState);
   const [formOpen, setFormOpen] = useState(false);
@@ -132,7 +134,7 @@ export function AssistanceManagement({
   const [tableSearch, setTableSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [outcomeFilter, setOutcomeFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState(initialCategoryId ?? "");
   const [officerFilter, setOfficerFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");

@@ -45,22 +45,6 @@ export async function clearSession() {
   cookieStore.delete(SELECTED_OFFICER_CATEGORY_COOKIE);
 }
 
-export async function setSelectedOfficerCategory(categoryId: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(SELECTED_OFFICER_CATEGORY_COOKIE, categoryId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-}
-
-export async function getSelectedOfficerCategory() {
-  const cookieStore = await cookies();
-  return cookieStore.get(SELECTED_OFFICER_CATEGORY_COOKIE)?.value ?? null;
-}
-
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const value = cookieStore.get(SESSION_COOKIE)?.value;

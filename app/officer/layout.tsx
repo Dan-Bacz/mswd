@@ -4,22 +4,19 @@ import Link from "next/link";
 import { Bell, ChevronDown } from "lucide-react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { db } from "@/lib/db";
-import { getSelectedOfficerCategoryId, requireRole } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 import { getInitials } from "@/lib/utils";
+import { isPwdCategory } from "@/lib/utils";
 import { logoutAction } from "@/app/actions/auth";
 
 export default async function OfficerLayout({ children }: { children: ReactNode }) {
   const user = await requireRole("OFFICER");
-  const selectedCategoryId = await getSelectedOfficerCategoryId(user);
-  if (!selectedCategoryId) {
-    return <div className="app-shell min-h-screen">{children}</div>;
-  }
   const assignedCategories = await db.category.findMany({
     where: { id: { in: user.categoryIds } },
     orderBy: { name: "asc" },
     select: { name: true },
   });
-  const categoryNames = assignedCategories.map((category) => category.name);
+  const categoryNames = assignedCategories.filter((category) => !isPwdCategory(category.name)).map((category) => category.name);
   const notificationCount = await db.notification.count({
     where: { userId: user.id, isRead: false },
   });

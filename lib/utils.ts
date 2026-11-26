@@ -45,3 +45,10 @@ export function formatDate(value: Date | string) {
     year: "numeric",
   }).format(new Date(value));
 }
+
+export function conciseDescription(value: string | null | undefined, fallback: string) {
+  const normalized = value?.trim();
+  if (!normalized) return fallback;
+  const firstSentence = normalized.match(/^(.+?[.!?])(?:\s|$)/)?.[1] ?? normalized;
+  return firstSentence.length > 140 ? `${firstSentence.slice(0, 137).trimEnd()}...` : firstSentence;
+}

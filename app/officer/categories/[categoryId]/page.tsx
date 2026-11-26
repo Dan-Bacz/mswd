@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { BeneficiaryRegistry } from "@/components/admin/beneficiary-registry";
 import { OfficerDashboardAnalytics, type OfficerDashboardTrend } from "@/components/officer/officer-dashboard-analytics";
 import { requireRole } from "@/lib/auth/permissions";
+import { isPwdCategory } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function OfficerCategoryDashboardPage({
 
   const category = await db.category.findUnique({ where: { id: categoryId } });
 
-  if (!category) {
+  if (!category || isPwdCategory(category.name)) {
     notFound();
   }
 

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Printer, ShieldCheck } from "lucide-react";
+import { Printer, Search, ShieldCheck } from "lucide-react";
 
 type Member = {
   id: string;
@@ -17,6 +17,7 @@ type Member = {
   barangay: string | null;
   municipality: string | null;
   province: string | null;
+  categoryId: string;
   categoryName: string;
   assignedOfficerName: string | null;
 };
@@ -24,18 +25,37 @@ type Member = {
 export function MembershipForm({
   beneficiaries,
   officerMode,
+  categories = [],
 }: {
   beneficiaries: Member[];
   officerMode: boolean;
+  categories?: { id: string; name: string }[];
 }) {
   const first = beneficiaries[0];
   const [selectedId, setSelectedId] = useState(first?.id ?? "");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
   const name = (member: Member | undefined) =>
     member
       ? [member.firstName, member.middleName, member.lastName, member.suffix]
           .filter(Boolean)
           .join(" ")
       : "";
+  const normalizedSearch = search.trim().toLowerCase();
+  const categoryOptions = categories.length
+    ? categories
+    : [...new Map(beneficiaries.map((beneficiary) => [beneficiary.categoryId, { id: beneficiary.categoryId, name: beneficiary.categoryName }])).values()];
+  const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
+    const matchesCategory = categoryFilter === "ALL" || beneficiary.categoryId === categoryFilter;
+    const matchesSearch = [name(beneficiary), beneficiary.beneficiaryNumber, beneficiary.categoryName]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedSearch);
+    return matchesCategory && matchesSearch;
+  });
+  const activeSelectedId = filteredBeneficiaries.some((beneficiary) => beneficiary.id === selectedId)
+    ? selectedId
+    : filteredBeneficiaries[0]?.id ?? "";
   return (
     <main className="mx-auto max-w-6xl space-y-6 pb-10 print:max-w-none print:space-y-0">
       <div className="flex items-start justify-between gap-4 print:hidden">
@@ -61,18 +81,43 @@ export function MembershipForm({
         </button>
       </div>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
-        <label className="block max-w-2xl text-sm font-semibold text-slate-700">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <label className="block text-sm font-semibold text-slate-700">
+            <span className="flex items-center gap-2"><Search className="h-4 w-4 text-[#0B4599]" />Category</span>
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.currentTarget.value)}
+              className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100"
+            >
+              <option value="ALL">All categories</option>
+              {categoryOptions.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm font-semibold text-slate-700">
+            <span className="flex items-center gap-2"><Search className="h-4 w-4 text-[#0B4599]" />Search beneficiaries</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.currentTarget.value)}
+              placeholder="Search by name or beneficiary ID"
+              className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100"
+            />
+          </label>
+        </div>
+        <label className="mt-4 block text-sm font-semibold text-slate-700">
           Select beneficiary
           <select
             id="membership-beneficiary"
-            value={selectedId}
+            value={activeSelectedId}
             onChange={(event) => setSelectedId(event.currentTarget.value)}
             className="mt-2 h-12 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-normal text-slate-800 outline-none focus:border-[#0B4599] focus:ring-4 focus:ring-blue-100"
           >
             <option value="" disabled>
               Select a beneficiary
             </option>
-            {beneficiaries.map((beneficiary) => (
+            {filteredBeneficiaries.map((beneficiary) => (
               <option key={beneficiary.id} value={beneficiary.id}>
                 {name(beneficiary)} — {beneficiary.beneficiaryNumber} —{" "}
                 {beneficiary.categoryName}
@@ -80,6 +125,7 @@ export function MembershipForm({
             ))}
           </select>
         </label>
+        {!filteredBeneficiaries.length && <p className="mt-3 text-sm text-amber-700">No beneficiaries match your search.</p>}
         <p className="mt-3 text-xs text-slate-500">
           {officerMode
             ? "Only beneficiaries assigned to your selected category are available."
@@ -88,7 +134,7 @@ export function MembershipForm({
       </section>
       <Certificate
         beneficiaries={beneficiaries}
-        selectedId={selectedId}
+        selectedId={activeSelectedId}
         name={name}
       />
     </main>

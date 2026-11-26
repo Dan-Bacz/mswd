@@ -51,6 +51,7 @@ type AssistanceReportRow = {
 };
 
 type Period = "day" | "week" | "month" | "year";
+type ReportMode = "programs" | "assistance" | "staff";
 const periodOptions: Period[] = ["day", "week", "month", "year"];
 type SummaryRow = { key: string; label: string; count: number };
 type AssistanceSummaryRow = SummaryRow & {
@@ -196,38 +197,59 @@ export function ReportBuilder({
   beneficiaries,
   assistance,
   assistanceTypes,
+  staffOptions,
   officerName,
   generatedAt,
+  categoryOptions,
 }: {
   dateRange: ReportDateRange;
   beneficiaries: BeneficiaryReportRow[];
   assistance: AssistanceReportRow[];
   assistanceTypes: (keyof typeof ASSISTANCE_TYPE_LABELS)[];
+  staffOptions: { id: string; name: string }[];
   officerName?: string;
   generatedAt: string;
+  categoryOptions?: string[];
 }) {
   const [period, setPeriod] = useState<Period>("month");
+  const [reportMode, setReportMode] = useState<ReportMode>("programs");
   const [assistanceType, setAssistanceType] = useState("ALL");
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [staffFilter, setStaffFilter] = useState("ALL");
-  const reportCategories = useMemo(() => [...new Set(assistance.map((row) => row.categoryName))].sort(), [assistance]);
-  const reportStaff = useMemo(() => [...new Set(assistance.map((row) => row.staffName))].sort(), [assistance]);
-  const membershipSummary = useMemo(
-    () => groupBeneficiaries(beneficiaries, period),
-    [beneficiaries, period],
-  );
+  const reportCategories = useMemo(() => {
+    const names = categoryOptions ?? [...new Set([...beneficiaries.map((row) => row.categoryName), ...assistance.map((row) => row.categoryName)])];
+    return [...new Set(names)].sort((left, right) => left.localeCompare(right));
+  }, [assistance, beneficiaries, categoryOptions]);
+  const reportStaff = useMemo(() => [...new Map([...staffOptions, ...assistance.map((row) => ({ id: row.staffId, name: row.staffName }))].map((staff) => [staff.id, staff])).values()].sort((left, right) => left.name.localeCompare(right.name)), [assistance, staffOptions]);
+  const filteredBeneficiaries = useMemo(() => {
+    const normalized = search.trim().toLowerCase();
+    return beneficiaries.filter((row) => {
+      const matchesCategory = categoryFilter === "ALL" || row.categoryName === categoryFilter;
+      const matchesSearch = !normalized || [row.fullName, row.beneficiaryNumber, row.categoryName, row.barangay].join(" ").toLowerCase().includes(normalized);
+      return matchesCategory && matchesSearch;
+    });
+  }, [beneficiaries, categoryFilter, search]);
   const filteredAssistance = useMemo(() => {
     const normalized = search.trim().toLowerCase();
     return assistance.filter((row) => {
       const matchesType = assistanceType === "ALL" || row.type === assistanceType;
       const matchesCategory = categoryFilter === "ALL" || row.categoryName === categoryFilter;
-      const matchesStaff = staffFilter === "ALL" || row.staffName === staffFilter;
+      const matchesStaff = staffFilter === "ALL" || row.staffId === staffFilter || row.staffName === staffFilter;
       const searchable = [row.beneficiaryName, row.beneficiaryNumber, row.categoryName, row.staffName, row.referenceNumber, row.otherType, row.providerName, row.doctorName, row.providedDescription].join(" ").toLowerCase();
       return matchesType && matchesCategory && matchesStaff && (!normalized || searchable.includes(normalized));
     });
   }, [assistance, assistanceType, categoryFilter, search, staffFilter]);
+  const reportBeneficiaries = useMemo(() => {
+    if (reportMode !== "staff") return filteredBeneficiaries;
+    const handledBeneficiaryNumbers = new Set(filteredAssistance.map((row) => row.beneficiaryNumber));
+    return filteredBeneficiaries.filter((row) => handledBeneficiaryNumbers.has(row.beneficiaryNumber));
+  }, [filteredAssistance, filteredBeneficiaries, reportMode]);
+  const membershipSummary = useMemo(
+    () => groupBeneficiaries(reportBeneficiaries, period),
+    [period, reportBeneficiaries],
+  );
   const assistanceSummary = useMemo(
     () => groupAssistance(filteredAssistance, period),
     [filteredAssistance, period],
@@ -307,7 +329,7 @@ export function ReportBuilder({
       [],
       ["Beneficiary membership details"],
       ["Beneficiary ID", "Full name", "Membership date", "Category", "Barangay", "Status"],
-      ...beneficiaries.map((row) => [
+      ...reportBeneficiaries.map((row) => [
         row.beneficiaryNumber,
         row.fullName,
         row.registrationDate,
@@ -372,6 +394,18 @@ export function ReportBuilder({
 
   return (
     <div className="space-y-8">
+      <nav className="print:hidden grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_-30px_rgba(9,44,92,0.7)] sm:grid-cols-3" aria-label="Report sections">
+        {([
+          ["programs", "Programs and Services", "Beneficiary registrations by category or program"],
+          ["assistance", "Type of Assistance", "Assistance transactions and outcomes"],
+          ["staff", "Staff", "Beneficiaries and assistance handled by staff"],
+        ] as const).map(([value, label, description]) => (
+          <button key={value} type="button" onClick={() => setReportMode(value)} className={`rounded-xl px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${reportMode === value ? "bg-[#0b4599] text-white shadow-md" : "text-[#0b1a3e] hover:bg-blue-50"}`} aria-pressed={reportMode === value}>
+            <span className="block text-sm font-bold">{label}</span>
+            <span className={`mt-1 block text-xs ${reportMode === value ? "text-blue-100" : "text-slate-500"}`}>{description}</span>
+          </button>
+        ))}
+      </nav>
       <header className="relative isolate overflow-hidden rounded-[2rem] border border-[#1b4d88] bg-[linear-gradient(135deg,#061a38_0%,#0b4599_58%,#0b68c5_100%)] px-6 py-7 text-white shadow-[0_28px_70px_-28px_rgba(7,28,58,0.65)] sm:px-8 sm:py-9">
         <div className="pointer-events-none absolute -right-16 -top-24 h-80 w-80 rounded-full bg-[#ffd21f]/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
@@ -457,11 +491,11 @@ export function ReportBuilder({
       </form>
 
       <section className="print:hidden rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(9,44,92,0.7)]" aria-label="Report filters">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Explore the data</p><h2 className="mt-1 text-lg font-bold text-[#0b1a3e]">Filter assistance records</h2></div><span className="rounded-full bg-[#eef6ff] px-3 py-1.5 text-xs font-bold text-[#0b4599]">{filteredAssistance.length} matching records</span></div>
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Explore the data</p><h2 className="mt-1 text-lg font-bold text-[#0b1a3e]">{reportMode === "programs" ? "Filter programs and services" : reportMode === "staff" ? "Filter staff activity" : "Filter assistance records"}</h2></div><span className="rounded-full bg-[#eef6ff] px-3 py-1.5 text-xs font-bold text-[#0b4599]">{reportMode === "programs" ? filteredBeneficiaries.length : filteredAssistance.length} matching records</span></div>
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(240px,1.5fr)_minmax(170px,0.7fr)_minmax(170px,0.7fr)]">
-          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Search reports<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Beneficiary, staff, reference, provider..." className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100" /></label>
+          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Search reports<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder={reportMode === "programs" ? "Beneficiary, ID, category, barangay..." : "Beneficiary, staff, reference, provider..."} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100" /></label>
           <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All categories</option>{reportCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff} value={staff}>{staff}</option>)}</select></label>
+          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.name}</option>)}</select></label>
           <div className="ml-auto flex flex-wrap gap-2 text-sm"><span className="rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800">{filteredAssistance.length} transactions</span><span className="rounded-lg bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">₱{selectedAssistanceTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })} total amount</span></div>
         </div>
       </section>
@@ -503,7 +537,7 @@ export function ReportBuilder({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 id="membership-report-heading" className="text-xl font-bold text-slate-900">Beneficiary membership report</h2>
-              <p className="text-sm text-slate-600">{beneficiaries.length.toLocaleString()} new members in selected date range</p>
+              <p className="text-sm text-slate-600">{reportBeneficiaries.length.toLocaleString()} beneficiaries in the selected category and date range</p>
             </div>
             <button type="button" onClick={exportBeneficiaries} className="print:hidden rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               Export beneficiary CSV
@@ -533,7 +567,7 @@ export function ReportBuilder({
                 </tr>
               </thead>
               <tbody>
-                {beneficiaries.length ? beneficiaries.map((row) => (
+                {reportBeneficiaries.length ? reportBeneficiaries.map((row) => (
                   <tr key={row.beneficiaryNumber} className="border-t border-slate-100">
                     <td className="px-4 py-3">{row.beneficiaryNumber}</td><td className="px-4 py-3">{row.fullName}</td>
                     <td className="px-4 py-3">{displayDate(row.registrationDate)}</td><td className="px-4 py-3">{row.categoryName}</td>

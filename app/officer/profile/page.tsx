@@ -1,11 +1,11 @@
 import { OfficerProfileForm } from "@/components/officer/officer-profile-form";
 import { db } from "@/lib/db";
-import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function OfficerProfilePage() {
-  const { user } = await requireSelectedOfficerCategory();
+  const user = await requireRole("OFFICER");
   const account = await db.user.findUniqueOrThrow({
     where: { id: user.id },
     select: {

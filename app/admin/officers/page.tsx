@@ -62,7 +62,7 @@ export default async function OfficersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-600">
-                    {officer.userCategories.map((assignment) => assignment.category.name).join(", ") || "None"}
+                    {officer.userCategories.filter((assignment) => !isPwdCategory(assignment.category.name)).map((assignment) => assignment.category.name).join(", ") || "None"}
                   </td>
                   <td className="px-4 py-3">
                     <Link

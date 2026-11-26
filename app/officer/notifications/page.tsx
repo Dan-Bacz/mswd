@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Bell, CheckCheck, ExternalLink } from "lucide-react";
 import { db } from "@/lib/db";
-import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "@/app/actions/auth";
 
 function formatDate(date: Date) {
@@ -13,7 +13,7 @@ function formatDate(date: Date) {
 }
 
 export default async function OfficerNotificationsPage() {
-  const { user } = await requireSelectedOfficerCategory();
+  const user = await requireRole("OFFICER");
   const notifications = await db.notification.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },

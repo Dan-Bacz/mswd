@@ -223,7 +223,7 @@ export default async function OfficerManagePage({
           </div>
           {officer.userCategories.length > 0 ? (
             <ul className="divide-y divide-slate-200">
-              {officer.userCategories.map((assignment) => (
+              {officer.userCategories.filter((assignment) => !isPwdCategory(assignment.category.name)).map((assignment) => (
                 <li key={assignment.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <span className="text-sm font-medium text-slate-800">{assignment.category.name}</span>
                   <Link

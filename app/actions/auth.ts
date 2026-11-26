@@ -13,8 +13,8 @@ import {
   sendOfficerDeletionEmail,
   sendOfficerRejectionEmail,
 } from "@/lib/email";
-import { createSession, clearSession, setSelectedOfficerCategory } from "@/lib/auth/session";
-import { requireAdmin, requireAuth, requireRole } from "@/lib/auth/permissions";
+import { createSession, clearSession } from "@/lib/auth/session";
+import { requireAdmin, requireAuth } from "@/lib/auth/permissions";
 import { categorySchema, loginSchema, officerProfileSchema, officerRegistrationSchema, setupSchema } from "@/lib/validation";
 import { buildFullName } from "@/lib/identity";
 import { isPwdCategory } from "@/lib/utils";
@@ -79,19 +79,7 @@ export async function loginAction(
   });
 
   revalidatePath("/");
-  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : "/officer/select-category");
-}
-
-export async function selectOfficerCategoryAction(formData: FormData) {
-  const user = await requireRole("OFFICER");
-  const categoryId = String(formData.get("categoryId") ?? "").trim();
-  if (!categoryId || !user.categoryIds.includes(categoryId)) {
-    redirect("/officer/select-category");
-  }
-
-  await setSelectedOfficerCategory(categoryId);
-  revalidatePath("/officer");
-  redirect(`/officer/categories/${categoryId}`);
+  redirect(user.role.name === "ADMIN" ? "/admin/dashboard" : "/officer/dashboard");
 }
 
 export async function setupAction(
@@ -320,6 +308,9 @@ export async function updateOfficerProfileAction(
 
   revalidatePath("/officer/profile");
   revalidatePath("/officer/dashboard");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/officer", "layout");
   return { ok: true, message: "Profile updated successfully." };
 }
 
@@ -935,7 +926,6 @@ export async function assignOfficerCategoriesAction(formData: FormData) {
   revalidatePath("/admin/officers");
   revalidatePath(`/admin/officers/${officerId}`);
   revalidatePath("/officer/dashboard");
-  revalidatePath("/officer/select-category");
 }
 
 export async function deleteOfficerAction(
@@ -980,7 +970,6 @@ export async function deleteOfficerAction(
   revalidatePath(`/admin/officers/${officer.id}`);
   revalidatePath("/admin/categories");
   revalidatePath("/officer/dashboard");
-  revalidatePath("/officer/select-category");
 
   try {
     await sendOfficerDeactivationEmail({ name: officer.name, email: officer.email });

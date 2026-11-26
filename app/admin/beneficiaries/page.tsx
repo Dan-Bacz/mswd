@@ -8,13 +8,14 @@ export default async function BeneficiariesPage({
   searchParams,
 }: {
   searchParams?:
-    | Promise<{ category?: string; categoryId?: string; q?: string }>
-    | { category?: string; categoryId?: string; q?: string };
+    | Promise<{ category?: string; categoryId?: string; q?: string; status?: string }>
+    | { category?: string; categoryId?: string; q?: string; status?: string };
 }) {
   const params = await Promise.resolve(searchParams ?? {});
   const requestedCategory = typeof params.category === "string" ? params.category : undefined;
   const requestedCategoryId = typeof params.categoryId === "string" ? params.categoryId : undefined;
   const initialSearch = typeof params.q === "string" ? params.q : "";
+  const statusFilter = params.status === "closed" ? "closed" : "active";
 
   const [categories, officers] = await Promise.all([
     db.category.findMany({ orderBy: { name: "asc" } }),
@@ -29,11 +30,16 @@ export default async function BeneficiariesPage({
   const selectedCategory =
     filterCategories.find((category) => category.id === requestedCategoryId) ??
     filterCategories.find((category) => category.name === requestedCategory);
-  const beneficiaries = await db.beneficiary.findMany({
-    where: selectedCategory ? { categoryId: selectedCategory.id } : undefined,
-    include: { category: { select: { id: true, name: true } }, assignedOfficer: { select: { name: true } } },
-    orderBy: { registrationDate: "desc" },
-  });
+  const categoryScope = selectedCategory ? { categoryId: selectedCategory.id } : {};
+  const [beneficiaries, activeCount, closedCount] = await Promise.all([
+    db.beneficiary.findMany({
+      where: { ...categoryScope, status: statusFilter === "closed" ? { in: ["INACTIVE", "ARCHIVED"] as const } : "ACTIVE" as const },
+      include: { category: { select: { id: true, name: true } }, assignedOfficer: { select: { name: true } } },
+      orderBy: { registrationDate: "desc" },
+    }),
+    db.beneficiary.count({ where: { ...categoryScope, status: "ACTIVE" } }),
+    db.beneficiary.count({ where: { ...categoryScope, status: { in: ["INACTIVE", "ARCHIVED"] } } }),
+  ]);
 
   return (
     <BeneficiaryRegistry
@@ -55,6 +61,9 @@ export default async function BeneficiariesPage({
         status: beneficiary.status,
       }))}
       selectedCategoryId={selectedCategory?.id}
+      statusFilter={statusFilter}
+      activeCount={activeCount}
+      closedCount={closedCount}
       initialSearch={initialSearch}
     />
   );

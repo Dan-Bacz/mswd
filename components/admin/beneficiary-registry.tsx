@@ -179,6 +179,9 @@ export function BeneficiaryRegistry({
   beneficiaries,
   selectedCategoryId,
   officerMode = false,
+  statusFilter = "active",
+  activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length,
+  closedCount = beneficiaries.filter((beneficiary) => beneficiary.status !== "ACTIVE").length,
   initialSearch = "",
 }: {
   categories: RegistryCategory[];
@@ -187,6 +190,9 @@ export function BeneficiaryRegistry({
   beneficiaries: RegistryBeneficiary[];
   selectedCategoryId?: string;
   officerMode?: boolean;
+  statusFilter?: "active" | "closed";
+  activeCount?: number;
+  closedCount?: number;
   initialSearch?: string;
 }) {
   const [search, setSearch] = useState(initialSearch);
@@ -194,18 +200,20 @@ export function BeneficiaryRegistry({
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const categoryFilterRef = useRef<HTMLDivElement>(null);
   const categoryFilterButtonRef = useRef<HTMLButtonElement>(null);
+  const registryBase = officerMode ? "/officer/beneficiaries" : "/admin/beneficiaries";
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
   const selectedCategoryName = selectedCategory?.name.toLowerCase() ?? "";
+  const selectedCategoryQuery = selectedCategoryId ? `?categoryId=${encodeURIComponent(selectedCategoryId)}` : "";
+  const intakeBase = `${officerMode ? "/officer" : "/admin"}/beneficiaries/new`;
   const dedicatedPageHref = selectedCategoryName.includes("solo parent")
-    ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/solo-parent`
+    ? `${intakeBase}/solo-parent${selectedCategoryQuery}`
       : selectedCategoryName.includes("aics") || selectedCategoryName.includes("disaster") || selectedCategoryName.includes("children in need of special protection")
-      ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
+      ? `${intakeBase}/general-intake${selectedCategoryQuery}`
       : selectedCategoryName.includes("vawc") || selectedCategoryName.includes("special protection")
-        ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/vawc-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId ?? "")}`}`
+        ? `${intakeBase}/vawc-intake${selectedCategoryQuery}`
       : selectedCategoryId
-        ? `${officerMode ? "/officer" : "/admin"}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(selectedCategoryId)}`}`
+        ? `${intakeBase}/general-intake${selectedCategoryQuery}`
         : null;
-  const activeCount = beneficiaries.filter((beneficiary) => beneficiary.status === "ACTIVE").length;
   const normalizedSearch = search.trim().toLowerCase();
   const filteredBeneficiaries = beneficiaries.filter((beneficiary) => {
     const searchable = `${beneficiary.fullName} ${beneficiary.beneficiaryNumber}`.toLowerCase();
@@ -215,9 +223,10 @@ export function BeneficiaryRegistry({
   function categoryAddHref(category: RegistryCategory) {
     const name = category.name.toLowerCase();
     const base = officerMode ? "/officer" : "/admin";
-    if (name.includes("solo parent")) return `${base}/beneficiaries/new/solo-parent`;
-    if (name.includes("vawc") || (name.includes("special protection") && !name.includes("children in need of special protection"))) return `${base}/beneficiaries/new/vawc-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(category.id)}`}`;
-    return `${base}/beneficiaries/new/general-intake${officerMode ? "" : `?categoryId=${encodeURIComponent(category.id)}`}`;
+    const query = `?categoryId=${encodeURIComponent(category.id)}`;
+    if (name.includes("solo parent")) return `${base}/beneficiaries/new/solo-parent${query}`;
+    if (name.includes("vawc") || (name.includes("special protection") && !name.includes("children in need of special protection"))) return `${base}/beneficiaries/new/vawc-intake${query}`;
+    return `${base}/beneficiaries/new/general-intake${query}`;
   }
 
   useEffect(() => {
@@ -270,15 +279,17 @@ export function BeneficiaryRegistry({
         )}
       </header>
 
-      <section aria-label="Beneficiary summary" className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-[#DCE3EE] border-t-2 border-t-[#0645AD] bg-white p-4 shadow-sm">
-          <p className="text-xs font-medium text-[#6480A9]">Total beneficiaries</p>
-          <p className="mt-2 text-2xl font-bold text-[#0B1A3E]">{beneficiaries.length.toLocaleString()}</p>
-        </div>
-        <div className="rounded-xl border border-[#DCE3EE] border-t-2 border-t-[#168653] bg-white p-4 shadow-sm">
+      <section aria-label="Beneficiary case status" className="grid gap-3 sm:grid-cols-2">
+        <Link href={`${registryBase}${selectedCategoryId ? `?categoryId=${encodeURIComponent(selectedCategoryId)}` : ""}`} className={`rounded-xl border border-[#DCE3EE] border-t-2 border-t-[#0645AD] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0B68C5] ${statusFilter === "active" ? "ring-2 ring-[#0B68C5]/15" : ""}`}>
           <p className="text-xs font-medium text-[#6480A9]">Active beneficiaries</p>
           <p className="mt-2 text-2xl font-bold text-[#0B1A3E]">{activeCount.toLocaleString()}</p>
-        </div>
+          <p className="mt-1 text-xs text-[#6480A9]">Current active cases</p>
+        </Link>
+        <Link href={`${registryBase}?status=closed${selectedCategoryId ? `&categoryId=${encodeURIComponent(selectedCategoryId)}` : ""}`} className={`rounded-xl border border-[#DCE3EE] border-t-2 border-t-[#168653] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#168653] ${statusFilter === "closed" ? "ring-2 ring-[#168653]/15" : ""}`}>
+          <p className="text-xs font-medium text-[#6480A9]">Closed cases</p>
+          <p className="mt-2 text-2xl font-bold text-[#0B1A3E]">{closedCount.toLocaleString()}</p>
+          <p className="mt-1 text-xs text-[#6480A9]">Resolved or archived records</p>
+        </Link>
       </section>
 
       <section className="rounded-xl border border-[#DCE3EE] bg-white shadow-sm">
@@ -294,7 +305,7 @@ export function BeneficiaryRegistry({
             </p>
           </div>
           <div className="mt-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
-            {!officerMode && <div ref={categoryFilterRef} className="relative w-full shrink-0 sm:w-auto">
+            {filterCategories.length > 0 && <div ref={categoryFilterRef} className="relative w-full shrink-0 sm:w-auto">
               <button
                 ref={categoryFilterButtonRef}
                 type="button"
@@ -319,7 +330,7 @@ export function BeneficiaryRegistry({
                   className="absolute left-0 top-full z-20 mt-2 max-h-[min(60vh,24rem)] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-[#DCE3EE] bg-white p-1.5 shadow-xl"
                 >
                   <Link
-                    href="/admin/beneficiaries"
+                    href={registryBase}
                     aria-current={!selectedCategoryId ? "page" : undefined}
                     onClick={() => setCategoryFilterOpen(false)}
                     className={`block rounded-md px-3 py-2.5 text-sm transition ${
@@ -333,7 +344,7 @@ export function BeneficiaryRegistry({
                   {filterCategories.map((category) => (
                     <Link
                       key={category.id}
-                      href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`}
+                      href={`${registryBase}?categoryId=${encodeURIComponent(category.id)}`}
                       aria-current={selectedCategoryId === category.id ? "page" : undefined}
                       onClick={() => setCategoryFilterOpen(false)}
                       className={`block whitespace-normal break-words rounded-md px-3 py-2.5 text-sm transition ${

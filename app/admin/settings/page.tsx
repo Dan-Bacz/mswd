@@ -4,6 +4,7 @@ import { ShieldCheck, UserRound, ScrollText } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/permissions";
 import { db } from "@/lib/db";
 import { SystemLogIcon, SystemSettingsPanel } from "@/components/admin/system-settings-panel";
+import { OfficerProfileForm } from "@/components/officer/officer-profile-form";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,10 @@ function formatDate(value: Date) {
 
 export default async function SettingsPage() {
   const admin = await requireAdmin();
-  const [settings, profile, logs] = await Promise.all([
+  const [settings, account, profile, logs] = await Promise.all([
     db.systemSetting.findMany({ select: { key: true, value: true } }),
-    db.userProfile.findUnique({ where: { userId: admin.id }, select: { photoContent: true, address: true, contactNumber: true } }),
+    db.user.findUnique({ where: { id: admin.id }, select: { firstName: true, middleName: true, lastName: true, email: true, employeeId: true } }),
+    db.userProfile.findUnique({ where: { userId: admin.id }, select: { photoContent: true, address: true, contactNumber: true, barangay: true, municipality: true, province: true } }),
     db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 12, include: { user: { select: { name: true } } } }),
   ]);
   const maintenanceMode = settings.find((setting) => setting.key === "maintenance_mode")?.value === "true";
@@ -28,6 +30,7 @@ export default async function SettingsPage() {
         <p className="mt-2 max-w-3xl text-sm text-slate-600">Manage system availability, secure backups, administrator profile details, and accountability records.</p>
         <nav className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4" aria-label="Settings sections">
           <a href="#system-controls" className="rounded-lg bg-[#EEF4FF] px-3 py-2 text-xs font-semibold text-[#0B4599]">System controls</a>
+          <a href="#account-settings" className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Account settings</a>
           <a href="#backup-recovery" className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Backup &amp; recovery</a>
           <a href="#system-logs" className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">System logs</a>
         </nav>
@@ -39,9 +42,34 @@ export default async function SettingsPage() {
           <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10"><ShieldCheck className="h-5 w-5 text-[#FFD21F]" /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-200">Administrator access</p><h2 className="mt-1 text-lg font-bold">System owner profile</h2></div></div>
           <div className="mt-6 flex items-center gap-3"><span className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white text-xl font-bold text-[#0B4599]">{profile?.photoContent ? <Image src="/api/profile/photo" alt="Administrator profile" fill unoptimized className="object-cover" /> : <UserRound className="h-7 w-7" />}</span><div className="min-w-0"><p className="truncate font-semibold">{admin.name}</p><p className="truncate text-xs text-blue-200">{admin.email}</p></div></div>
           <div className="mt-5 space-y-2 border-t border-white/10 pt-4 text-xs text-blue-100"><p><span className="text-blue-300">Contact:</span> {profile?.contactNumber || "Not recorded"}</p><p><span className="text-blue-300">Address:</span> {profile?.address || "Not recorded"}</p></div>
-          <Link href="#admin-profile" className="mt-5 inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-semibold text-[#082B59] hover:bg-blue-50">View admin profile</Link>
+          <Link href="#account-settings" className="mt-5 inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-semibold text-[#082B59] hover:bg-blue-50">Edit admin profile</Link>
         </aside>
       </section>
+
+      {account && (
+        <section id="account-settings" className="rounded-2xl border border-[#D9E5F5] bg-white p-5 shadow-sm sm:p-7">
+          <div className="mb-6 border-b border-slate-100 pb-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#A88724]">Account settings</p>
+            <h2 className="mt-1 text-xl font-bold text-[#102A4C]">Administrator profile</h2>
+            <p className="mt-1 text-sm text-slate-500">Update your name and personal information. Changes are saved to your administrator account.</p>
+          </div>
+          <OfficerProfileForm
+            profile={{
+              firstName: account.firstName,
+              middleName: account.middleName,
+              lastName: account.lastName,
+              email: account.email,
+              employeeId: account.employeeId,
+              contactNumber: profile?.contactNumber ?? null,
+              address: profile?.address ?? null,
+              barangay: profile?.barangay ?? null,
+              municipality: profile?.municipality ?? null,
+              province: profile?.province ?? null,
+            }}
+            hasPhoto={Boolean(profile?.photoContent)}
+          />
+        </section>
+      )}
 
       <section id="system-logs" className="overflow-hidden rounded-2xl border border-[#D9E5F5] bg-white shadow-sm">
         <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-6"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><ScrollText className="h-5 w-5" /></span><div><h2 className="text-lg font-bold text-[#102A4C]">System logs</h2><p className="mt-1 text-xs text-slate-500">Recent administrative and system activity.</p></div></div>

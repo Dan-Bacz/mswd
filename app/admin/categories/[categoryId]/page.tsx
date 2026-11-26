@@ -73,18 +73,12 @@ export default async function AdminCategoryDashboardPage({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard
-          label="Beneficiaries"
-          value={String(beneficiaryCount)}
-          hint="Registered in this category"
-          icon={<Users className="h-5 w-5" />}
-        />
-        <MetricCard
-          label="Assistance records"
-          value={String(assistanceCount)}
-          hint="Provided in this category"
-          icon={<HandHeart className="h-5 w-5" />}
-        />
+        <Link href={`/admin/beneficiaries?categoryId=${encodeURIComponent(category.id)}`} className="block rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100">
+          <MetricCard label="Beneficiaries" value={String(beneficiaryCount)} hint="Registered in this category" icon={<Users className="h-5 w-5" />} />
+        </Link>
+        <Link href={`/admin/assistance?categoryId=${encodeURIComponent(category.id)}`} className="block rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100">
+          <MetricCard label="Assistance records" value={String(assistanceCount)} hint="Provided in this category" icon={<HandHeart className="h-5 w-5" />} />
+        </Link>
         <MetricCard
           label="Assigned officers"
           value={String(assignedOfficers.length)}

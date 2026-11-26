@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { getCurrentUser, getSelectedOfficerCategoryId } from "@/lib/auth/permissions";
 import type { NavSection } from "@/components/layout/nav-links";
 import { SidebarNavigation } from "@/components/layout/sidebar-navigation";
 
@@ -21,12 +20,9 @@ const adminSections: NavSection[] = [
 ];
 
 export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
-  const [settings, currentUser] = await Promise.all([
-    db.systemSetting.findMany({
-      select: { key: true, value: true },
-    }),
-    role === "OFFICER" ? getCurrentUser() : Promise.resolve(null),
-  ]);
+  const settings = await db.systemSetting.findMany({
+    select: { key: true, value: true },
+  });
 
   const municipality =
     settings.find((setting) => ["municipality", "municipality_name", "municipal_name", "local_government_unit"].includes(setting.key.toLowerCase()))?.value ??
@@ -34,20 +30,10 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
 
   let sections = adminSections;
   if (role === "OFFICER") {
-    const selectedCategoryId = currentUser ? await getSelectedOfficerCategoryId(currentUser) : null;
-    const assignedCategories = currentUser
-      ? await db.category.findMany({
-          where: { id: { in: currentUser.categoryIds } },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true },
-        })
-      : [];
-    const selectedCategory = assignedCategories.find((category) => category.id === selectedCategoryId);
-
     sections = [
       {
         items: [
-          { href: selectedCategory ? `/officer/categories/${selectedCategory.id}` : "/officer/select-category", label: "Dashboard", icon: "dashboard" },
+          { href: "/officer/dashboard", label: "Dashboard", icon: "dashboard" },
           { href: "/officer/beneficiaries", label: "Benefeciaries", icon: "beneficiaries" },
           { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },

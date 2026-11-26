@@ -1,11 +1,11 @@
 import { AssistanceManagement } from "@/components/assistance/assistance-management";
 import { db } from "@/lib/db";
-import { requireSelectedOfficerCategory } from "@/lib/auth/permissions";
+import { requireRole } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function OfficerAssistancePage() {
-  const { user } = await requireSelectedOfficerCategory();
+  const user = await requireRole("OFFICER");
 
   const [beneficiaries, records] = await Promise.all([
     db.beneficiary.findMany({
