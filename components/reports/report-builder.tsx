@@ -397,21 +397,28 @@ export function ReportBuilder({
           </div>
         </div>
         <Dialog open={typeModalOpen} onOpenChange={setTypeModalOpen}>
-          <Dialog.Title>Select Type of Assistance</Dialog.Title>
-          <div className="grid gap-2 mt-4">
+          <Dialog.Title>Choose assistance type</Dialog.Title>
+          <p className="-mt-2 max-w-sm text-sm leading-5 text-slate-500">Select one category to update the report summary, charts, and totals.</p>
+          <div className="mt-5 grid gap-2">
             <button
-              className={`rounded-lg px-4 py-3 text-left font-semibold ${assistanceType === "ALL" ? "bg-blue-100 text-blue-900" : "hover:bg-slate-100"}`}
+              type="button"
+              aria-pressed={assistanceType === "ALL"}
+              className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${assistanceType === "ALL" ? "border-[#0b4599] bg-[#0b4599] text-white shadow-md" : "border-slate-200 bg-white text-[#0b1a3e] hover:border-[#0b68c5] hover:bg-blue-50"}`}
               onClick={() => { setAssistanceType("ALL"); setTypeModalOpen(false); }}
             >
-              All Types of Assistance
+              <span className="block">All types of assistance</span>
+              <span className={`mt-1 block text-xs font-medium ${assistanceType === "ALL" ? "text-blue-100" : "text-slate-500"}`}>Include every assistance category</span>
             </button>
             {assistanceTypes.map((value) => (
               <button
                 key={value}
-                className={`rounded-lg px-4 py-3 text-left font-semibold ${assistanceType === value ? "bg-blue-100 text-blue-900" : "hover:bg-slate-100"}`}
+                type="button"
+                aria-pressed={assistanceType === value}
+                className={`rounded-xl border px-4 py-3 text-left text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${assistanceType === value ? "border-[#0b4599] bg-[#0b4599] text-white shadow-md" : "border-slate-200 bg-white text-[#0b1a3e] hover:border-[#0b68c5] hover:bg-blue-50"}`}
                 onClick={() => { setAssistanceType(value); setTypeModalOpen(false); }}
               >
-                {ASSISTANCE_TYPE_LABELS[value]}
+                <span className="block">{ASSISTANCE_TYPE_LABELS[value]}</span>
+                <span className={`mt-1 block text-xs font-medium ${assistanceType === value ? "text-blue-100" : "text-slate-500"}`}>Filter this report by this service</span>
               </button>
             ))}
           </div>

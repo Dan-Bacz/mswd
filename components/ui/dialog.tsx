@@ -8,7 +8,7 @@ export function Dialog({ open, onOpenChange, children }: {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-2xl shadow-xl p-6 min-w-[320px] max-w-[90vw] relative">
+      <div className="relative min-w-[320px] max-w-[90vw] rounded-2xl bg-white p-6 text-[#0B1A3E] shadow-xl">
         <button
           className="absolute top-3 right-3 text-slate-400 hover:text-slate-700"
           aria-label="Close dialog"
