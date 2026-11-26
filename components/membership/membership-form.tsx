@@ -107,7 +107,7 @@ function Certificate({
   return (
     <div className="membership-certificate mx-auto max-w-[850px] border border-slate-300 bg-white p-0 text-[#111827] shadow-sm print:max-w-none print:border print:shadow-none">
       <div className="bg-white p-6 sm:p-10">
-        <header className="border-b-2 border-[#111827] pb-4 text-center">
+        <header className="pb-4 text-center">
           <div className="relative mx-auto min-h-[96px] max-w-[720px]">
             <div className="flex items-center justify-start gap-1 sm:absolute sm:left-0 sm:top-1 sm:gap-2">
               <Image
@@ -148,7 +148,7 @@ function Certificate({
         <div className="mt-10 text-center">
           <p className="text-sm leading-7">This is to certify that</p>
           <div
-            className="mt-5 border-b-2 border-[#0B1C3A] pb-2 text-2xl font-bold uppercase tracking-wide"
+            className="mt-5 pb-2 text-2xl font-bold uppercase tracking-wide"
             data-membership-name
           >
             {name(beneficiaries.find((member) => member.id === selectedId))}
