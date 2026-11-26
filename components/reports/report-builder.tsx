@@ -371,26 +371,27 @@ export function ReportBuilder({
   }
 
   return (
-    <div className="space-y-7">
-      <header className="relative isolate overflow-hidden rounded-[2rem] border border-slate-200 bg-transparent px-6 py-7 text-[#071C3A] shadow-[0_28px_70px_-35px_rgba(7,28,58,0.12)] sm:px-8 sm:py-8">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-[#0B68C5]/30 blur-3xl" />
+    <div className="space-y-8">
+      <header className="relative isolate overflow-hidden rounded-[2rem] border border-[#1b4d88] bg-[linear-gradient(135deg,#061a38_0%,#0b4599_58%,#0b68c5_100%)] px-6 py-7 text-white shadow-[0_28px_70px_-28px_rgba(7,28,58,0.65)] sm:px-8 sm:py-9">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-80 w-80 rounded-full bg-[#ffd21f]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#A88724]"><Sparkles className="h-3.5 w-3.5" /> MSWD intelligence center</p>
+            <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#ffd21f]"><Sparkles className="h-3.5 w-3.5" /> MSWD intelligence center</p>
             <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Reports &amp; analytics</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">A clear operational view of beneficiary reach and assistance delivery{officerName ? " for your assigned workspace" : " across the municipal office"}.</p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">A clear operational view of beneficiary reach and assistance delivery{officerName ? " for your assigned workspace" : " across the municipal office"}.</p>
           </div>
-          <div className="flex flex-col gap-3 items-end">
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
             <button
               type="button"
-              className="print:hidden inline-flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-[#0B68C5] bg-white px-6 text-base font-bold text-[#0B68C5] shadow-md hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              className="print:hidden inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white px-5 text-sm font-bold text-[#0b4599] shadow-xl transition hover:-translate-y-0.5 hover:bg-[#fff9df] focus:outline-none focus:ring-4 focus:ring-[#ffd21f]/40"
               onClick={() => setTypeModalOpen(true)}
               aria-label="Select Type of Assistance"
             >
               <ClipboardList className="h-5 w-5" />
               {assistanceType === "ALL" ? "All Types of Assistance" : ASSISTANCE_TYPE_LABELS[assistanceType as keyof typeof ASSISTANCE_TYPE_LABELS]}
             </button>
-            <button type="button" onClick={() => window.print()} className="print:hidden inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#0B1A3E] bg-[#0B1A3E] px-4 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#172B4D]">
+            <button type="button" onClick={() => window.print()} className="print:hidden inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-white/20">
               <FileDown className="h-4 w-4" /> Print / Save PDF
             </button>
           </div>
@@ -418,22 +419,23 @@ export function ReportBuilder({
         <div className="relative mt-7 grid gap-3 border-t border-slate-200 pt-5 text-xs text-slate-500 sm:grid-cols-3"><span className="inline-flex items-center gap-2"><CalendarRange className="h-4 w-4 text-[#A88724]" /> {dateRange.startDate} – {dateRange.endDate}</span><span className="inline-flex items-center gap-2"><ClipboardList className="h-4 w-4 text-[#A88724]" /> {selectedTypeLabel}</span><span className="inline-flex items-center gap-2 sm:justify-end"><ArrowUpRight className="h-4 w-4 text-[#A88724]" /> Live database report</span></div>
       </header>
 
-      <form method="get" className="print:hidden flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
+      <form method="get" className="print:hidden flex flex-wrap items-end gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(9,44,92,0.7)]">
+        <div className="w-full border-b border-slate-100 pb-3"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Report controls</p><p className="mt-1 text-sm text-slate-500">Choose a reporting window and the time grouping used in the charts.</p></div>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
-          From
-          <input className="h-10 rounded-lg border border-slate-300 px-3" type="date" name="startDate" defaultValue={dateRange.startDate} />
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">From</span>
+          <input className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 outline-none transition focus:border-[#0b68c5] focus:bg-white focus:ring-4 focus:ring-blue-100" type="date" name="startDate" defaultValue={dateRange.startDate} />
         </label>
         <label className="grid gap-1 text-sm font-medium text-slate-700">
-          To
-          <input className="h-10 rounded-lg border border-slate-300 px-3" type="date" name="endDate" defaultValue={dateRange.endDate} />
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">To</span>
+          <input className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 outline-none transition focus:border-[#0b68c5] focus:bg-white focus:ring-4 focus:ring-blue-100" type="date" name="endDate" defaultValue={dateRange.endDate} />
         </label>
-        <button type="submit" className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        <button type="submit" className="h-11 rounded-xl bg-[#0b4599] px-5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#083875]">
           Apply dates
         </button>
         <label className="ml-auto grid gap-1 text-sm font-medium text-slate-700">
-          Group by
+          <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Group by</span>
           <select
-            className="h-10 rounded-lg border border-slate-300 px-3"
+            className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 outline-none focus:border-[#0b68c5] focus:ring-4 focus:ring-blue-100"
             value={period}
             onChange={(event) => {
               const value = event.currentTarget.value;
@@ -447,14 +449,12 @@ export function ReportBuilder({
         </label>
       </form>
 
-      <section className="print:hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_20px_45px_-35px_rgba(9,44,92,0.7)]" aria-label="Report filters">
-        <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.8fr)_minmax(220px,1fr)]">
-          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Search reports<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Beneficiary, staff, reference, provider..." className="h-12 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100" /></label>
-        </div>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Search records<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Beneficiary, staff, reference..." className="h-10 w-full min-w-64 rounded-lg border border-slate-300 px-3 text-sm" /></label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.currentTarget.value)} className="h-10 rounded-lg border border-slate-300 px-3 text-sm"><option value="ALL">All categories</option>{reportCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-10 rounded-lg border border-slate-300 px-3 text-sm"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff} value={staff}>{staff}</option>)}</select></label>
+      <section className="print:hidden rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(9,44,92,0.7)]" aria-label="Report filters">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Explore the data</p><h2 className="mt-1 text-lg font-bold text-[#0b1a3e]">Filter assistance records</h2></div><span className="rounded-full bg-[#eef6ff] px-3 py-1.5 text-xs font-bold text-[#0b4599]">{filteredAssistance.length} matching records</span></div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(240px,1.5fr)_minmax(170px,0.7fr)_minmax(170px,0.7fr)]">
+          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Search reports<input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Beneficiary, staff, reference, provider..." className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-4 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100" /></label>
+          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All categories</option>{reportCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+          <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Staff<select value={staffFilter} onChange={(event) => setStaffFilter(event.currentTarget.value)} className="h-11 rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal outline-none focus:border-[#0B68C5] focus:bg-white focus:ring-4 focus:ring-blue-100"><option value="ALL">All staff</option>{reportStaff.map((staff) => <option key={staff} value={staff}>{staff}</option>)}</select></label>
           <div className="ml-auto flex flex-wrap gap-2 text-sm"><span className="rounded-lg bg-blue-50 px-3 py-2 font-semibold text-blue-800">{filteredAssistance.length} transactions</span><span className="rounded-lg bg-emerald-50 px-3 py-2 font-semibold text-emerald-800">₱{selectedAssistanceTotal.toLocaleString("en-PH", { minimumFractionDigits: 2 })} total amount</span></div>
         </div>
       </section>
@@ -466,7 +466,7 @@ export function ReportBuilder({
         <ReportKpi icon={<ArrowUpRight />} label="Provided" value={providedCount.toLocaleString()} note="Successful assistance outcomes" tone="green" />
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5" aria-label="Assistance type summary">
+      <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(9,44,92,0.65)] sm:p-6" aria-label="Assistance type summary">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="text-base font-bold text-[#0B1A3E]">{selectedTypeLabel} summary</h2><p className="mt-1 text-xs text-slate-500">Reporting period: {dateRange.startDate} to {dateRange.endDate}</p></div>
             <div className="text-sm font-semibold text-[#173B70]">{(assistanceType === "MEDICAL_ASSISTANCE" || assistanceType === "ALL") && <p>Medicine quantity recorded: {medicineQuantityTotal.toLocaleString()}</p>}{(assistanceType !== "MEDICAL_ASSISTANCE") && <p>Items / goods quantity recorded: {itemQuantityTotal.toLocaleString()}</p>}</div>
@@ -484,7 +484,7 @@ export function ReportBuilder({
         <div className="dashboard-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_22px_50px_-35px_rgba(9,44,92,0.7)] sm:p-6"><div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0B4599]">Service mix</p><h2 className="mt-1 text-xl font-bold text-[#0B1A3E]">Records by assistance type</h2></div><div className="mt-5 h-[265px] min-w-0"><ResponsiveContainer width="100%" height="100%"><BarChart data={typeAnalytics} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 0 }}><CartesianGrid horizontal={false} stroke="#E8EEF7" /><XAxis type="number" allowDecimals={false} hide /><YAxis type="category" dataKey="label" width={105} tick={{ fontSize: 10, fill: "#405B80" }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #DCE7F5" }} /><Bar dataKey="count" name="Records" radius={[0, 8, 8, 0]} barSize={20}>{typeAnalytics.map((entry, index) => <Cell key={entry.type} fill={index % 2 ? "#C9A93F" : "#0B68C5"} />)}</Bar></BarChart></ResponsiveContainer></div></div>
       </section>
 
-      <div className="report-print-document space-y-8">
+      <div className="report-print-document space-y-10">
         <div className="hidden print:block">
           <h1 className="text-2xl font-bold">Mahayag MSWD Reports{qualifier}</h1>
           <p className="mt-1 text-sm">Reporting period: {dateRange.startDate} to {dateRange.endDate}</p>
@@ -619,5 +619,5 @@ function ReportKpi({ icon, label, value, note, tone }: { icon: React.ReactNode; 
     gold: "border-amber-200 bg-gradient-to-br from-white to-amber-50 text-amber-700",
     green: "border-emerald-200 bg-gradient-to-br from-white to-emerald-50 text-emerald-700",
   };
-  return <article className={`dashboard-3d-card relative overflow-hidden rounded-2xl border p-5 shadow-[0_22px_42px_-32px_rgba(9,44,92,0.7)] ${tones[tone]}`}><div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-current opacity-[0.07] blur-xl" /><div className="relative flex items-start justify-between gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 shadow-sm [&>svg]:h-5 [&>svg]:w-5">{icon}</span><span className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">Live</span></div><p className="relative mt-5 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p><p className="relative mt-1 text-2xl font-black tracking-tight text-[#0B1A3E]">{value}</p><p className="relative mt-1 text-xs font-medium text-slate-500">{note}</p></article>;
+  return <article className={`dashboard-3d-card relative overflow-hidden rounded-[1.5rem] border p-5 shadow-[0_22px_42px_-32px_rgba(9,44,92,0.7)] transition hover:-translate-y-1 hover:shadow-[0_28px_52px_-30px_rgba(9,44,92,0.55)] ${tones[tone]}`}><div className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-current opacity-[0.1] blur-xl" /><div className="relative flex items-start justify-between gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/90 shadow-sm [&>svg]:h-5 [&>svg]:w-5">{icon}</span><span className="rounded-full bg-white/70 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">Live</span></div><p className="relative mt-5 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p><p className="relative mt-1 text-3xl font-black tracking-tight text-[#0B1A3E]">{value}</p><p className="relative mt-1 text-xs font-medium text-slate-500">{note}</p></article>;
 }
