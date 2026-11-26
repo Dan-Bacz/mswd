@@ -394,18 +394,6 @@ export function ReportBuilder({
 
   return (
     <div className="space-y-8">
-      <nav className="print:hidden grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_-30px_rgba(9,44,92,0.7)] sm:grid-cols-3" aria-label="Report sections">
-        {([
-          ["programs", "Programs and Services", "Beneficiary registrations by category or program"],
-          ["assistance", "Type of Assistance", "Assistance transactions and outcomes"],
-          ["staff", "Staff", "Beneficiaries and assistance handled by staff"],
-        ] as const).map(([value, label, description]) => (
-          <button key={value} type="button" onClick={() => setReportMode(value)} className={`rounded-xl px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${reportMode === value ? "bg-[#0b4599] text-white shadow-md" : "text-[#0b1a3e] hover:bg-blue-50"}`} aria-pressed={reportMode === value}>
-            <span className="block text-sm font-bold">{label}</span>
-            <span className={`mt-1 block text-xs ${reportMode === value ? "text-blue-100" : "text-slate-500"}`}>{description}</span>
-          </button>
-        ))}
-      </nav>
       <header className="relative isolate overflow-hidden rounded-[2rem] border border-[#1b4d88] bg-[linear-gradient(135deg,#061a38_0%,#0b4599_58%,#0b68c5_100%)] px-6 py-7 text-white shadow-[0_28px_70px_-28px_rgba(7,28,58,0.65)] sm:px-8 sm:py-9">
         <div className="pointer-events-none absolute -right-16 -top-24 h-80 w-80 rounded-full bg-[#ffd21f]/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-36 left-1/3 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
@@ -459,6 +447,19 @@ export function ReportBuilder({
         </Dialog>
         <div className="relative mt-7 grid gap-3 border-t border-slate-200 pt-5 text-xs text-slate-500 sm:grid-cols-3"><span className="inline-flex items-center gap-2"><CalendarRange className="h-4 w-4 text-[#A88724]" /> {dateRange.startDate} – {dateRange.endDate}</span><span className="inline-flex items-center gap-2"><ClipboardList className="h-4 w-4 text-[#A88724]" /> {selectedTypeLabel}</span><span className="inline-flex items-center gap-2 sm:justify-end"><ArrowUpRight className="h-4 w-4 text-[#A88724]" /> Live database report</span></div>
       </header>
+
+      <nav className="print:hidden grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_40px_-30px_rgba(9,44,92,0.7)] sm:grid-cols-3" aria-label="Report sections">
+        {([
+          ["programs", "Programs and Services", "Beneficiary registrations by category or program"],
+          ["assistance", "Type of Assistance", "Assistance transactions and outcomes"],
+          ["staff", "Staff", "Beneficiaries and assistance handled by staff"],
+        ] as const).map(([value, label, description]) => (
+          <button key={value} type="button" onClick={() => setReportMode(value)} className={`rounded-xl px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${reportMode === value ? "bg-[#0b4599] text-white shadow-md" : "text-[#0b1a3e] hover:bg-blue-50"}`} aria-pressed={reportMode === value}>
+            <span className="block text-sm font-bold">{label}</span>
+            <span className={`mt-1 block text-xs ${reportMode === value ? "text-blue-100" : "text-slate-500"}`}>{description}</span>
+          </button>
+        ))}
+      </nav>
 
       <form method="get" className="print:hidden flex flex-wrap items-end gap-4 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_-35px_rgba(9,44,92,0.7)]">
         <div className="w-full border-b border-slate-100 pb-3"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0b4599]">Report controls</p><p className="mt-1 text-sm text-slate-500">Choose a reporting window and the time grouping used in the charts.</p></div>
