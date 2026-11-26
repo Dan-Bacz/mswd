@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Award, Printer, ShieldCheck } from "lucide-react";
+import { Printer, ShieldCheck } from "lucide-react";
 
 type Member = {
   id: string;
@@ -88,7 +88,7 @@ export function MembershipForm({
       </section>
       <Certificate
         beneficiaries={beneficiaries}
-        initialId={selectedId}
+        selectedId={selectedId}
         name={name}
       />
     </main>
@@ -97,55 +97,53 @@ export function MembershipForm({
 
 function Certificate({
   beneficiaries,
-  initialId,
+  selectedId,
   name,
 }: {
   beneficiaries: Member[];
-  initialId: string;
+  selectedId: string;
   name: (member: Member | undefined) => string;
 }) {
   return (
-    <div className="membership-certificate mx-auto max-w-[850px] border-[10px] border-double border-[#0B1C3A] bg-white p-2 text-[#142A46] shadow-xl print:max-w-none print:border-[8px] print:shadow-none">
-      <div className="border border-[#C9A93F] p-6 sm:p-10">
-        <header className="border-b-2 border-[#0B1C3A] pb-5 text-center">
-          <div className="grid grid-cols-[64px_1fr_64px] items-center gap-4 sm:grid-cols-[78px_1fr_78px]">
-            <Image
-              src="/images/municipal-seal.png"
-              alt="Municipal seal"
-              width={78}
-              height={78}
-              className="h-16 w-16 object-contain"
-            />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide">
-                Republic of the Philippines
-              </p>
-              <p className="text-sm font-bold uppercase">
-                Municipality of Mahayag
-              </p>
-              <p className="text-xs font-semibold uppercase">
-                Municipal Social Welfare and Development Office
-              </p>
-              <p className="mt-1 text-[10px]">Mahayag, Zamboanga del Sur</p>
+    <div className="membership-certificate mx-auto max-w-[850px] border border-slate-300 bg-white p-0 text-[#111827] shadow-sm print:max-w-none print:border print:shadow-none">
+      <div className="bg-white p-6 sm:p-10">
+        <header className="border-b-2 border-[#111827] pb-4 text-center">
+          <div className="mx-auto grid max-w-[720px] grid-cols-[96px_1fr] items-center gap-4 sm:grid-cols-[132px_1fr] sm:gap-6">
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
+              <Image
+                src="/images/municipal-seal.png"
+                alt="Municipality of Mahayag seal"
+                width={78}
+                height={78}
+                className="h-[62px] w-[62px] object-contain sm:h-[78px] sm:w-[78px]"
+              />
+              <Image
+                src="/images/new mswd.png"
+                alt="Bagong Pilipinas logo"
+                width={78}
+                height={78}
+                className="h-[62px] w-[62px] object-contain sm:h-[78px] sm:w-[78px]"
+              />
             </div>
-            <Image
-              src="/images/new mswd.png"
-              alt="Municipal logo"
-              width={78}
-              height={78}
-              className="h-16 w-16 object-contain sm:h-[78px] sm:w-[78px]"
-            />
+            <div className="leading-[1.15]">
+              <p className="text-[11px] font-medium sm:text-sm">Republic of the Philippines</p>
+              <p className="text-[11px] font-medium sm:text-sm">Region IX-Zamboanga Peninsula</p>
+              <p className="text-[11px] font-medium sm:text-sm">Province of Zamboanga del Sur</p>
+              <p className="text-[12px] font-bold sm:text-base">Municipality of Mahayag</p>
+              <p className="mt-1 text-[10px] italic text-[#0645AD] underline sm:text-xs">bagaslaoft@gmail.com</p>
+            </div>
           </div>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Award className="h-6 w-6 text-[#A88724]" />
-            <h2 className="text-2xl font-black uppercase tracking-[0.14em] text-[#0B1C3A]">
+          <div className="mx-auto mt-4 max-w-[720px] border-t border-[#111827] pt-2">
+            <p className="text-xs font-black uppercase tracking-[0.08em] sm:text-base">Municipal Social Welfare and Development Office</p>
+          </div>
+          <div className="mt-7">
+            <h2 className="text-xl font-black uppercase tracking-[0.1em] text-[#111827] sm:text-2xl">
               Certificate of Membership
             </h2>
-            <Award className="h-6 w-6 text-[#A88724]" />
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Official proof of beneficiary registration
+            </p>
           </div>
-          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#A88724]">
-            Official proof of beneficiary registration
-          </p>
         </header>
         <div className="mt-10 text-center">
           <p className="text-sm leading-7">This is to certify that</p>
@@ -153,7 +151,7 @@ function Certificate({
             className="mt-5 border-b-2 border-[#0B1C3A] pb-2 text-2xl font-bold uppercase tracking-wide"
             data-membership-name
           >
-            {name(beneficiaries.find((member) => member.id === initialId))}
+            {name(beneficiaries.find((member) => member.id === selectedId))}
           </div>
           <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
             Name of beneficiary
@@ -163,10 +161,10 @@ function Certificate({
             Development Office under the following program or service category:
           </p>
           <div
-            className="mt-5 rounded-lg border border-[#C9A93F] bg-[#FFFDF3] px-5 py-4 text-xl font-bold text-[#0B4599]"
+            className="mt-5 border border-slate-300 bg-white px-5 py-4 text-xl font-bold text-[#111827]"
             data-membership-category
           >
-            {beneficiaries.find((member) => member.id === initialId)
+            {beneficiaries.find((member) => member.id === selectedId)
               ?.categoryName ?? ""}
           </div>
         </div>
@@ -174,22 +172,22 @@ function Certificate({
           <Detail
             label="Client ID"
             value={
-              beneficiaries.find((member) => member.id === initialId)
+              beneficiaries.find((member) => member.id === selectedId)
                 ?.beneficiaryNumber ?? ""
             }
           />
           <Detail
             label="Age"
             value={String(
-              beneficiaries.find((member) => member.id === initialId)?.age ??
+              beneficiaries.find((member) => member.id === selectedId)?.age ??
                 "Not recorded",
             )}
           />
           <Detail
             label="Address"
             value={[
-              beneficiaries.find((member) => member.id === initialId)?.address,
-              beneficiaries.find((member) => member.id === initialId)?.barangay,
+              beneficiaries.find((member) => member.id === selectedId)?.address,
+              beneficiaries.find((member) => member.id === selectedId)?.barangay,
             ]
               .filter(Boolean)
               .join(", ")}
