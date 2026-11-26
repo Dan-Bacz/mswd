@@ -108,8 +108,8 @@ function Certificate({
     <div className="membership-certificate mx-auto max-w-[850px] border border-slate-300 bg-white p-0 text-[#111827] shadow-sm print:max-w-none print:border print:shadow-none">
       <div className="bg-white p-6 sm:p-10">
         <header className="border-b-2 border-[#111827] pb-4 text-center">
-          <div className="mx-auto grid max-w-[720px] grid-cols-[96px_1fr] items-center gap-4 sm:grid-cols-[132px_1fr] sm:gap-6">
-            <div className="flex items-center justify-center gap-1 sm:gap-2">
+          <div className="relative mx-auto min-h-[96px] max-w-[720px]">
+            <div className="flex items-center justify-start gap-1 sm:absolute sm:left-0 sm:top-1 sm:gap-2">
               <Image
                 src="/images/municipal-seal.png"
                 alt="Municipality of Mahayag seal"
@@ -118,14 +118,14 @@ function Certificate({
                 className="h-[62px] w-[62px] object-contain sm:h-[78px] sm:w-[78px]"
               />
               <Image
-                      src="/images/bagong pilipinas.png"
+                src="/images/bagong pilipinas.png"
                 alt="Bagong Pilipinas logo"
                 width={78}
                 height={78}
                 className="h-[62px] w-[62px] object-contain sm:h-[78px] sm:w-[78px]"
               />
             </div>
-            <div className="leading-[1.15]">
+            <div className="mx-auto max-w-[520px] pt-3 leading-[1.15] sm:pt-0">
               <p className="text-[11px] font-medium sm:text-sm">Republic of the Philippines</p>
               <p className="text-[11px] font-medium sm:text-sm">Region IX-Zamboanga Peninsula</p>
               <p className="text-[11px] font-medium sm:text-sm">Province of Zamboanga del Sur</p>
