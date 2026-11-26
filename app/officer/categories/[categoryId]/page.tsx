@@ -59,11 +59,11 @@ export default async function OfficerCategoryDashboardPage({
 
   return (
     <div className="space-y-7">
-      <div className="relative overflow-hidden rounded-[28px] border border-[#DCE7F5] bg-white px-6 py-7 text-[#071C3A] shadow-[0_24px_55px_-26px_rgba(7,28,58,0.28)] sm:px-8 sm:py-9">
-        <span className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-[#0B68C5]/10 blur-3xl" /><span className="pointer-events-none absolute bottom-[-70px] left-1/3 h-52 w-52 rounded-full bg-[#C9A93F]/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-[28px] border border-[#1b4d88] bg-[linear-gradient(135deg,#061a38_0%,#0b4599_58%,#0b68c5_100%)] px-6 py-7 text-white shadow-[0_28px_70px_-28px_rgba(7,28,58,0.65)] sm:px-8 sm:py-9">
+        <span className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-[#ffd21f]/20 blur-3xl" /><span className="pointer-events-none absolute bottom-[-70px] left-1/3 h-52 w-52 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-5">
-          <div><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#0B4599]"><Sparkles className="h-4 w-4 text-[#A88724]" /> Officer workspace</div><h1 className="mt-3 text-3xl font-black tracking-tight text-[#071C3A] sm:text-4xl">{category.name}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#6480A9]">A focused view of your assigned beneficiaries, services, and actual category activity.</p></div>
-          <div className="rounded-2xl border border-[#DCE7F5] bg-[#F7FAFF] px-4 py-3"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6480A9]">Today</p><p className="mt-1 flex items-center gap-2 text-sm font-semibold text-[#173B70]"><CalendarDays className="h-4 w-4 text-[#A88724]" />{today.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}</p></div>
+          <div><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#ffd21f]"><Sparkles className="h-4 w-4" /> Officer workspace</div><h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">{category.name}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-blue-100">A focused view of your assigned beneficiaries, services, and actual category activity.</p></div>
+          <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-100">Today</p><p className="mt-1 flex items-center gap-2 text-sm font-semibold text-white"><CalendarDays className="h-4 w-4 text-[#ffd21f]" />{today.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })}</p></div>
         </div>
       </div>
 
