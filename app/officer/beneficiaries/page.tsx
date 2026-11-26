@@ -11,16 +11,15 @@ export default async function OfficerBeneficiariesPage({
 }) {
   const params = await Promise.resolve(searchParams ?? {});
   const initialSearch = typeof params.q === "string" ? params.q : "";
-  const { user } = await requireSelectedOfficerCategory();
+  const { user, categoryId } = await requireSelectedOfficerCategory();
 
   const [categories, beneficiaries] = await Promise.all([
     db.category.findMany({
-      where: { id: { in: user.categoryIds } },
-      orderBy: { name: "asc" },
+      where: { id: categoryId },
       select: { id: true, name: true },
     }),
     db.beneficiary.findMany({
-      where: { categoryId: { in: user.categoryIds } },
+      where: { categoryId },
       include: { category: true },
       orderBy: { registrationDate: "desc" },
       take: 25,
@@ -42,7 +41,7 @@ export default async function OfficerBeneficiariesPage({
         officerName: user.name,
         status: beneficiary.status,
       }))}
-      selectedCategoryId={undefined}
+      selectedCategoryId={categoryId}
       officerMode
       initialSearch={initialSearch}
     />
