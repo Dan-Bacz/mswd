@@ -52,6 +52,7 @@ export async function Sidebar({ role }: { role: "ADMIN" | "OFFICER" }) {
           { href: "/officer/membership", label: "Membership Form", icon: "membership" },
           { href: "/officer/assistance", label: "Assistance", icon: "assistance" },
           { href: "/officer/reports", label: "Reports", icon: "reports" },
+          { href: "/officer/notifications", label: "Notifications", icon: "notifications" },
           { href: "/officer/profile", label: "My Profile", icon: "profile" },
         ],
       },

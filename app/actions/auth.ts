@@ -829,7 +829,7 @@ export async function rejectOfficerAction(
 }
 
 export async function markNotificationReadAction(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requireAuth();
   const notificationId = String(formData.get("notificationId") ?? "");
   if (!notificationId) {
     return;
@@ -837,14 +837,18 @@ export async function markNotificationReadAction(formData: FormData) {
 
   await markNotificationRead(notificationId, user.id);
   revalidatePath("/admin/notifications");
+  revalidatePath("/officer/notifications");
   revalidatePath("/admin", "layout");
+  revalidatePath("/officer", "layout");
 }
 
 export async function markAllNotificationsReadAction() {
-  const user = await requireAdmin();
+  const user = await requireAuth();
   await markAllNotificationsRead(user.id);
   revalidatePath("/admin/notifications");
+  revalidatePath("/officer/notifications");
   revalidatePath("/admin", "layout");
+  revalidatePath("/officer", "layout");
 }
 
 function readCategoryIds(formData: FormData, fieldName = "categoryIds") {
